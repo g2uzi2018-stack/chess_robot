@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>chess_robot_validation</name><version>0.1.0</version>
+  <description>Read-only Nova5 acceptance tools; no enable or motion commands.</description>
+  <maintainer email="maintainer@example.invalid">Chess robot project</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend><depend>sensor_msgs</depend>
+  <depend>kdl_parser</depend><depend>urdf</depend><depend>eigen</depend>
+  <depend>tf2_ros</depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>
