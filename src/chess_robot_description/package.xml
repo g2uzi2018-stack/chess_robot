@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>chess_robot_description</name>
+  <version>0.1.0</version>
+  <description>Nova5 model assets for the Chinese chess robot project.</description>
+  <maintainer email="zzkuang0516@163.com">gitadmin</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

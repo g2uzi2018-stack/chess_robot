@@ -1,0 +1,8 @@
+*.STL binary
+*.pdf binary
+
+# Preserve vendor snapshots byte-for-byte, including upstream whitespace.
+reference/dobot/communication/** -text -whitespace
+reference/dobot/examples/demo.py -text -whitespace
+reference/dobot/models/nova5_robot.urdf -text -whitespace
+src/chess_robot_description/urdf/nova5.urdf -text -whitespace
