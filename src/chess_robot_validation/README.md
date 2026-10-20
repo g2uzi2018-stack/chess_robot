@@ -54,3 +54,7 @@ Start robot_state_publisher with `joint_states:=/validation/synthetic_joint_stat
 - Motion, tracking, speed, acceleration and stop response: no threshold adopted without firmware-specific limits, sampling characterization and operator-approved motion envelope.
 
 No physical velocity limits are installed: the original URDF zero velocity/effort fields remain unchanged. The negative allowlist tests establish that this client blocks all actuation, not that the robot controller enforces speed limits. No claim of physical limit or absolute TCP accuracy validation is made.
+
+## RViz-only scope (user confirmed robot disconnected)
+
+`nova5_rviz_demo <urdf> <output.csv>` publishes only `/validation/synthetic_joint_states` and `/validation/synthetic_flange_path`. No network sockets or controller API are used. It plays a 20 s smooth, closed joint curve with 5 s holds before/after at nominal 50 Hz and logs generated joint positions/analytic velocities, KDL flange pose and scaled Jacobian conditioning. It checks model position bounds and the offline Jacobian criteria only. Physical velocity/acceleration limits, dynamics, collisions and execution accuracy are not validated. The cyan RViz path is the model's Link6 origin, not a measured TCP or a MovL command.
