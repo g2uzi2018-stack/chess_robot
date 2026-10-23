@@ -32,6 +32,9 @@ logs/
 *.db3
 *.mcap
 
+# Offline browser viewer build dependencies
+tools/description/viewer/node_modules/
+
 # Editor and OS files
 .idea/
 .vscode/

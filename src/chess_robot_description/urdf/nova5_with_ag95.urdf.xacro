@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<robot name="nova5_with_ag95" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- ROS resolves the installed package; the generator supplies a source path. -->
+  <xacro:include filename="nova5.urdf"/>
+  <xacro:arg name="ag95_macro_file" default="$(find dh_ag95_description)/urdf/dh_ag95_macro.xacro"/>
+  <xacro:include filename="$(arg ag95_macro_file)"/>
+  <xacro:arg name="include_ground" default="false"/>
+  <xacro:arg name="include_legacy_padding" default="true"/>
+
+  <!-- Legacy mounting geometry and transforms; not a new calibration. -->
+  <link name="camera_bracket_link">
+    <visual>
+      <origin xyz="0.09419 -0.10218 0.18445" rpy="0 3.14159 0"/>
+      <geometry>
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver"><color rgba="0.75 0.75 0.75 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0.09419 -0.10218 0.18445" rpy="0 3.14159 0"/>
+      <geometry>
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL" scale="0.001 0.001 0.001"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_bracket_joint" type="fixed">
+    <parent link="Link6"/>
+    <child link="camera_bracket_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:dh_ag95_gripper prefix="" parent="camera_bracket_link" grasp_link_offset="0.20">
+    <origin xyz="0 0 0.0085" rpy="0 0 0"/>
+  </xacro:dh_ag95_gripper>
+
+  <!-- Preserve the old extra collision envelope, independently switchable. -->
+  <xacro:if value="$(arg include_legacy_padding)">
+    <link name="safety_padding_link">
+      <visual>
+        <origin xyz="0 0.0305 0.0825" rpy="0 0 0"/>
+        <geometry><box size="0.115 0.001 0.165"/></geometry>
+        <material name="blue"><color rgba="0.0 0.0 1.0 0.6"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0.0305 0.0825" rpy="0 0 0"/>
+        <geometry><box size="0.115 0.001 0.165"/></geometry>
+      </collision>
+    </link>
+    <joint name="safety_padding_joint" type="fixed">
+      <parent link="ag95_base_link"/>
+      <child link="safety_padding_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:if>
+
+  <!-- Scene geometry is optional; not part of the default robot model. -->
+  <xacro:if value="$(arg include_ground)">
+    <link name="env_ground">
+      <collision><geometry><box size="2.0 2.0 0.05"/></geometry></collision>
+      <visual>
+        <geometry><box size="2.0 2.0 0.05"/></geometry>
+        <material name="ground"><color rgba="0.5 0.5 0.5 0.6"/></material>
+      </visual>
+    </link>
+    <joint name="ground_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="env_ground"/>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+    </joint>
+  </xacro:if>
+</robot>

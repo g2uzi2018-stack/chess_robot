@@ -1,0 +1,123 @@
+{
+  "repository": "https://github.com/g2uzi2018-stack/nova",
+  "commit": "a45852ab1d414a1fe075a98f47551ca846a783f6",
+  "import_date": "2026-10-23",
+  "gripper_license": "Apache-2.0 (original LICENSE and package.xml retained)",
+  "assembly_changes": [
+    "Use unchanged chess_robot_description Nova5 baseline and AG95 description-only macro",
+    "Replace ROS file:// find mesh URI with package://chess_robot_description URI",
+    "Preserve bracket mesh/origins, 8.5 mm gripper mount, 200 mm grasp frame and padding",
+    "Make ground optional (default false) and external blue padding switchable (default true)",
+    "Generate pure URDF and relative-path browser exports; no control drivers imported"
+  ],
+  "files": [
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/collision/base_link.stl",
+      "target_path": "src/dh_ag95_description/meshes/collision/base_link.stl",
+      "sha256": "e6134af47b04e292e2c9cd56462d93c861aefe575a4366738238d141fbea22a9",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/collision/finger.stl",
+      "target_path": "src/dh_ag95_description/meshes/collision/finger.stl",
+      "sha256": "7d4c275479a3c39d5884b78c383855d1db92d381a4a06a0f50706500f1855be4",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/collision/finger_pad.stl",
+      "target_path": "src/dh_ag95_description/meshes/collision/finger_pad.stl",
+      "sha256": "3ed3044bdab33c99557c25335dfad88513c10bb0a7639087e4096ea9b0c8670a",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/collision/gripper_body.stl",
+      "target_path": "src/dh_ag95_description/meshes/collision/gripper_body.stl",
+      "sha256": "969e7000c47fbc54379f70a2819d79c79e8e72ac28ae6c004fabd82f0106f79c",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/collision/inner_knuckle.stl",
+      "target_path": "src/dh_ag95_description/meshes/collision/inner_knuckle.stl",
+      "sha256": "e6280d54e82ddfb7e3281e2f79f707d9e4007f77b4ee8e069fe1fdc244758415",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/collision/outer_knuckle.stl",
+      "target_path": "src/dh_ag95_description/meshes/collision/outer_knuckle.stl",
+      "sha256": "618ae262515dc2b1114b4783542c3feae412fb3e7f6e46431eee61ce60424a12",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/visual/base_link.stl",
+      "target_path": "src/dh_ag95_description/meshes/visual/base_link.stl",
+      "sha256": "92f0fd7e62cd1f6fc8fc0eaf0efff49ba32d261d28aa88c9687d1abeebe51ac5",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/visual/finger.stl",
+      "target_path": "src/dh_ag95_description/meshes/visual/finger.stl",
+      "sha256": "be0737719f5b31901ac68e4fed086467398d3052ec60fb4ee9a341fe9fce38a4",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/visual/finger_pad.stl",
+      "target_path": "src/dh_ag95_description/meshes/visual/finger_pad.stl",
+      "sha256": "44e4a98065782da69980cd30ef630d47ef4fc6364d5f026b7b5c02d8e4479825",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/visual/gripper_body.stl",
+      "target_path": "src/dh_ag95_description/meshes/visual/gripper_body.stl",
+      "sha256": "63555d0f0cce8e4d7addaa7910b74ac5c4bbb7c59419821dcf1180ea1f624464",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/visual/inner_knuckle.stl",
+      "target_path": "src/dh_ag95_description/meshes/visual/inner_knuckle.stl",
+      "sha256": "d6f1cabdda16b71f78d8779233ab4511def1fe6361eedc93928f9712dc6a2f3f",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/meshes/visual/outer_knuckle.stl",
+      "target_path": "src/dh_ag95_description/meshes/visual/outer_knuckle.stl",
+      "sha256": "c136958ef72eef893260065a3668d7ac79fe80e20eca22f8d311df295a706f47",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/LICENSE",
+      "target_path": "src/dh_ag95_description/LICENSE",
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/urdf/dh_ag95_macro.xacro",
+      "target_path": "src/dh_ag95_description/urdf/dh_ag95_macro.xacro",
+      "sha256": "e28d49db0fbe4615477028f689c47ca60eba47e28860023d8d03815dddf06ab1",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/my_nova5_config/meshes/new_jiazhua1.STL",
+      "target_path": "src/chess_robot_description/meshes/tool_mount/new_jiazhua1.STL",
+      "sha256": "19ab5bf279aaa5df5c50c434e499421a5f8152a0c71d55eba173f62a964f40bc",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/my_nova5_config/urdf/nova5_with_ag95.xacro",
+      "target_path": "reference/ag95/nova5_with_ag95.original.xacro",
+      "sha256": "36b5b085fcd0ddb8862a8176ac4e3f0e7abe0c4a67ff5914a375df92b9fb827d",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/package.xml",
+      "target_path": "reference/ag95/package.original.xml",
+      "sha256": "0bb29fecacaa3869dc34c2fd94e0b4f6c87da0bbb6c976881d654a1b6a14ecd4",
+      "changes": "none"
+    },
+    {
+      "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/urdf/dh_ag95.urdf.xacro",
+      "target_path": "reference/ag95/dh_ag95.original.urdf.xacro",
+      "sha256": "d09dcc0471585cbb739fe6942687e576917b85def19abd25a44fbcdcc67c73a4",
+      "changes": "none"
+    }
+  ]
+}

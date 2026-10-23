@@ -2,10 +2,12 @@
 <package format="3">
   <name>chess_robot_description</name>
   <version>0.1.0</version>
-  <description>Nova5 model assets for the Chinese chess robot project.</description>
+  <description>Nova5 and mounted AG95 model assets for the Chinese chess robot.</description>
   <maintainer email="zzkuang0516@163.com">gitadmin</maintainer>
   <license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>dh_ag95_description</exec_depend>
+  <exec_depend>xacro</exec_depend>
   <export>
     <build_type>ament_cmake</build_type>
   </export>

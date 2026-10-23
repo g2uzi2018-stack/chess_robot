@@ -1,3 +1,4 @@
+* text=auto eol=lf
 *.STL binary
 *.pdf binary
 
@@ -6,3 +7,21 @@ reference/dobot/communication/** -text -whitespace
 reference/dobot/examples/demo.py -text -whitespace
 reference/dobot/models/nova5_robot.urdf -text -whitespace
 src/chess_robot_description/urdf/nova5.urdf -text -whitespace
+
+# Preserve imported source bytes and their recorded hashes on every platform.
+reference/ag95/*.original.* -text
+src/dh_ag95_description/urdf/dh_ag95_macro.xacro -text whitespace=cr-at-eol
+src/dh_ag95_description/LICENSE -text
+*.stl -text
+
+# Keep generated models and offline tools reproducible across Windows/Linux.
+src/chess_robot_description/urdf/nova5_with_ag95.* text eol=lf
+src/dh_ag95_description/urdf/ag95.* text eol=lf
+src/dh_ag95_description/CMakeLists.txt text eol=lf
+src/dh_ag95_description/package.xml text eol=lf
+src/dh_ag95_description/SOURCES.json text eol=lf
+reference/ag95/SOURCES.json text eol=lf
+tools/description/*.py text eol=lf
+tools/description/viewer/* text eol=lf
+tools/description/viewer/viewer.bundle.js -whitespace linguist-generated=true
+.gitattributes text eol=lf

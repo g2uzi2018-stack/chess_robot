@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="nova5_robot">
+
+  <xacro:include filename="$(find cra_description)/urdf/nova5_robot.xacro"/>
+  <xacro:include filename="$(find dh_ag95_description)/urdf/dh_ag95_macro.xacro"/>
+
+  <!-- 相机支架与相机建模 -->
+  <!-- 注意：根据分析，法兰中心在大约 X=46.44, Y=51.18, Z=107mm 处 -->
+  <!-- 旋转 180 度 (pi) 绕 X 轴，使支架向外延伸，并平移对齐法兰中心 -->
+  <link name="camera_bracket_link">
+    <visual>
+      <origin xyz="0.09419 -0.10218 0.18445" rpy="0 3.14159 0" />
+      <geometry>
+        <mesh filename="file://$(find my_nova5_config)/meshes/new_jiazhua1.STL" scale="0.001 0.001 0.001" />
+      </geometry>
+      <material name="silver">
+        <color rgba="0.75 0.75 0.75 1.0" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.09419 -0.10218 0.18445" rpy="0 3.14159 0" />
+      <geometry>
+        <mesh filename="file://$(find my_nova5_config)/meshes/new_jiazhua1.STL" scale="0.001 0.001 0.001" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="camera_bracket_joint" type="fixed">
+    <parent link="Link6" />
+    <child link="camera_bracket_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <xacro:dh_ag95_gripper prefix="" parent="camera_bracket_link" grasp_link_offset="0.20">
+    <origin xyz="0 0 0.0085" rpy="0 0 0"/>
+  </xacro:dh_ag95_gripper>
+
+  <!-- 夹爪另一侧防碰撞补丁 (蓝色 Box, 调整后长16.5cm, 宽11.5cm, 厚1mm) -->
+  <link name="safety_padding_link">
+    <visual>
+      <origin xyz="0 0.0305 0.0825" rpy="0 0 0" />
+      <geometry>
+        <box size="0.115 0.001 0.165" />
+      </geometry>
+      <material name="blue">
+        <color rgba="0.0 0.0 1.0 0.6" />
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0.0305 0.0825" rpy="0 0 0" />
+      <geometry>
+        <box size="0.115 0.001 0.165" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="safety_padding_joint" type="fixed">
+    <parent link="ag95_base_link" />
+    <child link="safety_padding_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- 地面 -->
+  <link name="env_ground">
+    <collision><geometry><box size="2.0 2.0 0.05"/></geometry></collision>
+    <visual>
+      <geometry><box size="2.0 2.0 0.05"/></geometry>
+      <material name="g"><color rgba="0.5 0.5 0.5 0.6"/></material>
+    </visual>
+  </link>
+  <joint name="ground_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="env_ground" />
+    <!-- box厚度0.05，中心设为 -0.03，则上表面在 -0.03 + 0.025 = -0.005，留出下潜空间 -->
+    <origin xyz="0 0 -0.03" rpy="0 0 0" />
+  </joint>
+
+</robot>

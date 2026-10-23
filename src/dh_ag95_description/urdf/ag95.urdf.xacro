@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<robot name="ag95_preview" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- Description only. No hardware plugin, serial device or controller. -->
+  <xacro:include filename="dh_ag95_macro.xacro"/>
+  <link name="world"/>
+  <xacro:dh_ag95_gripper prefix="" parent="world" grasp_link_offset="0.20">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </xacro:dh_ag95_gripper>
+</robot>
