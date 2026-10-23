@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Export pure URDF and relative STL paths for browser viewers (stdlib only)."""
+"""Export pure URDF and relative STL paths for external viewers (stdlib only)."""
 import argparse
 import hashlib
 import json
@@ -21,6 +21,11 @@ def export(output):
     if output == ROOT or output == ROOT / "src" or (ROOT / "src") in output.parents:
         raise ValueError("Choose an output directory outside src/, e.g. runs/browser_model")
     output.mkdir(parents=True, exist_ok=True)
+    # Remove only the known entrypoints from older exports of our retired viewer.
+    for name in ("index.html", "viewer.bundle.js", "LICENSES.txt"):
+        retired = output / name
+        if retired.is_file():
+            retired.unlink()
     exported = set()
     for filename, source in MODELS.items():
         doc = ET.parse(source)
@@ -50,22 +55,15 @@ def export(output):
                 target = output / f"{package}_{name}"
                 shutil.copyfile(source, target)
                 exported.add(target)
-    for name in ("index.html", "viewer.bundle.js", "LICENSES.txt"):
-        target = output / name
-        shutil.copyfile(ROOT / "tools/description/viewer" / name, target)
-        exported.add(target)
     guide = output / "README.txt"
     guide.write_text(
-        "Nova5 + AG95 browser preview (description only)\n\n"
-        "Local viewer (no internet or ROS required):\n"
-        "  cd into this extracted folder, then run:\n"
-        "  python3 -m http.server 8765 --bind 127.0.0.1\n"
-        "  Open http://127.0.0.1:8765 in a WebGL-capable browser on this machine.\n\n"
-        "Alternatively open https://urdf.deyuf.org/, click Open Folder and choose\n"
-        "this entire folder. Select nova5_with_ag95.urdf or ag95.urdf.\n"
+        "Nova5 + AG95 model assets (description only)\n\n"
+        "Import this entire folder into your chosen URDF viewer/parser.\n"
+        "Select nova5_with_ag95.urdf for the assembly, or ag95.urdf for the gripper.\n"
         "Use Joints to change left_outer_knuckle_joint (0..1.10 rad).\n"
         "   The other finger joints are coupled by mimic.\n"
-        "Enable collision display to inspect the inherited padding boxes.\n\n"
+        "If supported, enable collision display to inspect the inherited padding boxes.\n\n"
+        "This package contains model assets only; no bundled viewer or server.\n"
         "All meshes use relative paths; no ROS install or controller connection is needed.\n"
         "Mounting and grasp frame offsets are inherited, not calibrated measurements.\n"
         "No robot control code is included. Default model has no ground plane.\n",

@@ -19,7 +19,7 @@ docs/
 reference/
   dobot/                    # 原厂参考源码、示例、来源与校验值
   ag95/                     # 旧装配对照件与迁移来源记录
-tools/description/          # 模型生成、检查和浏览器导出工具
+tools/description/          # 模型生成、检查和纯 URDF 资源导出工具
 ```
 
 ## 当前状态
@@ -28,7 +28,7 @@ tools/description/          # 模型生成、检查和浏览器导出工具
 - 开发机基线：Jetson / aarch64 / Ubuntu 22.04.5 LTS。
 - 已迁入原厂 Nova5 本体模型和协议资料，功能代码尚未开始。
 - 已迁入旧 `nova` 工程的 AG95 夹爪和支架，保留原安装关系，提供独立夹爪和组合纯 URDF。
-- [在 AGX 浏览器中查看组合模型](docs/models/ag95-browser.md)：无需连接机械臂或安装网页服务。
+- [导出模型供在线解析器查看](docs/models/ag95-browser.md)：提供纯 URDF 与相对路径网格，不附带本地查看器。
 - 现有 [nova](https://github.com/g2uzi2018-stack/nova) 项目中有已能控制机械臂的参考代码（用户确认）；旧业务代码未迁入。
 - 控制器固件、末端工具、相机和棋盘参数待确认；当前模型的原厂速度/力矩占位值尚未替换为实机配置。
 

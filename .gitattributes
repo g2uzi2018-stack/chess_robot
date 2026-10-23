@@ -22,6 +22,4 @@ src/dh_ag95_description/package.xml text eol=lf
 src/dh_ag95_description/SOURCES.json text eol=lf
 reference/ag95/SOURCES.json text eol=lf
 tools/description/*.py text eol=lf
-tools/description/viewer/* text eol=lf
-tools/description/viewer/viewer.bundle.js -whitespace linguist-generated=true
 .gitattributes text eol=lf

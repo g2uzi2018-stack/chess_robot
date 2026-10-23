@@ -1,6 +1,6 @@
-# 在 AGX 浏览器查看 Nova5 + AG95
+# 导出 Nova5 + AG95 供在线解析器查看
 
-模型已装配到项目中。浏览器加载的是离线模型；不需要连接 `192.168.30.234`，也不会控制机械臂。
+模型已装配到项目中。当前项目只提供模型资源和导出工具，不附带本地网页查看器或 HTTP 服务。
 
 ## 最简步骤
 
@@ -11,29 +11,16 @@ cd /home/kuang/workspace/chess_robot
 python3 tools/description/export_browser_model.py
 ```
 
-推荐使用随项目提供的本地查看器，不依赖外网：
+在你选择的在线 URDF 解析器中导入 `runs/browser_model` 整个文件夹，或按该解析器的要求上传 ZIP。
 
-```bash
-python3 tools/description/serve_preview.py
-```
-
-保持终端运行，在 AGX 的浏览器打开 **http://127.0.0.1:8765**。
-页面可切换组合模型/独立夹爪、调整关节、切换外观/碰撞显示、查看抓取坐标系。
-脚本会自动刷新导出包；只绑定本机回环地址，Ctrl+C 停止。
-浏览器需要支持 WebGL；查看时不需要 npm 或 ROS。
-
-也可以在 AGX 的 Chrome/Chromium 中使用 <https://urdf.deyuf.org/>：
-
-1. 点击 **Open Folder**，选择项目中的 `runs/browser_model` 整个文件夹。
-2. 在模型下拉菜单中选择 **nova5_with_ag95.urdf** 查看组合模型。
-3. 选择 **ag95.urdf** 可只看夹爪。
-4. 用 **Joints** 面板调整 `left_outer_knuckle_joint`，先查看 `0`、`0.55`、`1.10 rad` 三种状态；其余手指通过 mimic 联动。
-5. 显示碰撞几何，检查指尖、支架和旧碰撞包络。蓝色薄片是历史碰撞包络，不是实际零件。
+1. 选择 **nova5_with_ag95.urdf** 查看组合模型。
+2. 选择 **ag95.urdf** 可只看夹爪。
+3. 如果解析器支持关节调节，可检查 `left_outer_knuckle_joint` 的 `0`、`0.55`、`1.10 rad` 三种状态；其余手指通过 mimic 联动。
+4. 如果支持碰撞几何显示，可检查指尖、支架和旧碰撞包络。蓝色薄片是历史碰撞包络，不是实际零件。
 
 导出同时生成 `runs/browser_model.zip`，可复制到别的电脑解压查看。
 导出包内网格均为相对路径，选择整个文件夹才能加载完整外形。
-该在线查看器文档说明文件在浏览器本地处理；无需上传到服务器。
-参考：<https://urdf.deyuf.org/docs/quickstart/web>。
+导出包只包含 URDF、STL、来源/许可证、说明与校验清单，不包含 HTML、JavaScript 或服务端程序。
 
 也可以直接在查看器中选择本仓库的 `src` 文件夹，然后选择组合纯 URDF；
 两个 package.xml 用于解析 `package://` 路径。导出包则不依赖 ROS 包路径解析。
