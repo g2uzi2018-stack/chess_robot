@@ -2,6 +2,8 @@
 #include "arm_tools/operator.hpp"
 #include <csignal>
 #include <fcntl.h>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <set>
@@ -25,9 +27,9 @@ Args parse(int argc, char **argv) {
   a.operation = argv[1];
   const std::set<std::string> flags{"--apply", "--request-tcp", "--execute",
                                     "--help"};
-  const std::set<std::string> values{"--config",         "--ip",
-                                     "--dashboard-port", "--feedback-port",
-                                     "--home-file",      "--output-dir"};
+  const std::set<std::string> values{
+      "--config",    "--ip",         "--dashboard-port", "--feedback-port",
+      "--home-file", "--output-dir", "--record-feedback"};
   for (int i = 2; i < argc; ++i) {
     std::string key = argv[i];
     if (flags.count(key))
@@ -72,6 +74,7 @@ void help() {
       << "capture-home --config FILE --home-file YAML --output-dir NEW_DIR "
          "[--apply]\n"
       << "Network overrides: --ip IPv4 --dashboard-port N --feedback-port N\n"
+      << "Optional encoder log: --record-feedback NEW_CSV_PATH\n"
       << "Defaults: prepare previews; home previews; capture saves a "
          "candidate.\n";
 }
@@ -143,7 +146,36 @@ int main(int argc, char **argv) {
     s.validate();
     Lock lock(s.controller.ip);
     FeedbackReader feedback(s.controller);
-    Reader reader = [&] { return feedback.read(); };
+    std::ofstream recording;
+    const auto record_path = value(a, "--record-feedback");
+    if (!record_path.empty()) {
+      if (std::filesystem::exists(record_path))
+        throw std::runtime_error("feedback recording path already exists");
+      recording.exceptions(std::ios::failbit | std::ios::badbit);
+      recording.open(record_path);
+      recording << std::setprecision(17) << "host_utc_ns,controller_stamp,mode";
+      for (int j = 1; j <= 6; ++j)
+        recording << ",q" << j << "_rad";
+      for (int j = 1; j <= 6; ++j)
+        recording << ",dq" << j << "_rad_s";
+      recording << '\n';
+    }
+    Reader reader = [&] {
+      auto f = feedback.read();
+      if (recording.is_open()) {
+        recording << std::chrono::duration_cast<std::chrono::nanoseconds>(
+                         std::chrono::system_clock::now().time_since_epoch())
+                         .count()
+                  << ',' << f.controller_stamp << ',' << f.mode;
+        for (double q : f.q)
+          recording << ',' << q;
+        for (double v : f.speed)
+          recording << ',' << v;
+        recording << '\n';
+        recording.flush();
+      }
+      return f;
+    };
     Query query = [&](const std::string &command) {
       Socket socket(s.controller.ip, s.controller.dashboard_port,
                     s.controller.timeout_ms);

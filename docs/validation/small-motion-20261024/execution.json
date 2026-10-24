@@ -1,0 +1,25 @@
+{
+  "authorized_scope": "10mm upward local lift and return, a=1%, v=1%",
+  "status": "PASS",
+  "physical_motion_attempts": 2,
+  "steps": [
+    {
+      "label": "preflight",
+      "exit_code": 0,
+      "stdout": "PREVIEW: independent controller joint move, no motion sent: MovJ(joint={79.490013122558594,16.960006713867188,83.389991760253906,-10.350000381469725,-90,-3.6499876976013184},user=0,tool=0,a=1,v=1,cp=0)\n",
+      "stderr": ""
+    },
+    {
+      "label": "lift",
+      "exit_code": 0,
+      "stdout": "HOME_REACHED: matching queue, fresh measured joints, low speed and idle dwell verified\n",
+      "stderr": ""
+    },
+    {
+      "label": "return",
+      "exit_code": 0,
+      "stdout": "HOME_REACHED: matching queue, fresh measured joints, low speed and idle dwell verified\n",
+      "stderr": ""
+    }
+  ]
+}

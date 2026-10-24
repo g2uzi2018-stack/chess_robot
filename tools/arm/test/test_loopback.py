@@ -107,9 +107,11 @@ def main():
             events.append('preview zero writes; disabled non-TCP -> RequestControl -> ClearError -> EnableRobot -> measured idle')
             fixture.tcp=False;before=list(fixture.writes);run('prepare','--request-tcp','--apply',success=False);assert fixture.writes==before
             fixture.tcp=True;events.append('enabled non-TCP refuses automatic mode switch/disable')
-            before=list(fixture.writes);run('home');assert fixture.writes==before
+            before=list(fixture.writes);run('home','--record-feedback',directory/'preview.csv');assert fixture.writes==before
+            assert len((directory/'preview.csv').read_text().splitlines())>=2
             with fixture.lock:fixture.target[0]+=.05
-            p=run('home','--execute');assert 'HOME_REACHED' in p.stdout
+            p=run('home','--execute','--record-feedback',directory/'motion.csv');assert 'HOME_REACHED' in p.stdout
+            assert len((directory/'motion.csv').read_text().splitlines())>5
             events.append('direct MovJ(joint) Home verifies queue, measured target, speed and dwell without ROS')
             target=yaml.safe_load(canonical.read_text());target['chess_robot_arm']['ros__parameters']['home']['joint_positions_rad'][0]+=.05;canonical.write_text(yaml.safe_dump(target))
             before=len(fixture.writes);p=subprocess.Popen(command('home','--execute'),stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
