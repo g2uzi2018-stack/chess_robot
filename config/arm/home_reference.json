@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "name": "table_facing_down_home",
+  "confirmation_date": "2026-10-24",
+  "source": "operator_taught_pose_confirmed_by_real_feedback",
+  "joint_names": [
+    "joint1",
+    "joint2",
+    "joint3",
+    "joint4",
+    "joint5",
+    "joint6"
+  ],
+  "joint_positions_rad": [
+    1.3873624514421463,
+    0.29600795831732624,
+    1.4554299194273725,
+    -0.18064158423931584,
+    -1.5707963267948966,
+    -0.06370430298043014
+  ],
+  "joint_positions_deg": [
+    79.4900131225586,
+    16.960006713867188,
+    83.3899917602539,
+    -10.350000381469727,
+    -90.0,
+    -3.6499876976013184
+  ],
+  "joint_span_deg_during_capture": [
+    0.0001678466796875,
+    0.0001373291015625,
+    0.000274658203125,
+    0.0001373291015625,
+    0.0001068115234375,
+    0.0001647472381591797
+  ],
+  "controller_pose_representative_mm_deg": [
+    30.347904205322266,
+    -576.5199584960938,
+    475.3153991699219,
+    -180.0,
+    -1.6278027717426928e-17,
+    173.13999938964844
+  ],
+  "controller_pose_note": "One actual frame, not a component-wise mean of wrapped Euler angles; tool/user calibration is unchanged.",
+  "capture": "runs/20261024_confirmed_home_66bQPq",
+  "capture_frames": 368,
+  "capture_first_receive_utc_ns": 1792822935525225988,
+  "capture_last_receive_utc_ns": 1792822938525303082,
+  "raw_sha256": "26e53722e3014a8c438ed7e7aec2204a98b853993d14a64669507097dbe47f7a",
+  "home_pose_confirmed": true,
+  "cable_policy": {
+    "preferred_joint_reference": "this_taught_home",
+    "physical_twist_or_tension_measured": false,
+    "physical_left_right_limits_calibrated": false,
+    "limits_rad": null,
+    "reference_does_not_erase_prior_winding_history": true
+  },
+  "automatic_return_path_validated": false
+}

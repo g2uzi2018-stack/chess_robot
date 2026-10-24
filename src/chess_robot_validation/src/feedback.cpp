@@ -1,4 +1,5 @@
 #include "net.hpp"
+#include "feedback_frame.hpp"
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <array>
@@ -8,12 +9,8 @@
 #include <iostream>
 #include <vector>
 
-template<class T> T field(const std::array<unsigned char,1440>& b,size_t offset){T value;std::memcpy(&value,b.data()+offset,sizeof(T));return value;}
-void validate(const std::array<unsigned char,1440>& b){
-  const uint16_t endian=1;if(*reinterpret_cast<const unsigned char*>(&endian)!=1) throw std::runtime_error("little-endian host required");
-  if(field<uint16_t>(b,0)!=1440 || field<uint64_t>(b,48)!=0x0123456789ABCDEFULL) throw std::runtime_error("feedback framing/profile mismatch");
-  for(size_t off:{size_t(192),size_t(432),size_t(480),size_t(624)})for(size_t j=0;j<6;j++)if(!std::isfinite(field<double>(b,off+8*j))) throw std::runtime_error("nonfinite feedback");
-}
+template<class T> T field(const FeedbackFrame& b,size_t offset){return feedback_field<T>(b,offset);}
+void validate(const FeedbackFrame& b){validate_feedback(b);}
 int main(int argc,char** argv){
   try{
     if(argc==2 && std::string(argv[1])=="--self-test"){

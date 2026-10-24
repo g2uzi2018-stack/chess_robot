@@ -1,0 +1,20 @@
+# Operator-taught work Home, 2026-10-24. Joint positions are radians.
+# Reference data only; no automatic return-path or cable-range certification.
+chess_robot_arm:
+  ros__parameters:
+    home:
+      joint_names:
+      - joint1
+      - joint2
+      - joint3
+      - joint4
+      - joint5
+      - joint6
+      joint_positions_rad:
+      - 1.3873624514421463
+      - 0.29600795831732624
+      - 1.4554299194273725
+      - -0.18064158423931584
+      - -1.5707963267948966
+      - -0.06370430298043014
+      taught: true

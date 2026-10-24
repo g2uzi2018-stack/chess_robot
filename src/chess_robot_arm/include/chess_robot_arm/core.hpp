@@ -1,0 +1,208 @@
+#pragma once
+#include <atomic>
+#include <chess_robot_twist/model.hpp>
+#include <chrono>
+#include <functional>
+#include <mutex>
+#include <optional>
+#include <string>
+#include <vector>
+
+namespace chess_robot_arm {
+using chess_robot_twist::Joints;
+using chess_robot_twist::Transform;
+using Clock = std::chrono::steady_clock;
+constexpr double pi = 3.14159265358979323846;
+struct Failure : std::runtime_error {
+  uint16_t code;
+  Failure(uint16_t c, const std::string &s) : std::runtime_error(s), code(c) {}
+};
+enum Code : uint16_t {
+  PLAN_READY = 0,
+  COMPLETED = 1,
+  INVALID_GOAL = 10,
+  BUSY = 11,
+  REFERENCE_INVALID = 12,
+  FEEDBACK_FAULT = 13,
+  PLANNING_FAILED = 14,
+  HARDWARE_DISABLED = 15,
+  EXECUTION_FAILED = 16,
+  CANCELED = 17,
+  GRIPPER_FAILED = 18,
+  STOP_FAILED = 19
+};
+enum class Operation : uint8_t { Pregrasp, Descend, Retreat, Sequence, Home };
+struct Profile {
+  std::string name;
+  double speed = 0.25, acceleration = 0.5;
+};
+struct Config {
+  std::string backend = "read_only", ip = "127.0.0.1", urdf;
+  int dashboard_port = 29999, feedback_port = 30004, timeout_ms = 500;
+  Joints home{{1.3873624514421463, 0.29600795831732624, 1.4554299194273725,
+               -0.18064158423931584, -1.5707963267948966,
+               -0.06370430298043014}};
+  Joints velocity{{0.25, 0.25, 0.25, 0.25, 0.25, 0.25}};
+  Joints acceleration{{0.5, 0.5, 0.5, 0.5, 0.5, 0.5}};
+  Transform flange_tcp = Transform::Identity();
+  Eigen::Vector3d workspace_min{-0.8, -0.8, 0.0}, workspace_max{0.8, 0.8, 1.2};
+  Eigen::Vector3d grasp_axis{1, 0, 0};
+  double clearance = 0.25, downward_tolerance = 0.15;
+  double stamp_age = 1.0, stamp_future = 0.05, freshness = 0.25;
+  double home_tolerance = 0.03, stationary_speed = 0.01, dwell = 0.3;
+  double position_tolerance = 0.003, rotation_tolerance = 0.03,
+         joint_tolerance = 0.015;
+  double joint_step = 0.025, cartesian_step = 0.002, sample_period = 0.03;
+  double planning_timeout = 30.0, gripper_timeout = 15.0,
+         arrival_timeout = 10.0, stop_timeout = 2.0;
+  double servo_ahead = 50, servo_gain = 500, max_tracking_error = 0.15;
+  size_t max_samples = 20000;
+  double cost_duration = 1.0, cost_net = 1.0, cost_total = 1.0,
+         cost_energy = 0.01;
+  chess_robot_twist::Limits twist_limits;
+  chess_robot_twist::TrackerOptions tracker_options;
+  std::vector<Profile> profiles{{"conservative", 0.25, 0.5}};
+  // Fixture feedback is explicitly labelled and published under
+  // /simulation/arm.
+  bool test_fixture = false;
+  bool enable = false, tcp_verified = false, limits_verified = false,
+       execution_verified = false, servo_certified = false;
+  void validate() const;
+  bool hardwareAllowed() const;
+  const Profile &profile(const std::string &) const;
+};
+struct Feedback {
+  Joints q{}, speed{};
+  uint64_t mode = 0, controller_stamp = 0;
+  Clock::time_point received{};
+};
+// SDK kinematics always refer to base/user=0, flange/tool=0. TCP conversion is
+// local.
+class Kinematics {
+public:
+  virtual ~Kinematics() = default;
+  virtual Transform fk(const Joints &q) = 0;
+  virtual Joints ik(const Transform &flange, const Joints &seed) = 0;
+};
+class Driver : public Kinematics {
+public:
+  virtual Feedback readFeedback() = 0;
+  virtual void servo(const Joints &, double period) = 0;
+  virtual void stop() = 0;
+};
+struct Snapshot {
+  Feedback feedback;
+  bool fresh = false, reference = false;
+  chess_robot_twist::Tracker tracker;
+  std::string diagnostic;
+  Snapshot(chess_robot_twist::Tracker t) : tracker(std::move(t)) {}
+};
+class State {
+  Config config_;
+  std::shared_ptr<const chess_robot_twist::Model> model_;
+  mutable std::mutex mutex_;
+  chess_robot_twist::Tracker tracker_;
+  Feedback last_;
+  bool have_ = false;
+  std::optional<Clock::time_point> stationary_since_;
+  std::string diagnostic_;
+
+public:
+  State(const Config &, std::shared_ptr<const chess_robot_twist::Model>);
+  void update(const Feedback &);
+  void invalidate(const std::string &);
+  Snapshot snapshot();
+  void
+  initialize(); // Caller holds task admission lock; no active task permitted.
+};
+struct Goal {
+  Transform target = Transform::Identity();
+  Operation operation = Operation::Pregrasp;
+  std::string profile = "conservative";
+  bool plan_only = true;
+};
+struct Sample {
+  Joints q{};
+  double time = 0;
+};
+struct Segment {
+  std::string phase;
+  std::vector<Sample> samples;
+};
+struct Plan {
+  std::vector<Segment> segments;
+  bool wait_for_gripper = false;
+};
+void validatePose(const Transform &, const Config &, bool downward = true);
+void validateCapture(const std::string &frame, double stamp, double now,
+                     const Config &);
+double jointDistance(const Joints &, const Joints &);
+double rotationDistance(const Transform &, const Transform &);
+class Planner {
+  Config config_;
+  std::shared_ptr<const chess_robot_twist::Model> model_;
+  Kinematics &kinematics_;
+  std::function<void()> checkpoint_;
+  Segment ptp(const std::string &, const Joints &, const Joints &,
+              chess_robot_twist::Tracker &, const Profile &);
+  Segment vertical(const std::string &, const Joints &, const Transform &,
+                   chess_robot_twist::Tracker &, const Profile &);
+  void check(const Joints &, chess_robot_twist::Tracker &, bool downward);
+  void timePath(Segment &, const Profile &);
+  Joints solve(const Transform &, const Joints &);
+
+public:
+  Planner(const Config &, std::shared_ptr<const chess_robot_twist::Model>,
+          Kinematics &, std::function<void()>);
+  Plan plan(const Goal &, const Snapshot &);
+};
+// Admission, confirmation and cancellation lifecycle, independent of ROS
+// transport.
+class TaskGate {
+  mutable std::mutex mutex_;
+  std::string job_, phase_ = "IDLE", detail_;
+  bool busy_ = false, cancel_ = false, confirmation_used_ = false,
+       fault_latched_ = false, terminal_committed_ = false;
+  std::optional<bool> confirmation_;
+  std::optional<Clock::time_point> confirmation_deadline_;
+
+public:
+  bool reserve(const std::string &);
+  void release();
+  void latchFault(const std::string &);
+  bool cancel(const std::string &);
+  // Linearizes cancellation against the one terminal transition.
+  bool commitTerminal();
+  bool canceled() const;
+  void phase(const std::string &);
+  void beginGripperWait(Clock::time_point deadline);
+  std::optional<bool> finishGripperWait();
+  bool confirm(const std::string &, bool, const std::string &);
+  std::optional<bool> confirmation() const;
+  struct View {
+    bool busy;
+    std::string job, phase, detail;
+  };
+  View view() const;
+  bool initialize(State &, std::string &);
+};
+class Executor {
+  Config config_;
+  Driver &driver_;
+  State &state_;
+  TaskGate &gate_;
+  std::shared_ptr<const chess_robot_twist::Model> model_;
+  bool owned_ = false, attempted_ = false;
+  void checkpoint();
+  void waitUntil(Clock::time_point);
+  void arrival(const Joints &, double timeout);
+
+public:
+  Executor(const Config &, Driver &, State &, TaskGate &,
+           std::shared_ptr<const chess_robot_twist::Model>);
+  void run(const Plan &);
+  void stopOwned();
+  bool owned() const { return owned_; }
+  bool attempted() const { return attempted_; }
+};
+} // namespace chess_robot_arm

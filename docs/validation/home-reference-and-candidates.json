@@ -1,0 +1,381 @@
+{
+  "schema_version": 1,
+  "mechanical_zero": {
+    "operator_reported_zero": true,
+    "evidence": "runs/20261024_taught_zero_eg5wCl",
+    "frames": 368,
+    "reference_joint_deg_median": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max_absolute_sample_deg": 0.00016479492478538305,
+    "joint_span_deg": [
+      0.00030212402634788305,
+      0.0002197265566792339,
+      0.0001373291015625,
+      0.00016479492478538305,
+      0.00010986327833961695,
+      0.00019226074073230848
+    ],
+    "controller_mode_raw": [
+      5
+    ]
+  },
+  "table_pose_before_zero": {
+    "q_deg": [
+      80.1457,
+      35.3316,
+      104.9835,
+      -50.8226,
+      -94.177,
+      -3.0224
+    ],
+    "flange_position_model_m": [
+      0.030349101875959843,
+      -0.5765241928640787,
+      0.2253432580845821
+    ],
+    "flange_down_tilt_deg": 4.207648863849976,
+    "min_model_limit_margin_deg": 54.87172484149968,
+    "controller_flange_mm_deg": [
+      30.3701,
+      -576.5258,
+      225.6705,
+      -179.7125,
+      -4.1978,
+      173.1391
+    ],
+    "model_vs_controller_position_error_m": 0.000327600383518948
+  },
+  "work_home_candidates": [
+    {
+      "name": "same_point_down",
+      "flange_target_position_m": [
+        0.030349101875959843,
+        -0.5765241928640787,
+        0.2253432580845821
+      ],
+      "flange_target_rpy_deg": [
+        -180,
+        0,
+        173.1391
+      ],
+      "solutions": [
+        {
+          "q_rad": [
+            1.3873601534892486,
+            0.6128506667325342,
+            1.8341031151238596,
+            -0.8761611282276477,
+            -1.5707960980617515,
+            -0.06368800582769578
+          ],
+          "q_deg": [
+            79.48988145955603,
+            35.11375667555277,
+            105.0863676883941,
+            -50.200334820864754,
+            -89.99998689455614,
+            -3.6490539395315595
+          ],
+          "model_limit_margin_deg": [
+            280.327613882601,
+            144.79499099552572,
+            54.76885715310558,
+            309.61716052129225,
+            269.81750844760086,
+            356.16844140262543
+          ],
+          "position_error_m": 1.351192679507277e-13,
+          "rotation_error_rad": 7.987673691456649e-14,
+          "score_from_mechanical_zero": 2.983857107587551
+        },
+        {
+          "q_rad": [
+            1.3873601534891495,
+            1.1449469431615609,
+            0.7070159167443122,
+            2.8604297937211314,
+            1.570796098061802,
+            3.0779119941705315
+          ],
+          "q_deg": [
+            79.48988145955036,
+            65.6006276095624,
+            40.50902807802188,
+            163.8905547736975,
+            89.99998689455906,
+            176.3513669786663
+          ],
+          "model_limit_margin_deg": [
+            280.3276138826066,
+            114.3081200615161,
+            119.3461967634778,
+            195.92694056845951,
+            269.81750844759796,
+            183.4661283634907
+          ],
+          "position_error_m": 2.339755514347753e-16,
+          "rotation_error_rad": 2.614651843245635e-16,
+          "score_from_mechanical_zero": 4.884520901278523
+        }
+      ],
+      "approved_for_motion": false,
+      "controller_q_deg": [
+        79.4902,
+        35.1511,
+        105.0972,
+        -50.2483,
+        -90.0,
+        -3.6489
+      ],
+      "controller_fk_mm_deg": [
+        30.349,
+        -576.524,
+        225.3431,
+        180.0,
+        0.0,
+        173.1391
+      ],
+      "controller_target_mm_deg": [
+        30.349101875959843,
+        -576.5241928640787,
+        225.34325808458212,
+        -180,
+        0,
+        173.1391
+      ],
+      "max_absolute_joint_rotation_from_zero_deg": 105.0972,
+      "controller_fk_position_error_mm": 0.0002693807698355994,
+      "controller_crosscheck": "CALCULATION_PASSED_NOT_MOTION_VALIDATED"
+    },
+    {
+      "name": "raised_100mm_down",
+      "flange_target_position_m": [
+        0.030349101875959843,
+        -0.5765241928640787,
+        0.3253432580845821
+      ],
+      "flange_target_rpy_deg": [
+        -180,
+        0,
+        173.1391
+      ],
+      "solutions": [
+        {
+          "q_rad": [
+            1.3873601127373545,
+            0.439766947227016,
+            1.7381613477071307,
+            -0.6071356413054625,
+            -1.570796098061802,
+            -0.06368804657958355
+          ],
+          "q_deg": [
+            79.4898791246445,
+            25.196790045460418,
+            99.58930933638977,
+            -34.786309838771615,
+            -89.99998689455906,
+            -3.6490562744427355
+          ],
+          "model_limit_margin_deg": [
+            280.3276162175125,
+            154.71195762561808,
+            60.2659155051099,
+            325.03118550338536,
+            269.81750844759796,
+            356.16843906771425
+          ],
+          "position_error_m": 4.0015284212265805e-15,
+          "rotation_error_rad": 6.6728368841115485e-16,
+          "score_from_mechanical_zero": 2.8247899314564515
+        },
+        {
+          "q_rad": [
+            1.3873601127373556,
+            1.0745190407680074,
+            0.5471828394995041,
+            3.090690773359493,
+            1.570796098061802,
+            3.0779119534187376
+          ],
+          "q_deg": [
+            79.48987912464456,
+            61.565406042452466,
+            31.351267325305898,
+            177.0835370935234,
+            89.99998689455906,
+            176.3513646437605
+          ],
+          "model_limit_margin_deg": [
+            280.32761621751246,
+            118.34334162862602,
+            128.5039575161938,
+            182.7339582486336,
+            269.81750844759796,
+            183.4661306983965
+          ],
+          "position_error_m": 1.6335901197030925e-16,
+          "rotation_error_rad": 1.2547759199067956e-16,
+          "score_from_mechanical_zero": 4.987191608755771
+        }
+      ],
+      "approved_for_motion": false,
+      "controller_q_deg": [
+        79.4902,
+        25.224,
+        99.6143,
+        -34.8382,
+        -90.0,
+        -3.6489
+      ],
+      "controller_fk_mm_deg": [
+        30.349,
+        -576.5241,
+        325.3427,
+        179.9999,
+        0.0,
+        173.1391
+      ],
+      "controller_target_mm_deg": [
+        30.349101875959843,
+        -576.5241928640787,
+        325.3432580845821,
+        -180,
+        0,
+        173.1391
+      ],
+      "max_absolute_joint_rotation_from_zero_deg": 99.6143,
+      "controller_fk_position_error_mm": 0.0005748572423676792,
+      "controller_crosscheck": "CALCULATION_PASSED_NOT_MOTION_VALIDATED"
+    },
+    {
+      "name": "raised_150mm_down",
+      "flange_target_position_m": [
+        0.030349101875959843,
+        -0.5765241928640787,
+        0.37534325808458213
+      ],
+      "flange_target_rpy_deg": [
+        -180,
+        0,
+        173.1391
+      ],
+      "solutions": [
+        {
+          "q_rad": [
+            1.3873600923614584,
+            0.37527864244248615,
+            1.6622544445833005,
+            -0.4667404333971018,
+            -1.570796098061802,
+            -0.06368806695547921
+          ],
+          "q_deg": [
+            79.48987795719165,
+            21.501882353353544,
+            95.2401641514859,
+            -26.74225696176083,
+            -89.99998689455906,
+            -3.649057441895561
+          ],
+          "model_limit_margin_deg": [
+            280.3276173849654,
+            158.40686531772496,
+            64.61506069001378,
+            333.0752383803962,
+            269.81750844759796,
+            356.16843790026144
+          ],
+          "position_error_m": 2.4912465244908755e-16,
+          "rotation_error_rad": 1.8056984361283104e-16,
+          "score_from_mechanical_zero": 2.7418962612786846
+        },
+        {
+          "q_rad": [
+            1.3873600923614582,
+            1.0827391860326228,
+            0.3784248845022583,
+            3.251228583092123,
+            1.570796098061802,
+            3.07791193304284
+          ],
+          "q_deg": [
+            79.48987795719164,
+            62.036385673099375,
+            21.682148744705035,
+            186.28167604347732,
+            89.99998689455906,
+            176.35136347630757
+          ],
+          "model_limit_margin_deg": [
+            280.3276173849654,
+            117.87236199797913,
+            138.17307609679463,
+            173.53581929867968,
+            269.81750844759796,
+            183.46613186584943
+          ],
+          "position_error_m": 1.6856942748308595e-15,
+          "rotation_error_rad": 3.2934706169141136e-16,
+          "score_from_mechanical_zero": 5.074615957176191
+        }
+      ],
+      "approved_for_motion": false,
+      "controller_q_deg": [
+        79.4902,
+        21.5231,
+        95.272,
+        -26.7951,
+        -90.0,
+        -3.6489
+      ],
+      "controller_fk_mm_deg": [
+        30.349,
+        -576.5243,
+        375.3435,
+        180.0,
+        -0.0,
+        173.1391
+      ],
+      "controller_target_mm_deg": [
+        30.349101875959843,
+        -576.5241928640787,
+        375.34325808458215,
+        -180,
+        0,
+        173.1391
+      ],
+      "max_absolute_joint_rotation_from_zero_deg": 95.272,
+      "controller_fk_position_error_mm": 0.0002835134674584367,
+      "controller_crosscheck": "CALCULATION_PASSED_NOT_MOTION_VALIDATED"
+    }
+  ],
+  "cable_policy": {
+    "physical_left_right_limits_deg": null,
+    "neutral_cable_inspection_recorded": false,
+    "track_all_six_joint_displacements": true,
+    "prefer_reducing_displacement_from_home": true,
+    "automatic_execution_enabled": false
+  },
+  "status": "MECHANICAL_ZERO_RECORDED_WORK_HOME_CANDIDATES_ONLY",
+  "limitations": [
+    "No motion was commanded by these tools.",
+    "Offline IK solutions are not collision-cleared or taught work Home.",
+    "The 100/150 mm lift values are alternatives for review, not measured table clearances.",
+    "J1-to-flange orientation alone cannot bound cable winding through wrist/elbow joints."
+  ],
+  "post_tcp_mode_joint_deg": [
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0,
+    0.0
+  ]
+}

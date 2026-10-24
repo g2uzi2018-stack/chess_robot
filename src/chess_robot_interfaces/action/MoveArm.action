@@ -1,0 +1,36 @@
+uint8 PREGRASP=0
+uint8 DESCEND=1
+uint8 RETREAT=2
+uint8 GRASP_SEQUENCE=3
+uint8 HOME=4
+geometry_msgs/PoseStamped target
+uint8 operation
+string profile
+bool plan_only
+---
+uint16 PLAN_READY=0
+uint16 COMPLETED=1
+uint16 INVALID_GOAL=10
+uint16 BUSY=11
+uint16 REFERENCE_INVALID=12
+uint16 FEEDBACK_FAULT=13
+uint16 PLANNING_FAILED=14
+uint16 HARDWARE_DISABLED=15
+uint16 EXECUTION_FAILED=16
+uint16 CANCELED=17
+uint16 GRIPPER_FAILED=18
+uint16 STOP_FAILED=19
+uint16 code
+string detail
+bool executed
+geometry_msgs/PoseStamped final_tcp
+bool final_tcp_valid
+trajectory_msgs/JointTrajectory trajectory
+---
+string phase
+string job_id
+geometry_msgs/PoseStamped tcp
+bool tcp_valid
+bool reference_valid
+float64 signed_twist_rad
+float64 total_twist_rad
