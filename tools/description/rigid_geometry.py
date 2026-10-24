@@ -64,10 +64,21 @@ def fk(robot, supplied):
         assert ready, 'Disconnected or cyclic joint graph'
         for joint in ready:
             t = origin(joint.find('origin'))
-            if joint.get('type') != 'fixed':
+            kind = joint.get('type')
+            if kind in ('revolute', 'continuous', 'prismatic'):
                 axis = joint.find('axis')
                 axis = numbers(axis.get('xyz', '1 0 0')) if axis is not None else (1, 0, 0)
-                t = multiply(t, rotation(axis, values[joint.get('name')]))
+                if kind == 'prismatic':
+                    length = math.sqrt(sum(x*x for x in axis))
+                    assert length > 0, 'Zero joint axis'
+                    motion = eye()
+                    for i in range(3):
+                        motion[i][3] = axis[i]/length*values[joint.get('name')]
+                else:
+                    motion = rotation(axis, values[joint.get('name')])
+                t = multiply(t, motion)
+            elif kind != 'fixed':
+                raise ValueError(f'Unsupported joint type: {kind}; use a suitable kinematics backend')
             poses[joint.find('child').get('link')] = multiply(poses[joint.find('parent').get('link')], t)
             pending.remove(joint)
     return poses

@@ -1,0 +1,4 @@
+-r requirements-geometry.txt
+# Optional binding; if unavailable, pair sweeps must be reported as NOT_RUN.
+# MoveIt/ROS C++ FCL is a separate alternative, not a silent fallback.
+python-fcl==0.7.0.11

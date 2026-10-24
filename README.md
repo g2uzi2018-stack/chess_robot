@@ -27,7 +27,7 @@ tools/description/          # 模型生成、检查和纯 URDF 资源导出工�
 - 开发目录：`~/workspace/chess_robot`。
 - 开发机基线：Jetson / aarch64 / Ubuntu 22.04.5 LTS。
 - 已迁入原厂 Nova5 本体模型和协议资料，功能代码尚未开始。
-- 已迁入旧 `nova` 工程的 AG95 夹爪和支架，保留原安装关系，提供独立夹爪和组合纯 URDF。
+- 已整合 AG95 和用户更新的相机/支架，按新 CAD 配准安装基准，提供独立夹爪和组合 URDF；实机 TCP 等仍待标定。
 - [导出模型供在线解析器查看](docs/models/ag95-browser.md)：提供纯 URDF 与相对路径网格，不附带本地查看器。
 - 现有 [nova](https://github.com/g2uzi2018-stack/nova) 项目中有已能控制机械臂的参考代码（用户确认）；旧业务代码未迁入。
 - 控制器固件、末端工具、相机和棋盘参数待确认；当前模型的原厂速度/力矩占位值尚未替换为实机配置。
@@ -36,6 +36,8 @@ tools/description/          # 模型生成、检查和纯 URDF 资源导出工�
 
 - [模型包](src/chess_robot_description/README.md)
 - [AG95 夹爪模型](src/dh_ag95_description/README.md)
+- [AI 辅助 URDF 装配验证路线与工具](docs/models/urdf-workflow.md)
+- [给后续 AI / 工程师的接力说明](docs/models/urdf-handoff.md)
 - [协议资料](docs/vendor/dobot/README.md)
 - [参考材料与来源](reference/dobot/README.md)
 

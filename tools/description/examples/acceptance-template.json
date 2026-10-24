@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "robot_and_hardware_version": "FILL_IN",
+  "purpose": "visualization / collision_planning / dynamics / execution",
+  "input_files_with_sha256": [],
+  "units_and_evidence": [],
+  "installation_transforms_and_evidence": [],
+  "file_checks": {"status": "not_run", "evidence": []},
+  "image_review": {"status": "not_reviewed", "reviewer": null, "evidence": []},
+  "kinematic_checks": {"status": "not_run", "joint_ranges": [], "evidence": []},
+  "collision_checks": {"status": "not_run", "pairs": [], "sample_count": 0, "acm_reasons": [], "evidence": []},
+  "historical_failure_cases": [],
+  "physical_installation_and_tcp": {"status": "not_verified", "measurement_evidence": []},
+  "task_trajectory_validation": {"status": "not_run", "evidence": []},
+  "unresolved_items": [],
+  "note": "Successful tool exit or a rendered image does not complete all acceptance stages."
+}
