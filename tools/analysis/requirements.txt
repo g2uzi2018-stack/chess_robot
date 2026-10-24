@@ -1,0 +1,4 @@
+-r ../description/requirements-collision.txt
+PyYAML>=5.4,<7
+# Native build dependencies: Eigen3, yaml-cpp, FCL, pkg-config, g++.
+# The production-Planner audit additionally uses the already-built ROS packages.

@@ -1,0 +1,495 @@
+{
+  "scope": "offline actual production Planner with a single FK-verified known inverse pose; no SDK/network/motion",
+  "cases": [
+    {
+      "row": 0,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 498,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        0.0,
+        0.0,
+        1.570796293505383,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        0.11084706413852012,
+        -0.14260985259289918,
+        0.6816719731200298
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.791862930661723e-12,
+      "condition": 258400648448.38455,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 1,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 442,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        0.1875,
+        0.0,
+        1.383296293505383,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        0.08602702417023889,
+        -0.27640152444096755,
+        0.6688775580590017
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.688904285492686e-12,
+      "condition": 265878394167.0248,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 2,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 414,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        0.375,
+        0.0,
+        1.195796293505383,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        0.06207700230873444,
+        -0.40550335800961335,
+        0.6309426675394645
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.589569075868779e-12,
+      "condition": 274592813592.64407,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 3,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 414,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        0.5625,
+        0.0,
+        1.008296293505383,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        0.03983652762277612,
+        -0.5253898984688137,
+        0.5691970474587662
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.503135252788164e-12,
+      "condition": 283987990651.15533,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 4,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 414,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        0.75,
+        0.0,
+        0.820796293505383,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        0.0200852037849644,
+        -0.6318587181025642,
+        0.4858050901179535
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.433606653725862e-12,
+      "condition": 293621216484.1957,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 5,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 414,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        0.9375,
+        0.0,
+        0.633296293505383,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        0.003515381332781389,
+        -0.7211777255784657,
+        0.3836899649693981
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.385809368097384e-12,
+      "condition": 302938231940.4025,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 6,
+      "pose_validation_accepted": true,
+      "accepted": true,
+      "samples": 414,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        1.125,
+        0.0,
+        0.44579629350538297,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        -0.009292111553598532,
+        -0.7902159883402445,
+        0.26643115166530984
+      ],
+      "moving_geometry_z_evidence_m": 0.143499998152434,
+      "sigma_min": 6.363296974855889e-12,
+      "condition": 311394088976.8376,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 7,
+      "pose_validation_accepted": false,
+      "accepted": false,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        1.3125,
+        0.0,
+        0.25829629350538297,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        -0.017888329038620344,
+        -0.8365534823569828,
+        0.13813896721948682
+      ],
+      "moving_geometry_z_evidence_m": 0.1373804899508539,
+      "sigma_min": 6.367564010461879e-12,
+      "condition": 318536183590.90295,
+      "ground_margin_pass": true
+    },
+    {
+      "row": 8,
+      "pose_validation_accepted": false,
+      "accepted": false,
+      "kind": "elbow_singularity",
+      "q_rad": [
+        1.3873624514421463,
+        1.5,
+        0.0,
+        0.07079629350538297,
+        -1.5707963267948966,
+        -0.06370430298043014
+      ],
+      "tcp_xyz_m": [
+        -0.021971944697537125,
+        -0.8585659221300729,
+        0.0033104855286049117
+      ],
+      "moving_geometry_z_evidence_m": 0.002552305722605591,
+      "sigma_min": 6.397766432804447e-12,
+      "condition": 324063911626.8008,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 9,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        1.3992852263990931,
+        -2.118518253642618,
+        2.4971572453182596,
+        1.1921573018297416,
+        -1.5707963267948966,
+        -0.05178152802356273
+      ],
+      "tcp_xyz_m": [
+        0.14999999999999555,
+        0.07499999999999589,
+        0.05000000000000021
+      ],
+      "moving_geometry_z_evidence_m": -0.017439985310422262,
+      "sigma_min": 0.0687150511261525,
+      "condition": 25.75705289596673,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 10,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        1.2988828855138896,
+        -2.0987662813820878,
+        2.275830365055933,
+        1.393732209831538,
+        -1.5707963267948966,
+        -0.15218386890810143
+      ],
+      "tcp_xyz_m": [
+        0.1749999999999954,
+        0.12499999999999581,
+        0.07499999999999998
+      ],
+      "moving_geometry_z_evidence_m": -0.010538579898718675,
+      "sigma_min": 0.11803103004674423,
+      "condition": 14.895959754122607,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 11,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        1.6291802403431523,
+        -2.098766281382087,
+        2.275830365055934,
+        1.3937322098315361,
+        -1.5707963267948966,
+        0.1781134859190292
+      ],
+      "tcp_xyz_m": [
+        0.12499999999999545,
+        0.1749999999999953,
+        0.07500000000000034
+      ],
+      "moving_geometry_z_evidence_m": -0.010538579898718342,
+      "sigma_min": 0.11803103004674388,
+      "condition": 14.895959754122645,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 12,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        1.5553825252638553,
+        2.099029635789371,
+        -1.5129662974402676,
+        0.9847329551562787,
+        -1.5707963267948966,
+        0.10431577084018206
+      ],
+      "tcp_xyz_m": [
+        0.12499999999999577,
+        -0.6500000000000019,
+        0.024999999999999745
+      ],
+      "moving_geometry_z_evidence_m": -0.010701501642138872,
+      "sigma_min": 0.22309678783428993,
+      "condition": 8.604000903268021,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 13,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        1.1754059494264268,
+        2.0990296357893685,
+        -1.5129662974402616,
+        0.984732955156276,
+        -1.5707963267948966,
+        -0.2756608049947822
+      ],
+      "tcp_xyz_m": [
+        -0.12500000000000316,
+        -0.6500000000000018,
+        0.025000000000000022
+      ],
+      "moving_geometry_z_evidence_m": -0.010701501642137873,
+      "sigma_min": 0.22309678783428913,
+      "condition": 8.604000903268044,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 14,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        1.5166929820346464,
+        2.105006719135144,
+        -1.5303353001719653,
+        0.996124874542204,
+        -1.5707963267948966,
+        0.06562622761121917
+      ],
+      "tcp_xyz_m": [
+        0.09999999999999544,
+        -0.6500000000000019,
+        0.025000000000000244
+      ],
+      "moving_geometry_z_evidence_m": -0.012802783096607123,
+      "sigma_min": 0.22498315801014804,
+      "condition": 8.521346467206262,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 15,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        2.9178163543709337,
+        -2.101693574217469,
+        1.520690915869256,
+        -0.9897937017361969,
+        1.5707963267948966,
+        -1.6748357072315023
+      ],
+      "tcp_xyz_m": [
+        -0.6000000000000019,
+        0.2749999999999951,
+        0.025000000000000216
+      ],
+      "moving_geometry_z_evidence_m": -0.011556221857643406,
+      "sigma_min": 0.22393943230935678,
+      "condition": 8.566929332570371,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 16,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        -0.2237762992188741,
+        -2.1016935742174745,
+        1.520690915869272,
+        -0.9897937017362075,
+        1.5707963267948966,
+        1.466756946358272
+      ],
+      "tcp_xyz_m": [
+        0.599999999999994,
+        -0.27500000000000313,
+        0.025000000000000328
+      ],
+      "moving_geometry_z_evidence_m": -0.011556221857645238,
+      "sigma_min": 0.22393943230935862,
+      "condition": 8.566929332570284,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 17,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        2.832977586819336,
+        -2.1010286076135474,
+        1.518760532127402,
+        -0.9885282845982646,
+        1.5707963267948966,
+        -1.7596744747836335
+      ],
+      "tcp_xyz_m": [
+        -0.5750000000000017,
+        0.3249999999999945,
+        0.025000000000000355
+      ],
+      "moving_geometry_z_evidence_m": -0.011325242253589524,
+      "sigma_min": 0.22372940762750185,
+      "condition": 8.57614642479896,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 18,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        2.937742776425483,
+        2.101677550093301,
+        -1.5206415419375532,
+        -2.151832368240158,
+        1.5707963267948966,
+        -1.6549092851768223
+      ],
+      "tcp_xyz_m": [
+        0.42499999999999477,
+        0.04999999999999568,
+        0.025000000000000244
+      ],
+      "moving_geometry_z_evidence_m": -0.011633502133605006,
+      "sigma_min": 0.21022609259142055,
+      "condition": 8.490518834052615,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 19,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        -0.20384987716428693,
+        2.1016775500932887,
+        -1.5206415419375157,
+        -2.151832368240183,
+        1.5707963267948966,
+        1.48668336841299
+      ],
+      "tcp_xyz_m": [
+        -0.4250000000000029,
+        -0.0500000000000039,
+        0.024999999999999967
+      ],
+      "moving_geometry_z_evidence_m": -0.011633502133600676,
+      "sigma_min": 0.21022609259141833,
+      "condition": 8.49051883405271,
+      "ground_margin_pass": false
+    },
+    {
+      "row": 20,
+      "pose_validation_accepted": true,
+      "accepted": false,
+      "kind": "table_penetration_pose_validation_probe",
+      "q_rad": [
+        2.8776742385465957,
+        2.104843244479283,
+        -1.5298581782638812,
+        -2.145781426299812,
+        1.5707963267948966,
+        -1.7149778230560977
+      ],
+      "tcp_xyz_m": [
+        0.4249999999999949,
+        0.024999999999995855,
+        0.024999999999999828
+      ],
+      "moving_geometry_z_evidence_m": -0.012745432334857615,
+      "sigma_min": 0.21074424194009597,
+      "condition": 8.467149929036376,
+      "ground_margin_pass": false
+    }
+  ]
+}
