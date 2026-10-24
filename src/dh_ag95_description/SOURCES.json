@@ -4,11 +4,13 @@
   "import_date": "2026-10-23",
   "gripper_license": "Apache-2.0 (original LICENSE and package.xml retained)",
   "assembly_changes": [
-    "Use unchanged chess_robot_description Nova5 baseline and AG95 description-only macro",
-    "Replace ROS file:// find mesh URI with package://chess_robot_description URI",
-    "Preserve bracket mesh/origins, 8.5 mm gripper mount, 200 mm grasp frame and padding",
-    "Make ground optional (default false) and external blue padding switchable (default true)",
-    "Generate pure URDF and relative-path browser exports; no control drivers imported"
+    "Keep the original Nova5 baseline and raw vendor STL files unchanged",
+    "Archive the original AG95 macro; active macro removes four instantiated legacy padding boxes",
+    "Remove the extra safety_padding_link and joint",
+    "Replace fixed whole-gripper composite visual/collision with derived rear camera/mount components only",
+    "Default geometry-only closing limit is 0.94 rad (not a hardware calibration)",
+    "Expose mount Z, grasp offset and joint limit as Xacro arguments; keep unmeasured mount/TCP defaults",
+    "Generate pure URDF and relative mesh exports without robot control code"
   ],
   "files": [
     {
@@ -91,9 +93,9 @@
     },
     {
       "source_path": "02_business_grasp/ros2_ws_src/dh_ag95_gripper_ros2/dh_ag95_description/urdf/dh_ag95_macro.xacro",
-      "target_path": "src/dh_ag95_description/urdf/dh_ag95_macro.xacro",
+      "target_path": "reference/ag95/dh_ag95_macro.original.xacro",
       "sha256": "e28d49db0fbe4615477028f689c47ca60eba47e28860023d8d03815dddf06ab1",
-      "changes": "none"
+      "changes": "none; original archived here after the active macro was refined"
     },
     {
       "source_path": "02_business_grasp/ros2_ws_src/my_nova5_config/meshes/new_jiazhua1.STL",
@@ -118,6 +120,18 @@
       "target_path": "reference/ag95/dh_ag95.original.urdf.xacro",
       "sha256": "d09dcc0471585cbb739fe6942687e576917b85def19abd25a44fbcdcc67c73a4",
       "changes": "none"
+    }
+  ],
+  "model_revision_date": "2026-10-24",
+  "derived_files": [
+    {
+      "path": "src/dh_ag95_description/urdf/dh_ag95_macro.xacro",
+      "source_snapshot": "reference/ag95/dh_ag95_macro.original.xacro",
+      "changes": "Removed finger/finger-pad padding collisions; parameterized joint upper limit; retained vendor collision meshes, inertias, axes and mimic"
+    },
+    {
+      "path": "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl",
+      "provenance": "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.json"
     }
   ]
 }

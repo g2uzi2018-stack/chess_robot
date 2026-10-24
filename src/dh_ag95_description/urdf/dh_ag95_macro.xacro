@@ -6,13 +6,15 @@
     prefix
     grasp_link_offset:=0.19
     parent
+    joint_upper_limit:=0.94
     *origin"
   >
 
-    <!-- this URDF is overly complicated IMO don't bother trying to understand it lol -->
+    <!-- Adapted 2026-10-24: remove legacy collision boxes and expose a geometry-only
+         closing limit. The unmodified source is in reference/ag95/. -->
 
     <xacro:property name="lower_limit" value="0.0" />
-    <xacro:property name="upper_limit" value="1.10" />
+    <xacro:property name="upper_limit" value="${joint_upper_limit}" />
     <xacro:property name="max_effort" value="50.0" />
     <xacro:property name="max_velocity" value="2.1" />
 
@@ -110,13 +112,6 @@
               scale="0.001 0.001 0.001" />
           </geometry>
         </collision>
-        <!-- Added 1cm thickness padding block around the finger -->
-        <collision>
-          <origin xyz="-0.0103 0.00875 0.0166" rpy="0 0 0" />
-          <geometry>
-            <box size="0.052 0.041 0.064" />
-          </geometry>
-        </collision>
       </link>
     </xacro:macro>
 
@@ -149,13 +144,6 @@
           <geometry>
             <mesh filename="package://dh_ag95_description/meshes/collision/finger_pad.stl"
               scale="0.001 0.001 0.001" />
-          </geometry>
-        </collision>
-        <!-- Added 1cm thickness padding block around the finger pad -->
-        <collision>
-          <origin xyz="-0.001 0.0 0.0082" rpy="0 0 0" />
-          <geometry>
-            <box size="0.032 0.041 0.054" />
           </geometry>
         </collision>
       </link>

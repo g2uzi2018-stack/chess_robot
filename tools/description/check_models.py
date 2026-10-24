@@ -6,6 +6,7 @@ import math
 from pathlib import Path
 import struct
 import xml.etree.ElementTree as ET
+from rigid_geometry import pad_gap, joint_values
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -115,16 +116,41 @@ def main():
         if node.tag in ("link", "joint") and node.get("name") not in ("world", "gripper_base_joint"):
             copy = assembly.find(f"{node.tag}[@name='{node.get('name')}']")
             assert copy is not None and same_xml(node, copy), f"Changed AG95 node: {node.get('name')}"
-    for name in ("camera_bracket_joint", "safety_padding_joint"):
+    for name in ("camera_bracket_joint",):
         assert same_xml(legacy.find(f"joint[@name='{name}']"), assembly.find(f"joint[@name='{name}']"))
-    # Compare inherited bracket geometry after the intentional mesh-URI migration.
-    old_bracket = legacy.find("link[@name='camera_bracket_link']")
-    new_bracket = assembly.find("link[@name='camera_bracket_link']")
-    for mesh in old_bracket.findall(".//mesh"):
-        mesh.set("filename", "package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL")
-    assert same_xml(old_bracket, new_bracket), "Bracket geometry/origin changed"
-    assert same_xml(legacy.find("link[@name='safety_padding_link']"),
-                    assembly.find("link[@name='safety_padding_link']")), "Padding changed"
+    # The raw composite is archived, but only its rear camera/mount is active.
+    bracket = assembly.find("link[@name='camera_bracket_link']")
+    expected_uri = "package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl"
+    for kind in ("visual", "collision"):
+        node = bracket.find(kind)
+        assert origin(node) == ((0., 0., 0.), (0., 0., 0.))
+        mesh = node.find("geometry/mesh")
+        assert mesh.get("filename") == expected_uri
+        assert numbers(mesh.get("scale", "1 1 1")) == (1., 1., 1.)
+    derived_meta = json.loads((ROOT / "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.json").read_text())
+    derived = resolve_mesh(expected_uri)
+    assert hashlib.sha256(derived.read_bytes()).hexdigest() == derived_meta["output_sha256"]
+    assert check_stl(derived) == 38290
+    from rigid_geometry import stl_vertices
+    assert max(v[1] for v in stl_vertices(derived)) < -0.028, "Fixed gripper geometry returned"
+    assert assembly.find("link[@name='safety_padding_link']") is None
+    assert assembly.find("joint[@name='safety_padding_joint']") is None
+    for robot in (gripper, assembly):
+        for link in robot.findall("link"):
+            if link.get("name").startswith(("ag95_", "left_", "right_")):
+                assert len(link.findall("collision")) == 1
+                assert link.find("collision/geometry/mesh") is not None, "Legacy padding returned"
+        master = robot.find("joint[@name='left_outer_knuckle_joint']/limit")
+        upper = float(master.get("upper"))
+        joints = {j.get("name"): j for j in robot.findall("joint")}
+        for q in (0., upper/2, upper):
+            values = joint_values(joints, {"left_outer_knuckle_joint": q})
+            for name, value in values.items():
+                limit = joints[name].find("limit")
+                if limit is not None:
+                    assert float(limit.get("lower")) <= value <= float(limit.get("upper")), name
+        assert abs(pad_gap(robot, 0., resolve_mesh)-0.0952000949493442) < 1e-7
+        assert 0.0005 < pad_gap(robot, upper, resolve_mesh) < 0.001, "Invalid geometry-only closing limit"
     assert assembly.find("link[@name='env_ground']") is None, "Default includes scene ground"
     mount = assembly.find("joint[@name='gripper_base_joint']")
     assert mount.find("parent").get("link") == "camera_bracket_link"
@@ -136,7 +162,11 @@ def main():
     summary.update({"unique_meshes": len(assets), "mesh_references": references,
                     "triangles": triangle_count,
                     "Link6_to_grasp_link_xyz_m": [0.0, 0.0, 0.2085],
-                    "legacy_mount_geometry_and_padding": "unchanged"})
+                    "camera_mount_components_only": True,
+                    "legacy_padding_removed": True,
+                    "geometry_only_closing_limit_rad": upper,
+                    "pad_gap_at_closing_limit_mm": pad_gap(assembly, upper, resolve_mesh)*1000,
+                    "mount_and_tcp_calibration": "pending; legacy defaults retained"})
     print(json.dumps(summary, indent=2))
 
 

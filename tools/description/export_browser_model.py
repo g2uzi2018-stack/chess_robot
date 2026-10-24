@@ -21,6 +21,13 @@ def export(output):
     if output == ROOT or output == ROOT / "src" or (ROOT / "src") in output.parents:
         raise ValueError("Choose an output directory outside src/, e.g. runs/browser_model")
     output.mkdir(parents=True, exist_ok=True)
+    # Retire only the known managed, byte-identical obsolete composite. It is no
+    # longer referenced; importing it as a loose STL could reintroduce duplicates.
+    obsolete = output / "assets/chess_robot_description/meshes/tool_mount/new_jiazhua1.STL"
+    original = ROOT / "src/chess_robot_description/meshes/tool_mount/new_jiazhua1.STL"
+    if obsolete.is_file() and not obsolete.is_symlink() and obsolete.resolve().is_relative_to(output):
+        if hashlib.sha256(obsolete.read_bytes()).digest() == hashlib.sha256(original.read_bytes()).digest():
+            obsolete.unlink()
     # Remove only the known entrypoints from older exports of our retired viewer.
     for name in ("index.html", "viewer.bundle.js", "LICENSES.txt"):
         retired = output / name
@@ -55,17 +62,24 @@ def export(output):
                 target = output / f"{package}_{name}"
                 shutil.copyfile(source, target)
                 exported.add(target)
+    provenance = ROOT / "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.json"
+    provenance_target = output / "camera_mount_extraction.json"
+    shutil.copyfile(provenance, provenance_target)
+    exported.add(provenance_target)
     guide = output / "README.txt"
     guide.write_text(
         "Nova5 + AG95 model assets (description only)\n\n"
         "Import this entire folder into your chosen URDF viewer/parser.\n"
         "Select nova5_with_ag95.urdf for the assembly, or ag95.urdf for the gripper.\n"
-        "Use Joints to change left_outer_knuckle_joint (0..1.10 rad).\n"
+        "Use Joints to change left_outer_knuckle_joint (0..0.94 rad).\n"
         "   The other finger joints are coupled by mimic.\n"
-        "If supported, enable collision display to inspect the inherited padding boxes.\n\n"
+        "Legacy finger padding boxes and the blue safety sheet have been removed.\n"
+        "Original collision STL geometry remains active.\n"
+        "Only rear camera/mount geometry is fixed; the AG95 fingers move once.\n\n"
         "This package contains model assets only; no bundled viewer or server.\n"
         "All meshes use relative paths; no ROS install or controller connection is needed.\n"
         "Mounting and grasp frame offsets are inherited, not calibrated measurements.\n"
+        "0.94 rad is a geometry-only model limit, not a hardware command or calibration.\n"
         "No robot control code is included. Default model has no ground plane.\n",
         encoding="utf-8", newline="\n")
     exported.add(guide)

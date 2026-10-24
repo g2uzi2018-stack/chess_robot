@@ -5,21 +5,25 @@
   <xacro:arg name="ag95_macro_file" default="$(find dh_ag95_description)/urdf/dh_ag95_macro.xacro"/>
   <xacro:include filename="$(arg ag95_macro_file)"/>
   <xacro:arg name="include_ground" default="false"/>
-  <xacro:arg name="include_legacy_padding" default="true"/>
+  <!-- Unmeasured calibration defaults; model changes do not move hardware. -->
+  <xacro:arg name="gripper_mount_z" default="0.0085"/>
+  <xacro:arg name="grasp_link_offset" default="0.20"/>
+  <xacro:arg name="gripper_joint_upper_limit" default="0.94"/>
 
-  <!-- Legacy mounting geometry and transforms; not a new calibration. -->
+  <!-- Rear camera and mounting components only; original composite also contained
+       a complete fixed AG95, which must not duplicate the articulated gripper. -->
   <link name="camera_bracket_link">
     <visual>
-      <origin xyz="0.09419 -0.10218 0.18445" rpy="0 3.14159 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl"/>
       </geometry>
       <material name="silver"><color rgba="0.75 0.75 0.75 1.0"/></material>
     </visual>
     <collision>
-      <origin xyz="0.09419 -0.10218 0.18445" rpy="0 3.14159 0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry>
-        <mesh filename="package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL" scale="0.001 0.001 0.001"/>
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl"/>
       </geometry>
     </collision>
   </link>
@@ -29,29 +33,11 @@
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
-  <xacro:dh_ag95_gripper prefix="" parent="camera_bracket_link" grasp_link_offset="0.20">
-    <origin xyz="0 0 0.0085" rpy="0 0 0"/>
+  <xacro:dh_ag95_gripper prefix="" parent="camera_bracket_link"
+      grasp_link_offset="$(arg grasp_link_offset)"
+      joint_upper_limit="$(arg gripper_joint_upper_limit)">
+    <origin xyz="0 0 $(arg gripper_mount_z)" rpy="0 0 0"/>
   </xacro:dh_ag95_gripper>
-
-  <!-- Preserve the old extra collision envelope, independently switchable. -->
-  <xacro:if value="$(arg include_legacy_padding)">
-    <link name="safety_padding_link">
-      <visual>
-        <origin xyz="0 0.0305 0.0825" rpy="0 0 0"/>
-        <geometry><box size="0.115 0.001 0.165"/></geometry>
-        <material name="blue"><color rgba="0.0 0.0 1.0 0.6"/></material>
-      </visual>
-      <collision>
-        <origin xyz="0 0.0305 0.0825" rpy="0 0 0"/>
-        <geometry><box size="0.115 0.001 0.165"/></geometry>
-      </collision>
-    </link>
-    <joint name="safety_padding_joint" type="fixed">
-      <parent link="ag95_base_link"/>
-      <child link="safety_padding_link"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-    </joint>
-  </xacro:if>
 
   <!-- Scene geometry is optional; not part of the default robot model. -->
   <xacro:if value="$(arg include_ground)">

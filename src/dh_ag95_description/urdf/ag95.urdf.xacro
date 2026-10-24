@@ -3,7 +3,11 @@
   <!-- Description only. No hardware plugin, serial device or controller. -->
   <xacro:include filename="dh_ag95_macro.xacro"/>
   <link name="world"/>
-  <xacro:dh_ag95_gripper prefix="" parent="world" grasp_link_offset="0.20">
+  <xacro:arg name="gripper_joint_upper_limit" default="0.94"/>
+  <xacro:arg name="grasp_link_offset" default="0.20"/>
+  <xacro:dh_ag95_gripper prefix="" parent="world"
+      grasp_link_offset="$(arg grasp_link_offset)"
+      joint_upper_limit="$(arg gripper_joint_upper_limit)">
     <origin xyz="0 0 0" rpy="0 0 0"/>
   </xacro:dh_ag95_gripper>
 </robot>

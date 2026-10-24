@@ -203,18 +203,18 @@
   </joint>
   <link name="camera_bracket_link">
     <visual>
-      <origin rpy="0 3.14159 0" xyz="0.09419 -0.10218 0.18445" />
+      <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh filename="package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl" />
       </geometry>
       <material name="silver">
         <color rgba="0.75 0.75 0.75 1.0" />
       </material>
     </visual>
     <collision>
-      <origin rpy="0 3.14159 0" xyz="0.09419 -0.10218 0.18445" />
+      <origin rpy="0 0 0" xyz="0 0 0" />
       <geometry>
-        <mesh filename="package://chess_robot_description/meshes/tool_mount/new_jiazhua1.STL" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl" />
       </geometry>
     </collision>
   </link>
@@ -343,12 +343,6 @@
         <mesh filename="package://dh_ag95_description/meshes/collision/finger.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
-    <collision>
-      <origin rpy="0 0 0" xyz="-0.0103 0.00875 0.0166" />
-      <geometry>
-        <box size="0.052 0.041 0.064" />
-      </geometry>
-    </collision>
   </link>
   <link name="left_finger_pad">
     <inertial>
@@ -371,19 +365,13 @@
         <mesh filename="package://dh_ag95_description/meshes/collision/finger_pad.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
-    <collision>
-      <origin rpy="0 0 0" xyz="-0.001 0.0 0.0082" />
-      <geometry>
-        <box size="0.032 0.041 0.054" />
-      </geometry>
-    </collision>
   </link>
   <joint name="left_finger_joint" type="revolute">
     <origin rpy="0 0.7800050960087859 0" xyz="0.055 0.0 0.0" />
     <parent link="left_outer_knuckle" />
     <child link="left_finger" />
     <axis xyz="0.0 1.0 -0.0" />
-    <limit effort="50.0" lower="-0.01" upper="1.11" velocity="2.1" />
+    <limit effort="50.0" lower="-0.01" upper="0.95" velocity="2.1" />
     <mimic joint="left_outer_knuckle_joint" multiplier="1" offset="0" />
   </joint>
   <joint name="left_inner_knuckle_joint" type="revolute">
@@ -391,7 +379,7 @@
     <parent link="ag95_body" />
     <child link="left_inner_knuckle" />
     <axis xyz="0.0 -1.0 -0.0" />
-    <limit effort="50.0" lower="-0.01" upper="1.11" velocity="2.1" />
+    <limit effort="50.0" lower="-0.01" upper="0.95" velocity="2.1" />
     <mimic joint="left_outer_knuckle_joint" multiplier="1" offset="0" />
   </joint>
   <gazebo>
@@ -415,14 +403,14 @@
     <parent link="ag95_body" />
     <child link="left_outer_knuckle" />
     <axis xyz="-0.0 -1.0 0.0" />
-    <limit effort="50.0" lower="0.0" upper="1.1" velocity="2.1" />
+    <limit effort="50.0" lower="0.0" upper="0.94" velocity="2.1" />
   </joint>
   <joint name="right_finger_joint" type="revolute">
     <origin rpy="0 0.7800050960087859 0" xyz="0.055 0.0 0.0" />
     <parent link="right_outer_knuckle" />
     <child link="right_finger" />
     <axis xyz="0.0 1.0 -0.0" />
-    <limit effort="50.0" lower="-0.01" upper="1.11" velocity="2.1" />
+    <limit effort="50.0" lower="-0.01" upper="0.95" velocity="2.1" />
     <mimic joint="left_outer_knuckle_joint" multiplier="1" offset="0" />
   </joint>
   <joint name="right_inner_knuckle_joint" type="revolute">
@@ -430,7 +418,7 @@
     <parent link="ag95_body" />
     <child link="right_inner_knuckle" />
     <axis xyz="0.0 -1.0 -0.0" />
-    <limit effort="50.0" lower="-0.01" upper="1.11" velocity="2.1" />
+    <limit effort="50.0" lower="-0.01" upper="0.95" velocity="2.1" />
     <mimic joint="left_outer_knuckle_joint" multiplier="1" offset="0" />
   </joint>
   <gazebo>
@@ -514,12 +502,6 @@
         <mesh filename="package://dh_ag95_description/meshes/collision/finger.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
-    <collision>
-      <origin rpy="0 0 0" xyz="-0.0103 0.00875 0.0166" />
-      <geometry>
-        <box size="0.052 0.041 0.064" />
-      </geometry>
-    </collision>
   </link>
   <link name="right_finger_pad">
     <inertial>
@@ -542,46 +524,18 @@
         <mesh filename="package://dh_ag95_description/meshes/collision/finger_pad.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
-    <collision>
-      <origin rpy="0 0 0" xyz="-0.001 0.0 0.0082" />
-      <geometry>
-        <box size="0.032 0.041 0.054" />
-      </geometry>
-    </collision>
   </link>
   <joint name="right_outer_knuckle_joint" type="revolute">
     <origin rpy="0 -0.7800050960087859 3.141592653589793" xyz="0.003827000000000011 0.02305 0.083636" />
     <parent link="ag95_body" />
     <child link="right_outer_knuckle" />
     <axis xyz="-0.0 -1.0 0.0" />
-    <limit effort="50.0" lower="-0.01" upper="1.11" velocity="2.1" />
+    <limit effort="50.0" lower="-0.01" upper="0.95" velocity="2.1" />
     <mimic joint="left_outer_knuckle_joint" multiplier="1" offset="0" />
   </joint>
   <joint name="gripper_base_joint" type="fixed">
     <parent link="camera_bracket_link" />
     <child link="ag95_base_link" />
     <origin rpy="0 0 0" xyz="0 0 0.0085" />
-  </joint>
-  <link name="safety_padding_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0.0305 0.0825" />
-      <geometry>
-        <box size="0.115 0.001 0.165" />
-      </geometry>
-      <material name="blue">
-        <color rgba="0.0 0.0 1.0 0.6" />
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0.0305 0.0825" />
-      <geometry>
-        <box size="0.115 0.001 0.165" />
-      </geometry>
-    </collision>
-  </link>
-  <joint name="safety_padding_joint" type="fixed">
-    <parent link="ag95_base_link" />
-    <child link="safety_padding_link" />
-    <origin rpy="0 0 0" xyz="0 0 0" />
   </joint>
 </robot>

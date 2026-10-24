@@ -1,46 +1,52 @@
 # Nova5 与 AG95 模型资产
 
-数据型 ROS 2 description 包，安装 URDF 和网格；原厂 Nova5 本体文件保持不变。
+数据型 ROS 2 description 包，提供 URDF 和网格。Nova5 本体描述保持不变，不含控制器。
 
-- `urdf/nova5.urdf`：原厂纯 URDF，仅将网格 URI 的包名改为 `chess_robot_description`。
-- `urdf/nova5_with_ag95.urdf.xacro`：组合入口，引用相邻的 `dh_ag95_description` 包。
-- `urdf/nova5_with_ag95.urdf`：生成的组合纯 URDF，供浏览器或 RViz 加载。
-- `meshes/nova5/`：与该 URDF 对应的 7 个原厂 STL 文件。
-- `meshes/tool_mount/new_jiazhua1.STL`：旧装配实际使用的支架网格，字节不变。
-- 原始 URDF 对照件、来源提交和文件校验值见仓库的 `reference/dobot/`。
+- `urdf/nova5.urdf`：Nova5 原厂基线。
+- `urdf/nova5_with_ag95.urdf.xacro`：组合模型入口。
+- `urdf/nova5_with_ag95.urdf`：由入口生成的纯 URDF。
+- `meshes/nova5/`：7 个原厂 STL。
+- `meshes/tool_mount/camera_mount_assembly_m.stl`：从旧复合 STL 分离的侧面相机和安装件，已变换到 Link6，单位为米。
+- `meshes/tool_mount/camera_mount_assembly_m.json`：分离方法、保留分量、来源与 SHA-256。
+- `meshes/tool_mount/new_jiazhua1.STL`：原始复合网格，仅作来源对照，默认模型不引用；它包含完整的静态夹爪，不能再当独立支架叠加。
 
-## 使用边界
+## 本轮修正
 
-`nova5.urdf` 仍只含本体；`nova5_with_ag95.urdf` 包含 AG95、支架和旧碰撞补丁。
-组合模型不含棋盘、桌面或独立的相机光学坐标系。
-原厂导出文件的六个转动关节 `velocity`、`effort` 都为 0，本次按原样保留。当前模型可作为可视化和结构建模基础，尚未配置可执行的运动限值。
-保持原始关节名称、坐标变换、惯性、几何和位置限位，尚未根据当前实机做精度与方向验收。
+2026-10-24 移除手指/指垫共四个附加碰撞盒和蓝色 `safety_padding_link`；保留 AG95 原碰撞 STL。固定复合夹爪改为仅保留后侧相机和安装件，活动 AG95 只出现一次。
 
-## 构建
+主动关节的默认模型上限改为 0.94 rad，对应当前网格约 0.648 mm 夹口。它是防止模型自穿入的几何限值，不是实机驱动限位或标定。
+
+## 构建与查看
 
 ```bash
 source /opt/ros/humble/setup.bash
 colcon build --packages-select dh_ag95_description chess_robot_description
 source install/setup.bash
-ros2 pkg prefix --share chess_robot_description
+python3 tools/description/check_models.py
+python3 tools/description/export_browser_model.py
 ```
 
-## 装配关系
+在在线解析器中导入完整 `runs/browser_model.zip`，选择 `nova5_with_ag95.urdf`。只导入 URDF 不会带入 STL。
 
-`Link6 → camera_bracket_link → ag95_base_link → ag95_body / fingers`
+## 参数与安装基准
 
-- `Link6 → camera_bracket_link`：零平移、零旋转。
-- 支架网格自身 origin：`xyz="0.09419 -0.10218 0.18445"`、`rpy="0 3.14159 0"`，缩放 `0.001`。
-- 支架 → 夹爪基座：`xyz="0 0 0.0085"`、零旋转。
-- 夹爪基座 → `grasp_link`：`xyz="0 0 0.20"`、`rpy="pi/2 -pi/2 0"`。
-- 因此 `Link6 → grasp_link` 的位置为 `[0, 0, 0.2085] m`，方向包含上述固定旋转。
+装配链为 `Link6 → camera_bracket_link → ag95_base_link`。相机分离网格已包含旧 origin 和毫米缩放，因此在新的 URDF 中用单位缩放、零 origin。
 
-这些是从旧装配文件继承的参数，不是本次实测或标定结果。
-`camera_bracket_link` 保留历史名称和原网格，不表示已单独建立相机光学模型。
-默认保留旧蓝色防碰撞包络和手指处的额外碰撞盒；蓝色薄片是人工包络，不是夹爪零件。
-Xacro 参数 `include_legacy_padding:=false` 只关闭蓝色薄片，原宏内的手指碰撞盒仍保留。
-`include_ground:=true` 可恢复旧装配文件中的地面，默认不包含地面。
+| Xacro 参数 | 默认值 | 状态 |
+| --- | --- | --- |
+| `gripper_mount_z` | 0.0085 m | 旧安装偏移，待实测 |
+| `grasp_link_offset` | 0.20 m | 旧抓取参考点，待定义/标定 |
+| `gripper_joint_upper_limit` | 0.94 rad | 几何检查范围，非硬件命令 |
+| `include_ground` | false | 可选查看场景 |
 
-纯 URDF 已随仓库提供，查看无需先展开 Xacro。浏览器步骤、重新生成和检查命令见
-`../../docs/models/ag95-browser.md`。夹爪关节限值、惯性和碰撞补丁保留旧值，尚未实机验收。
-来源与原装配对照件见 `../../reference/ag95/`。
+用户确认实物采用原装指垫、带侧面相机的嵌槽式安装支架：夹爪后部通过两侧槽和螺丝固定，支架中心连接机械臂法兰。这种安装方式不能用支架外观总厚度直接推导 `gripper_mount_z`；必须核对法兰安装面、嵌槽位置和 AG95 模型原点。独立支架 STL 或实测数据到位前，保持旧偏移并明确标记待标定。
+
+AG95 的 base 网格本身含夹持底座外形；其与独立安装板的归属、尺寸需要对照实物/CAD，不能再叠加整套复合夹爪来补偿。这里尚未创建相机光学标定坐标系。
+
+默认 `grasp_link` 的局部 +X 指向夹爪伸出方向，其 +Z 不是接近轴；抓取代码需要使用一致的轴约定。
+
+## 验证边界
+
+本体的六个关节 effort/velocity 为原厂 0 占位值。尚无完整 SRDF、有效运动限值或实机碰撞误差验收。删除旧包络不代表碰撞检查已关闭，也不代表历史自碰撞原因已消除；细化后的模型仍需验证安装基准、误差余量和实际碰撞姿态。
+
+重新生成、参数覆盖、FCL 检查结果见 `../../docs/models/ag95-browser.md` 和 `../../docs/validation/ag95-refinement-2026-10-24.md`。

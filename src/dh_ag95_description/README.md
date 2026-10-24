@@ -1,16 +1,18 @@
 # AG95 夹爪模型
 
-从 `g2uzi2018-stack/nova` 的 AG95 description 包迁入，保留 Apache-2.0 许可证。
-这是模型资源包，提供网格、关节和抓取坐标系；不包含串口驱动或控制器。
+来自 `g2uzi2018-stack/nova` 的 AG95 模型资源，保留 Apache-2.0 许可证。不含串口驱动或控制器。
 
-- `meshes/visual/`、`meshes/collision/`：各 6 个原始 STL，字节不变。
-- `urdf/dh_ag95_macro.xacro`：原始宏，字节不变；包含 mimic 手指联动、惯性和历史碰撞补丁。
-- `urdf/ag95.urdf.xacro`：新增的独立预览入口，无硬件依赖。
-- `urdf/ag95.urdf`：由入口生成的纯 URDF，浏览器无需展开 Xacro。
-- `SOURCES.json`：来源路径、提交和 SHA-256；`LICENSE` 为原始 Apache-2.0 许可证。
+- `meshes/visual/`、`meshes/collision/`：各 6 个原始 STL，字节未变。
+- `urdf/dh_ag95_macro.xacro`：本地修订宏；2026-10-24 删除 finger/finger_pad 的额外盒碰撞（左右合计四个），保留原碰撞 STL、惯性、轴与 mimic。
+- `urdf/ag95.urdf.xacro`：独立模型入口。
+- `urdf/ag95.urdf`：生成的纯 URDF。
+- `../../reference/ag95/dh_ag95_macro.original.xacro`：未修改的上游宏，包含历史包络，供追溯。
+- `SOURCES.json`：原始文件校验与派生文件说明。
 
-原宏的 STL 缩放为 `0.001`，坐标长度使用米。关节角范围、惯性和碰撞补丁均保留旧值，
-迁移不等于实机行程、负载或碰撞精度验收。不要把驱动的开度命令直接当作弧度。
-组合模型沿用旧项目的 `grasp_link_offset=0.20`，需要用当前实物核对。
+网格缩放为 0.001，长度单位为米。默认 `joint_upper_limit=0.94` rad，避免旧 1.10 rad 导致的指垫自穿入。当前网格下 0.94 rad 的指间距约 0.648 mm，仅用于几何模型验证；不要把它当成硬件开度命令或已经标定的行程。
 
-浏览器查看和模型生成步骤见 `../../docs/models/ag95-browser.md`。
+独立入口支持 `gripper_joint_upper_limit` 与 `grasp_link_offset` 参数；组合入口还支持安装偏移。旧抓取参考点 Z=0.20 m 保留待标定。
+
+本模型用单主动关节加 mimic 表达无接触平行运动，并不完整模拟接触后的自适应包络抓取。惯性和驱动开度映射仍需与当前实物对照。
+
+查看与重新生成步骤见 `../../docs/models/ag95-browser.md`。

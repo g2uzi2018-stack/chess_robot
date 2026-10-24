@@ -15,8 +15,8 @@ python3 tools/description/export_browser_model.py
 
 1. 选择 **nova5_with_ag95.urdf** 查看组合模型。
 2. 选择 **ag95.urdf** 可只看夹爪。
-3. 如果解析器支持关节调节，可检查 `left_outer_knuckle_joint` 的 `0`、`0.55`、`1.10 rad` 三种状态；其余手指通过 mimic 联动。
-4. 如果支持碰撞几何显示，可检查指尖、支架和旧碰撞包络。蓝色薄片是历史碰撞包络，不是实际零件。
+3. 如果解析器支持关节调节，可检查 `left_outer_knuckle_joint` 的 `0`、`0.47`、`0.94 rad` 三种状态；其余手指通过 mimic 联动。
+4. 如果支持碰撞几何显示，可检查原始碰撞 STL。旧附加指尖碰撞盒和蓝色薄片已移除，相机与安装件仍保留。
 
 导出同时生成 `runs/browser_model.zip`，可复制到别的电脑解压查看。
 导出包内网格均为相对路径，选择整个文件夹才能加载完整外形。
@@ -52,10 +52,17 @@ xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
 
 ## 尚需对照实物的内容
 
-- 旧支架网格是否对应当前安装件，夹爪是否仍为 AG95、手指是否改装。
+- 夹爪已确认是原装指垫、带相机和嵌槽式支架；侧附件已从旧整机复合网格中分离，独立安装板与夹爪底座的基准还需核对。
 - 支架至夹爪的 8.5 mm 安装偏移，抓取坐标系的 200 mm 偏移和方向。
 - 开合行程与实际指间距的关系；原关节值以弧度表示，并非驱动开度值。
-- 旧碰撞盒/包络是否适合象棋棋子的间距。
+- 去掉旧包络后，应基于实际尺寸和标定误差设置有针对性的余量，并回放历史容易自碰撞的姿态。
 
-当前检查能确认模型可解析、网格可加载、关节链与旧装配一致；不能代替 TCP 标定、实机跟踪、
-碰撞规划或动力学验证。机械臂本体仍保留原厂零速度/力矩占位值。
+默认 0.94 rad 是避免网格自穿入的模型范围，不是硬件限位。参数覆盖示例（仅生成文件）：
+
+```bash
+xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
+  gripper_mount_z:=0.0085 grasp_link_offset:=0.20 \
+  gripper_joint_upper_limit:=0.94 > runs/assembly_candidate.urdf
+```
+
+当前检查不能代替安装面/TCP 标定、实机跟踪、带 SRDF 的碰撞规划或动力学验证。本轮 FCL 离线结果见 `../validation/ag95-refinement-2026-10-24.md`。机械臂本体仍保留原厂零速度/力矩占位值。
