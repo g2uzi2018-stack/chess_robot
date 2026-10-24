@@ -75,10 +75,12 @@ def export(output):
         "   The other finger joints are coupled by mimic.\n"
         "Legacy finger padding boxes and the blue safety sheet have been removed.\n"
         "Original collision STL geometry remains active.\n"
-        "Only rear camera/mount geometry is fixed; the AG95 fingers move once.\n\n"
+        "Fixed fixture uses the user-provided 20260117 v2 camera and mounting STL.\n"
+        "The fixture includes the base; duplicate generic AG95 base geometry is omitted.\n\n"
         "This package contains model assets only; no bundled viewer or server.\n"
         "All meshes use relative paths; no ROS install or controller connection is needed.\n"
-        "Mounting and grasp frame offsets are inherited, not calibrated measurements.\n"
+        "Mount registered to the new CAD flange face; extra mount Z defaults to zero.\n"
+        "Physical mount/TCP calibration and camera optical calibration remain pending.\n"
         "0.94 rad is a geometry-only model limit, not a hardware command or calibration.\n"
         "No robot control code is included. Default model has no ground plane.\n",
         encoding="utf-8", newline="\n")

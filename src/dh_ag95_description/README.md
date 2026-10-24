@@ -13,6 +13,8 @@
 
 独立入口支持 `gripper_joint_upper_limit` 与 `grasp_link_offset` 参数；组合入口还支持安装偏移。旧抓取参考点 Z=0.20 m 保留待标定。
 
+宏参数 `include_base_geometry` 默认为 true，独立夹爪使用通用底座外形。Nova5 组合入口设为 false，因为用户新相机支架 STL 已包含夹持底座；只省略重复 visual/collision，基座坐标系、关节和原惯性仍保留。
+
 本模型用单主动关节加 mimic 表达无接触平行运动，并不完整模拟接触后的自适应包络抓取。惯性和驱动开度映射仍需与当前实物对照。
 
 查看与重新生成步骤见 `../../docs/models/ag95-browser.md`。

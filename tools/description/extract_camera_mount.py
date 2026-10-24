@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-"""Reproduce the reviewed camera/mount selection (needs numpy and trimesh).
+"""Reproduce the registered user-provided camera/mount (numpy and trimesh).
 
-This does not identify installation datums or calibrate the physical assembly.
-The original composite is retained unchanged for comparison.
+This applies the reviewed CAD datums; it does not calibrate the physical assembly.
+The user source and older composite are retained unchanged for comparison.
 """
 import argparse
 import hashlib
 import json
 from pathlib import Path
-import xml.etree.ElementTree as ET
 
 import numpy as np
 import trimesh
@@ -19,21 +18,18 @@ ROOT = Path(__file__).resolve().parents[2]
 def extract():
     directory = ROOT / 'src/chess_robot_description/meshes/tool_mount'
     meta = json.loads((directory / 'camera_mount_assembly_m.json').read_text())
-    source = directory / meta['source']
+    source = ROOT / meta['source_path']
     assert hashlib.sha256(source.read_bytes()).hexdigest() == meta['source_sha256']
-    legacy = ET.parse(ROOT / 'reference/ag95/nova5_with_ag95.original.xacro')
-    visual = legacy.find(".//link[@name='camera_bracket_link']/visual")
     mesh = trimesh.load_mesh(source, process=True)
-    mesh.apply_scale(np.fromstring(visual.find('geometry/mesh').get('scale'), sep=' '))
-    origin = visual.find('origin')
-    matrix = trimesh.transformations.euler_matrix(*np.fromstring(origin.get('rpy'), sep=' '), axes='sxyz')
-    matrix[:3, 3] = np.fromstring(origin.get('xyz'), sep=' ')
-    mesh.apply_transform(matrix)
     components = sorted(mesh.split(only_watertight=False), key=lambda m: len(m.faces), reverse=True)
-    selected = [m for m in components if m.bounds[1, 1] < -0.028]
     assert len(components) == meta['original_components']
-    assert len(selected) == meta['retained_components']
-    result = trimesh.util.concatenate(selected)
+    assert len(components) == meta['retained_components']
+    result = mesh.copy()
+    result.apply_transform(np.asarray(meta['raw_to_Link6_mm'],dtype=float))
+    result.apply_scale(0.001)
+    # Recompute normals from registered vertices, rather than retaining normals
+    # cached by connected-component analysis before registration.
+    result = trimesh.Trimesh(vertices=result.vertices, faces=result.faces, process=False)
     assert len(result.faces) == meta['triangles']
     content = result.export(file_type='stl')
     assert hashlib.sha256(content).hexdigest() == meta['output_sha256'], 'Extraction changed; review before updating the manifest'

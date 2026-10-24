@@ -7,10 +7,13 @@
     "Keep the original Nova5 baseline and raw vendor STL files unchanged",
     "Archive the original AG95 macro; active macro removes four instantiated legacy padding boxes",
     "Remove the extra safety_padding_link and joint",
-    "Replace fixed whole-gripper composite visual/collision with derived rear camera/mount components only",
     "Default geometry-only closing limit is 0.94 rad (not a hardware calibration)",
-    "Expose mount Z, grasp offset and joint limit as Xacro arguments; keep unmeasured mount/TCP defaults",
-    "Generate pure URDF and relative mesh exports without robot control code"
+    "Generate pure URDF and relative mesh exports without robot control code",
+    "Replace the older camera/mount with all seven fixed components in the user-provided 20260117 v2 STL",
+    "Register the new fixture to the flange mounting face; remove the legacy 8.5 mm extra mount translation",
+    "Omit the generic AG95 base visual/collision only in the combined assembly, because the new fixture includes it",
+    "Keep the standalone AG95 base model, articulated gripper, collision padding removal and 0.94 rad limit",
+    "Keep the 200 mm grasp reference relative to the base as an uncalibrated parameter"
   ],
   "files": [
     {
@@ -120,6 +123,14 @@
       "target_path": "reference/ag95/dh_ag95.original.urdf.xacro",
       "sha256": "d09dcc0471585cbb739fe6942687e576917b85def19abd25a44fbcdcc67c73a4",
       "changes": "none"
+    },
+    {
+      "origin": "user_attachment",
+      "source_repository": null,
+      "source_path": "\u673a\u68b0\u81c2+\u5939\u722a_20260117(2).STL",
+      "target_path": "reference/ag95/user/arm_gripper_camera_20260117_v2.STL",
+      "sha256": "5395ec7cfcefff45f08ca750729f45b560ddd1dfa38534f040e6c6769a324925",
+      "changes": "none"
     }
   ],
   "model_revision_date": "2026-10-24",
@@ -127,7 +138,7 @@
     {
       "path": "src/dh_ag95_description/urdf/dh_ag95_macro.xacro",
       "source_snapshot": "reference/ag95/dh_ag95_macro.original.xacro",
-      "changes": "Removed finger/finger-pad padding collisions; parameterized joint upper limit; retained vendor collision meshes, inertias, axes and mimic"
+      "changes": "Removed finger/finger-pad padding collisions; parameterized joint upper limit; retained vendor collision meshes, inertias, axes and mimic; optional base visual/collision omitted when using the complete user fixture"
     },
     {
       "path": "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl",

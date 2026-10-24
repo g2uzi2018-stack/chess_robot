@@ -52,8 +52,8 @@ xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
 
 ## 尚需对照实物的内容
 
-- 夹爪已确认是原装指垫、带相机和嵌槽式支架；侧附件已从旧整机复合网格中分离，独立安装板与夹爪底座的基准还需核对。
-- 支架至夹爪的 8.5 mm 安装偏移，抓取坐标系的 200 mm 偏移和方向。
+- 夹爪为原装指垫，当前使用用户提供的 20260117 v2 新相机与嵌槽式支架 STL，替换了旧相机版本。
+- 新 CAD 与法兰安装面配准后，额外安装偏移默认为 0；仍需核实实物是否与这份 CAD 相同。抓取参考点相对基座 200 mm，未实机标定。
 - 开合行程与实际指间距的关系；原关节值以弧度表示，并非驱动开度值。
 - 去掉旧包络后，应基于实际尺寸和标定误差设置有针对性的余量，并回放历史容易自碰撞的姿态。
 
@@ -61,8 +61,8 @@ xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
 
 ```bash
 xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
-  gripper_mount_z:=0.0085 grasp_link_offset:=0.20 \
+  gripper_mount_z:=0.0 grasp_link_offset:=0.20 \
   gripper_joint_upper_limit:=0.94 > runs/assembly_candidate.urdf
 ```
 
-当前检查不能代替安装面/TCP 标定、实机跟踪、带 SRDF 的碰撞规划或动力学验证。本轮 FCL 离线结果见 `../validation/ag95-refinement-2026-10-24.md`。机械臂本体仍保留原厂零速度/力矩占位值。
+当前检查不能代替安装面/TCP 标定、实机跟踪、带 SRDF 的碰撞规划或动力学验证。新相机版本的检查见 `../validation/camera-v2-2026-10-24.md`，前一轮去包络记录保留在 `../validation/ag95-refinement-2026-10-24.md`。机械臂本体仍保留原厂零速度/力矩占位值。

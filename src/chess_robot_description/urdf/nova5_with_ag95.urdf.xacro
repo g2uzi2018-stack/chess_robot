@@ -5,13 +5,14 @@
   <xacro:arg name="ag95_macro_file" default="$(find dh_ag95_description)/urdf/dh_ag95_macro.xacro"/>
   <xacro:include filename="$(arg ag95_macro_file)"/>
   <xacro:arg name="include_ground" default="false"/>
-  <!-- Unmeasured calibration defaults; model changes do not move hardware. -->
-  <xacro:arg name="gripper_mount_z" default="0.0085"/>
+  <!-- New fixture includes the slotted gripper base; flange datums coincide in CAD.
+       Additional mount Z remains adjustable for later physical calibration. -->
+  <xacro:arg name="gripper_mount_z" default="0.0"/>
   <xacro:arg name="grasp_link_offset" default="0.20"/>
   <xacro:arg name="gripper_joint_upper_limit" default="0.94"/>
 
-  <!-- Rear camera and mounting components only; original composite also contained
-       a complete fixed AG95, which must not duplicate the articulated gripper. -->
+  <!-- User 20260117 v2 fixture: mounting plate, slotted clamp and new camera.
+       Includes the base shape, so the generic AG95 base geometry is omitted below. -->
   <link name="camera_bracket_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -35,6 +36,7 @@
 
   <xacro:dh_ag95_gripper prefix="" parent="camera_bracket_link"
       grasp_link_offset="$(arg grasp_link_offset)"
+      include_base_geometry="false"
       joint_upper_limit="$(arg gripper_joint_upper_limit)">
     <origin xyz="0 0 $(arg gripper_mount_z)" rpy="0 0 0"/>
   </xacro:dh_ag95_gripper>

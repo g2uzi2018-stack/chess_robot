@@ -229,21 +229,6 @@
       <mass value="0.05335674905975589" />
       <inertia ixx="1.1649107960000001e-05" ixy="0.0" ixz="-0.0" iyy="3.5238551579e-05" iyz="0.0" izz="4.6013976442e-05" />
     </inertial>
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0" />
-      <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/base_link.stl" scale="0.001 0.001 0.001" />
-      </geometry>
-      <material name="">
-        <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
-      </material>
-    </visual>
-    <collision>
-      <origin rpy="0 0 0" xyz="0 0 0" />
-      <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/base_link.stl" scale="0.001 0.001 0.001" />
-      </geometry>
-    </collision>
   </link>
   <link name="ag95_body">
     <inertial>
@@ -536,6 +521,6 @@
   <joint name="gripper_base_joint" type="fixed">
     <parent link="camera_bracket_link" />
     <child link="ag95_base_link" />
-    <origin rpy="0 0 0" xyz="0 0 0.0085" />
+    <origin rpy="0 0 0" xyz="0 0 0.0" />
   </joint>
 </robot>
