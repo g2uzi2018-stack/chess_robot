@@ -21,7 +21,7 @@ try:
     while True:
         try:
             with opener.open('http://127.0.0.1:8098/api/channels',timeout=1) as response:
-                assert len(json.load(response)['channels'])==2
+                assert len(json.load(response)['channels'])==3
             break
         except Exception:
             if time.monotonic()>deadline:raise

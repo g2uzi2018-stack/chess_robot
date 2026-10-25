@@ -7,11 +7,10 @@ import os
 import signal
 import subprocess
 import time
-import cv2
 import numpy as np
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
-from sensor_msgs.msg import Image, CameraInfo, CompressedImage
+from sensor_msgs.msg import Image, CameraInfo
 from chess_robot_vision.msg import FrameInfo
 
 parser=argparse.ArgumentParser()
@@ -21,7 +20,7 @@ parser.add_argument('--frames',type=int,default=180)
 args=parser.parse_args()
 output=Path(args.output).resolve();output.mkdir(parents=True,exist_ok=True)
 rclpy.init();node=rclpy.create_node('camera_io_smoke_observer')
-kinds=('color','depth','info','frame','color_jpeg','depth_jpeg')
+kinds=('color','depth','info','frame')
 seen={k:set() for k in kinds};counts={k:0 for k in kinds}
 errors=[];ages=[];finite_fractions=[];numbers=[];scales=[];startup_diagnostics=[];first_valid_delay=None
 def callback(kind,msg):
@@ -51,18 +50,13 @@ def callback(kind,msg):
             if not 0<msg.depth_scale_m<0.01:errors.append('invalid SDK depth scale')
             scales.append(msg.depth_scale_m)
             ages.append((node.get_clock().now().nanoseconds-key)/1e9)
-    else:
-        image=cv2.imdecode(np.frombuffer(msg.data,dtype=np.uint8),cv2.IMREAD_COLOR)
-        if image is None or image.shape!=(480,640,3):errors.append('bad preview JPEG')
 
 subscriptions=[]
 for kind,cls,topic in [
     ('color',Image,'/vision/color/image_rect'),
     ('depth',Image,'/vision/aligned_depth/image_rect'),
     ('info',CameraInfo,'/vision/color/camera_info'),
-    ('frame',FrameInfo,'/vision/frame_info'),
-    ('color_jpeg',CompressedImage,'/vision/color/image_rect/compressed'),
-    ('depth_jpeg',CompressedImage,'/vision/aligned_depth/preview/compressed')]:
+    ('frame',FrameInfo,'/vision/frame_info')]:
     subscriptions.append(node.create_subscription(cls,topic,lambda m,k=kind:callback(k,m),qos_profile_sensor_data))
 
 proc=None;log=None;started=time.monotonic()
@@ -79,7 +73,8 @@ try:
     else:errors.append('camera test timeout')
     for _ in range(20):rclpy.spin_once(node,timeout_sec=.01)
     obsolete={topic:len(node.get_publishers_info_by_topic(topic)) for topic in
-              ('/vision/candidates','/vision/debug/image/compressed')}
+              ('/vision/candidates','/vision/debug/image/compressed',
+               '/vision/color/image_rect/compressed','/vision/aligned_depth/preview/compressed')}
     if any(obsolete.values()):errors.append('obsolete algorithm topic still has a publisher')
 finally:
     if proc is not None:
@@ -94,7 +89,7 @@ finally:
 for kind,count in counts.items():
     if count<30:errors.append('too few '+kind+' messages')
 common=set.intersection(*seen.values())
-if len(common)<30:errors.append('too few complete synchronized RGB-D/calibration/metadata/JPEG groups')
+if len(common)<30:errors.append('too few complete synchronized RGB-D/calibration/metadata groups')
 if any(b[0]<=a[0] or b[1]<=a[1] for a,b in zip(numbers,numbers[1:])):errors.append('nonmonotonic frame numbers')
 if not finite_fractions or max(finite_fractions)==0:errors.append('no finite depth pixels')
 if first_valid_delay is None or first_valid_delay>5:errors.append('first valid frame did not arrive within 5 seconds')

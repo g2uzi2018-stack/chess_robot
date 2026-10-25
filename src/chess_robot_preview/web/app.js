@@ -25,7 +25,7 @@ function select(id){
 }
 async function pull(generation){
   if(generation!==epoch||!selected||paused||document.hidden)return;
-  const started=performance.now();controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),2500);
+  const started=performance.now();let retryDelay=0;controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),2500);
   try{
     const res=await fetch('/api/frame/'+selected.id+'?client='+client+'&after='+sequence,{cache:'no-store',signal:controller.signal});
     if(generation!==epoch)return;
@@ -46,14 +46,17 @@ async function pull(generation){
       main.src=next;thumb.src=next;thumb.hidden=false;thumb.parentNode.querySelector('.thumb-placeholder').hidden=true;
       if(previous)URL.revokeObjectURL(previous);
     }else if(res.status!==204){
-      clearFrame();message('等待图像','当前图像源暂未送来新画面');$('view-state').textContent='等待图像源';$('frame-info').textContent='无新画面';
+      clearFrame();message('无数据','当前图像源暂时没有可显示的画面');$('view-state').textContent='无数据';$('frame-info').textContent='无';
+      const placeholder=document.querySelector('.channel[aria-pressed=true] .thumb-placeholder');
+      if(placeholder)placeholder.innerHTML=icon+'无数据';
+      retryDelay=250;
     }
   }catch(error){
     if(generation!==epoch)return;
     clearFrame();message('连接暂时中断','正在重试，旧画面已清除');$('view-state').textContent='重新连接中';
   }finally{
     clearTimeout(timeout);
-    if(generation===epoch&&!paused&&!document.hidden)timer=setTimeout(()=>pull(generation),Math.max(1,1000/fps-(performance.now()-started)));
+    if(generation===epoch&&!paused&&!document.hidden)timer=setTimeout(()=>pull(generation),Math.max(1,retryDelay,1000/fps-(performance.now()-started)));
   }
 }
 async function loadChannels(){
@@ -68,6 +71,13 @@ async function loadChannels(){
         button.innerHTML='<div class="thumb"><div class="thumb-placeholder">'+icon+'点击后加载</div><img hidden alt=""></div><div class="channel-title"><span class="channel-number"></span><span class="title"></span><span class="selected-label"></span></div>';
         button.querySelector('.title').textContent=c.title;button.querySelector('.channel-number').textContent=String(index+1).padStart(2,'0');
         button.addEventListener('click',()=>select(c.id));$('channels').append(button);
+      }
+    }
+    for(const c of data.channels){
+      const button=document.querySelector('.channel[data-id="'+c.id+'"]');
+      if(button&&button.getAttribute('aria-pressed')!=='true'){
+        const placeholder=button.querySelector('.thumb-placeholder');
+        placeholder.innerHTML=icon+(c.has_publisher?'点击后加载':'无数据');
       }
     }
   }catch(error){$('connection').textContent='预览节点离线';$('connection').classList.add('offline');}

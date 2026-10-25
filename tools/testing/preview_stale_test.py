@@ -30,7 +30,7 @@ def request(path):
         return response.status,response.read()
 rclpy.init()
 node=rclpy.create_node('preview_test_source')
-pub=node.create_publisher(Image,'/preview_test/image',qos_profile_sensor_data)
+pub=None
 image=Image();image.width=100;image.height=60;image.encoding='bgr8';image.step=300;image.data=bytes([40,120,200])*6000
 checks=[]
 try:
@@ -44,6 +44,11 @@ try:
             time.sleep(.1)
     checks.append('adding a YAML channel requires no frontend edits; JSON escaping supports quotes/newlines')
     assert request('/api/frame/synthetic?client=stale')[0]==202
+    status,data=request('/api/frame/synthetic?client=stale')
+    assert status==202 and json.loads(data)['status']=='no_data'
+    assert not json.loads(request('/api/channels')[1])['channels'][0]['has_publisher']
+    checks.append('missing publisher: explicit no_data and no cached image')
+    pub=node.create_publisher(Image,'/preview_test/image',qos_profile_sensor_data)
     deadline=time.monotonic()+6
     while True:
         image.header.stamp=node.get_clock().now().to_msg();pub.publish(image)
@@ -66,6 +71,12 @@ try:
         if request('/api/frame/synthetic?client=stale')[0]==200:break
         assert time.monotonic()<deadline
     checks.append('source resumes: live preview recovers')
+    node.destroy_publisher(pub);pub=None
+    time.sleep(1.3)
+    status,data=request('/api/frame/synthetic?client=stale')
+    assert status==202 and json.loads(data)['status']=='no_data'
+    assert not json.loads(request('/api/channels')[1])['channels'][0]['has_publisher']
+    checks.append('publisher exits: old display becomes no_data again')
     time.sleep(2.5)
     assert not json.loads(request('/api/channels')[1])['channels'][0]['subscribed']
     checks.append('expired lease releases dynamically added channel')

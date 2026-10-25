@@ -95,8 +95,14 @@ for channel in ('color','depth'):
     (output/(channel+'.jpg')).write_bytes(data)
     checks.append('selection '+channel+': valid JPEG, only selected channel subscribed')
 
+status,data,_=request('/api/frame/detection?client=acceptance')
+assert status==202 and json.loads(data)['status']=='no_data'
+assert subscribed()=={'detection'}
+det=next(c for c in metadata()['channels'] if c['id']=='detection')
+assert not det['has_publisher'] and det['encoded_frames']==0
+checks.append('detection placeholder: missing topic returns no_data, no invented JPEG')
 image('color','other')
-assert subscribed()=={'color','depth'}
+assert subscribed()=={'color','detection'}
 release('acceptance')
 assert subscribed()=={'color'}
 image('color','acceptance')

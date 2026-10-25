@@ -3,7 +3,6 @@
 #include <librealsense2/rs.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
-#include <sensor_msgs/msg/compressed_image.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -28,11 +27,7 @@ class VisionNode final : public rclcpp::Node {
     const int opencv_threads=declare_parameter<int>("opencv_threads",2);
     publish_raw_ = declare_parameter<bool>("publish_raw",true);
     stale_s_ = declare_parameter<double>("stale_timeout_s",0.5);
-    preview_min_depth_ = declare_parameter<double>("preview_min_depth_m",0.07);
-    preview_max_depth_ = declare_parameter<double>("preview_max_depth_m",0.5);
     if (width_<=0 || height_<=0 || fps_<=0 || max_frames_<0 || opencv_threads<1 || frame_id_.empty() ||
-        !std::isfinite(preview_min_depth_) || !std::isfinite(preview_max_depth_) ||
-        preview_min_depth_<=0 || preview_max_depth_<=preview_min_depth_ ||
         !std::isfinite(stale_s_) || stale_s_ < 0.1) throw std::invalid_argument("invalid stream parameters");
     cv::setNumThreads(opencv_threads);
     // Parameters are startup-only; reject silent runtime edits to camera/calibration settings.
@@ -45,8 +40,6 @@ class VisionNode final : public rclcpp::Node {
     color_pub_ = create_publisher<sensor_msgs::msg::Image>("/vision/color/image_rect",qos);
     depth_pub_ = create_publisher<sensor_msgs::msg::Image>("/vision/aligned_depth/image_rect",qos);
     info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("/vision/color/camera_info",qos);
-    color_preview_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("/vision/color/image_rect/compressed",qos);
-    depth_preview_pub_ = create_publisher<sensor_msgs::msg::CompressedImage>("/vision/aligned_depth/preview/compressed",qos);
     start();
     last_frame_ = std::chrono::steady_clock::now();
     timer_ = create_wall_timer(5ms,[this] { tick(); });
@@ -85,13 +78,6 @@ class VisionNode final : public rclcpp::Node {
     msg.stream_ok=false; msg.diagnostic=why;
     msg.depth_scale_m=scale_;
     frame_pub_->publish(msg);
-  }
-  void publish_preview(const rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr &publisher,
-                       const std_msgs::msg::Header &header,const cv::Mat &image) {
-    sensor_msgs::msg::CompressedImage message;
-    message.header=header; message.format="bgr8; jpeg compressed bgr8";
-    cv::imencode(".jpg",image,message.data,{cv::IMWRITE_JPEG_QUALITY,75});
-    publisher->publish(message);
   }
   void tick() {
     const auto steady_now=std::chrono::steady_clock::now();
@@ -160,17 +146,6 @@ class VisionNode final : public rclcpp::Node {
         metres.setTo(std::numeric_limits<float>::quiet_NaN(),z16==0);
         depth_pub_->publish(*cv_bridge::CvImage(header,"32FC1",metres).toImageMsg());
       }
-      if(color_preview_pub_->get_subscription_count()>0) publish_preview(color_preview_pub_,header,bgr);
-      if(depth_preview_pub_->get_subscription_count()>0) {
-        cv::Mat metres,gray,visual;
-        z16.convertTo(metres,CV_32F,scale_);
-        const cv::Mat valid=(metres>=preview_min_depth_)&(metres<=preview_max_depth_);
-        metres.convertTo(gray,CV_8U,-255.0/(preview_max_depth_-preview_min_depth_),
-          255.0*preview_max_depth_/(preview_max_depth_-preview_min_depth_));
-        cv::applyColorMap(gray,visual,cv::COLORMAP_TURBO);
-        visual.setTo(cv::Scalar(0,0,0),~valid);
-        publish_preview(depth_preview_pub_,header,visual);
-      }
       ++count_;
       if (!evidence_dir_.empty() && (count_==30 || (max_frames_>0 && count_==max_frames_)))
         save(bgr,z16,info,result,intrinsics);
@@ -205,7 +180,6 @@ class VisionNode final : public rclcpp::Node {
   }
   rs2::pipeline pipeline_; rs2::pipeline_profile profile_; rs2::align align_;
   bool running_{false},publish_raw_{true}; double scale_{0},stale_s_{0.5};
-  double preview_min_depth_{0.07},preview_max_depth_{0.5};
   int width_,height_,fps_,max_frames_,count_{0};
   bool have_frame_{false}; uint64_t last_color_number_{0},last_depth_number_{0};
   std::string serial_,frame_id_,evidence_dir_;
@@ -216,7 +190,6 @@ class VisionNode final : public rclcpp::Node {
   rclcpp::Publisher<vision::msg::FrameInfo>::SharedPtr frame_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr color_pub_,depth_pub_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_;
-  rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr color_preview_pub_,depth_preview_pub_;
 };
 int main(int argc,char **argv) {
   rclcpp::init(argc,argv);

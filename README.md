@@ -39,7 +39,8 @@ tools/description/          # 模型生成、检查和纯 URDF 资源导出工�
 - D405 直连 AGX，默认 640×480、30 Hz；相机节点提供校正图像、米制深度、内参与帧信息，棋子检测和位姿计算由后续独立节点负责。
 - [视觉包](src/chess_robot_vision/README.md) 与 [预览包](src/chess_robot_preview/README.md) 包含构建、启动和接口说明。
 - 当前 AGX 面板：<http://192.168.30.26:8088>；未点击的图像不加载，当前组合服务为 `chess_robot_preview.service`，ROS domain 90，未启用开机自启。
-- 当前面板仅保留彩色与深度图，`/vision/candidates` 和检测叠加图已移除；[职责拆分与验证](docs/validation/camera-io-20261025/REPORT.md)。
+- 面板提供彩色、深度及检测叠加图入口；检测项订阅 `/pose/debug/image`，当前无来源时显示“无数据”，位姿节点尚未实现。
+- 相机不发布压缩图；缩放、深度伪彩色和 JPEG 均由预览按需完成，仅通过 HTTP 返回浏览器；[当前职责与验证](docs/validation/preview-owned-20261025/REPORT.md)。
 - [历史 30 Hz 报告](docs/validation/preview-30hz-20261025.md)保留旧版三路性能记录，不代表当前仍有检测功能。
 
 ## 资料入口

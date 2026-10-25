@@ -56,7 +56,6 @@ struct Channel {
   uint64_t sequence{0},received_count{0},encoded_count{0},sent_bytes{0};
   int width{0},height{0}; bool encoding{false};
   double source_fps{0};
-  bool passthrough{false};
 };
 struct Viewer { std::string channel; Clock::time_point touched; };
 
@@ -80,7 +79,6 @@ class PreviewNode : public rclcpp::Node {
       c->description=entry["description"].as<std::string>(""); c->topic=entry["topic"].as<std::string>();
       c->type=entry["type"].as<std::string>(); c->mode=entry["mode"].as<std::string>("color");
       c->source_fps=entry["source_fps"].as<double>(0.0);
-      c->passthrough=entry["passthrough"].as<bool>(false);
       if(!std::regex_match(c->id,std::regex("[a-zA-Z0-9_-]{1,48}"))||by_id_.count(c->id)||
          (c->type!="image"&&c->type!="compressed")||(c->mode!="color"&&c->mode!="depth")||
          (c->type=="compressed"&&c->mode=="depth")||c->topic.empty()||
@@ -125,15 +123,13 @@ class PreviewNode : public rclcpp::Node {
     for(auto &c:channels_) {
       const bool wanted=std::any_of(viewers_.begin(),viewers_.end(),[&](const auto &v) { return v.second.channel==c->id; });
       if(wanted&&!c->subscription) {
-        auto qos=rclcpp::SensorDataQoS().keep_last(1);
+        auto qos=rclcpp::SensorDataQoS().keep_last(2);
         if(c->type=="compressed") c->subscription=create_subscription<sensor_msgs::msg::CompressedImage>(c->topic,qos,
           [this,c](sensor_msgs::msg::CompressedImage::ConstSharedPtr m) {
             if(!begin_frame(c)) return;
             try {
               if(m->data.size()>16*1024*1024) throw std::runtime_error("compressed frame too large");
-              const bool jpeg=m->data.size()>2 && m->data[0]==0xff && m->data[1]==0xd8;
-              finish_frame(c,cv::imdecode(m->data,cv::IMREAD_COLOR),m->header.stamp,
-                c->passthrough&&jpeg?&m->data:nullptr);
+              finish_frame(c,cv::imdecode(m->data,cv::IMREAD_COLOR),m->header.stamp);
             } catch(const std::exception &e) { frame_error(c,e.what()); }
           });
         else c->subscription=create_subscription<sensor_msgs::msg::Image>(c->topic,qos,
@@ -171,7 +167,7 @@ class PreviewNode : public rclcpp::Node {
     else c->next_encode+=period;
     c->encoding=true; return true;
   }
-  void finish_frame(const std::shared_ptr<Channel> &c,cv::Mat image,const builtin_interfaces::msg::Time &stamp,const Bytes *original_jpeg=nullptr) {
+  void finish_frame(const std::shared_ptr<Channel> &c,cv::Mat image,const builtin_interfaces::msg::Time &stamp) {
     if(image.empty()) throw std::runtime_error("empty image");
     if(stamp.sec!=0||stamp.nanosec!=0) {
       const double age=(now().nanoseconds()-rclcpp::Time(stamp).nanoseconds())*1e-9;
@@ -180,8 +176,7 @@ class PreviewNode : public rclcpp::Node {
     const bool resize=image.cols>max_width_;
     if(resize) cv::resize(image,image,{max_width_,std::max(1,image.rows*max_width_/image.cols)},0,0,cv::INTER_AREA);
     Bytes jpeg;
-    if(original_jpeg&&!resize) jpeg=*original_jpeg;
-    else if(!cv::imencode(".jpg",image,jpeg,{cv::IMWRITE_JPEG_QUALITY,quality_})) throw std::runtime_error("JPEG encode failed");
+    if(!cv::imencode(".jpg",image,jpeg,{cv::IMWRITE_JPEG_QUALITY,quality_})) throw std::runtime_error("JPEG encode failed");
     std::lock_guard<std::mutex> lock(mutex_);
     c->encoding=false;
     if(!c->subscription) return;
@@ -200,7 +195,9 @@ class PreviewNode : public rclcpp::Node {
       if(!first) o<<',';
       first=false;
       o<<"{\"id\":"<<json_quote(c->id)<<",\"title\":"<<json_quote(c->title)<<",\"description\":"<<json_quote(c->description)
-       <<",\"subscribed\":"<<(c->subscription?"true":"false")<<",\"encoded_frames\":"<<c->encoded_count
+       <<",\"subscribed\":"<<(c->subscription?"true":"false")
+       <<",\"has_publisher\":"<<(count_publishers(c->topic)>0?"true":"false")
+       <<",\"received_frames\":"<<c->received_count<<",\"encoded_frames\":"<<c->encoded_count
        <<",\"sent_bytes\":"<<c->sent_bytes<<",\"width\":"<<c->width<<",\"height\":"<<c->height<<'}';
     }
     return o.str()+"]}";
@@ -236,7 +233,8 @@ class PreviewNode : public rclcpp::Node {
             return stopping_||!c->subscription||c->jpeg.empty()||after->second!=std::to_string(c->sequence);
           });
         }
-        if(!c->subscription||c->jpeg.empty()||seconds(Clock::now(),c->received)>stale_s_) return text_response(http::status::accepted,"{\"status\":\"waiting\"}");
+        if(!c->subscription||c->jpeg.empty()||seconds(Clock::now(),c->received)>stale_s_)
+          return text_response(http::status::accepted,"{\"status\":\"no_data\"}");
         if(after!=args.end()&&after->second==std::to_string(c->sequence)) return response(http::status::no_content,"image/jpeg");
         auto r=response(http::status::ok,"image/jpeg",c->jpeg);
         r.set("X-Frame-Sequence",std::to_string(c->sequence));

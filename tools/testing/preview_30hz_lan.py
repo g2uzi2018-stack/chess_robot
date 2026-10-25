@@ -50,6 +50,7 @@ try:
         result=dict(channel=channel,duration_s=elapsed,jpeg_frames=len(times),unique_jpeg_fps=delivered,
             jpeg_mib_per_s=sum(sizes)/elapsed/1024**2,response_time_ms_mean=1000*sum(rtts)/len(rtts) if rtts else None,
             encoding_fps=(b['encoded_frames']-a['encoded_frames'])/elapsed,waiting_responses=waits,
+            received_ros_fps=(b.get('received_frames',0)-a.get('received_frames',0))/elapsed,
             viewers_start=before['viewers'],viewers_end=after['viewers'])
         for name in ('preview','camera'):
             assert cpu_before[name]['pid']==cpu_after[name]['pid']

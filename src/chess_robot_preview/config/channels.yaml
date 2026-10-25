@@ -12,16 +12,21 @@ channels:
   - id: color
     title: 彩色图
     description: 校正后的相机画面
-    topic: /vision/color/image_rect/compressed
-    type: compressed
+    topic: /vision/color/image_rect
+    type: image
     mode: color
     source_fps: 30.0
-    passthrough: true
   - id: depth
     title: 深度图
     description: 距离伪彩色 · 黑色为无效深度
-    topic: /vision/aligned_depth/preview/compressed
-    type: compressed
-    mode: color
+    topic: /vision/aligned_depth/image_rect
+    type: image
+    mode: depth
     source_fps: 30.0
-    passthrough: true
+  - id: detection
+    title: 检测叠加图
+    description: 接收位姿节点结果 · 无数据时显示无
+    topic: /pose/debug/image
+    type: image
+    mode: color
+    source_fps: 0.0

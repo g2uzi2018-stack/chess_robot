@@ -1,7 +1,8 @@
 # D405 相机节点
 
 `chess_robot_vision` 保留原包名和 `vision_node` 可执行文件，职责为采集、彩深对齐、畸变校正、内参与帧信息发布。
-圆候选检测、表面三维点计算、`/vision/candidates` 和检测叠加图已移除；后续棋子检测与位姿计算由独立位姿节点负责，本轮不创建该节点。
+圆候选检测、表面三维点计算、`/vision/candidates` 和相机侧检测图生成已移除；后续棋子检测与位姿计算由独立位姿节点负责，本轮不创建该节点。
+相机只发布未压缩算法数据，不发布 JPEG/CompressedImage；网页压缩与深度伪彩色由预览节点处理。
 
 ## 1 构建与启动
 
@@ -33,10 +34,8 @@ ros2 launch chess_robot_vision vision.launch.py
 | `/vision/aligned_depth/image_rect` | `sensor_msgs/Image` | 同图平面的 32FC1 深度，单位 m，SDK 空洞为 NaN |
 | `/vision/color/camera_info` | `sensor_msgs/CameraInfo` | 校正图平面的 K/P 内参与零畸变系数 |
 | `/vision/frame_info` | `chess_robot_vision/FrameInfo` | 帧号、SDK 时间戳/时间域、深度单位与采集有效状态 |
-| `/vision/color/image_rect/compressed` | `sensor_msgs/CompressedImage` | 按需彩色 JPEG，质量 75 |
-| `/vision/aligned_depth/preview/compressed` | `sensor_msgs/CompressedImage` | 按需深度伪彩色 JPEG，质量 75，仅供显示 |
 
-图像/预览仅在有订阅者时生成对应发布数据；内参与帧信息随相机处理频率发布，默认 640×480、30 Hz。
+图像仅在有订阅者时生成对应发布数据；内参与帧信息随相机处理频率发布，默认 640×480、30 Hz。
 `publish_raw=true` 允许发布上述未压缩的校正 Image，不表示未经校正的原始镜头图。
 
 本机彩色标定为 Inverse Brown Conrady。节点先用 SDK 对齐深度到彩色图，再校正到共同针孔图平面；彩色双线性、深度最近邻重采样，保留空洞并避免混合物体边缘深度。
@@ -54,7 +53,7 @@ ros2 launch chess_robot_vision vision.launch.py
 目标检测、深度质量筛选、三维反投影、姿态估计及坐标变换均放在位姿节点，不能用预览 JPEG 的颜色当米制深度。
 运动中的手眼标定仍需验证曝光时刻与机械臂反馈同步，当前只保留数据，未完成该标定。
 
-`preview_min_depth_m` / `preview_max_depth_m` 默认 0.07 / 0.50，仅控制深度 JPEG 的显示颜色范围，不裁剪或过滤算法用的 32FC1 数据。
+相机不按预览颜色范围裁剪或过滤 32FC1 深度；显示范围由消费者自行设置。
 
 ## 4 检查与采样
 
