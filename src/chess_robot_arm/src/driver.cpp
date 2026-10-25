@@ -1,21 +1,28 @@
 #include "chess_robot_arm/driver.hpp"
 #include "chess_robot_arm/dashboard_reply.hpp"
 #include "chess_robot_arm/net.hpp"
+#include <filesystem>
 #include <iomanip>
 #include <locale>
 #include <sstream>
 
 namespace chess_robot_arm {
 namespace {
+struct ControllerRejected : Failure {
+  explicit ControllerRejected(const std::string &detail)
+      : Failure(EXECUTION_FAILED, detail) {}
+};
 class TcpTransport final : public CommandTransport {
   Socket socket_;
   int timeout_;
+  int stop_timeout_;
 
 public:
   explicit TcpTransport(const Config &c)
-      : socket_(c.ip, c.dashboard_port, c.timeout_ms), timeout_(c.timeout_ms) {}
+      : socket_(c.ip, c.dashboard_port, c.timeout_ms), timeout_(c.timeout_ms),
+        stop_timeout_(c.stop_ack_timeout_ms) {}
   std::string query(const std::string &c) override {
-    return socket_.query(c, timeout_);
+    return socket_.query(c, c == "Stop()" ? stop_timeout_ : timeout_);
   }
 };
 std::string number(double x) {
@@ -23,7 +30,10 @@ std::string number(double x) {
     throw Failure(INVALID_GOAL, "nonfinite SDK argument");
   std::ostringstream s;
   s.imbue(std::locale::classic());
-  s << std::setprecision(17) << x;
+  // The target controller rejects exponent notation (e.g. a near-zero Ry)
+  // with -30005. Keep all wire numbers in decimal notation, including tiny
+  // joint values and servo periods. Nine decimal places are below SDK units.
+  s << std::fixed << std::setprecision(9) << x;
   return s.str();
 }
 std::string list(const Joints &q, double scale) {
@@ -81,26 +91,74 @@ V4Driver::V4Driver(const Config &c, TransportFactory factory)
     : config_(c), transport_(std::move(factory)) {
   if (!transport_)
     transport_ = [c]() { return std::make_unique<TcpTransport>(c); };
+  if (!c.audit_directory.empty()) {
+    if (!std::filesystem::create_directory(c.audit_directory))
+      throw Failure(INVALID_GOAL, "audit directory must be new");
+    command_audit_.open(c.audit_directory + "/commands.csv");
+    feedback_audit_.open(c.audit_directory + "/feedback.bin", std::ios::binary);
+    if (!command_audit_ || !feedback_audit_)
+      throw Failure(INVALID_GOAL, "cannot open audit files");
+    command_audit_ << "host_utc_ns,latency_s,command,reply_or_error\n";
+  }
 }
 V4Driver::~V4Driver() = default;
 std::string V4Driver::call(const std::string &command) {
-  // One bounded connection per command prevents a delayed reply poisoning a
-  // later query, and gives Stop its own connection rather than a planning
-  // transport mutex.
-  auto transport = transport_();
-  std::string raw;
+  // Reuse a single ordered stream: per-command connection setup caused
+  // intermittent query timeouts in the real burst test. The real controller
+  // rejects a second command connection from this host, so Stop must use the
+  // same stream. An in-flight call can delay Stop by its bounded I/O deadline;
+  // callers must budget that latency. Never retry an ambiguous command.
+  auto query = [&](CommandTransport &transport) {
+    const auto start = Clock::now();
+    auto audit = [&](const std::string &value) {
+      if (!command_audit_.is_open())
+        return;
+      auto escape = [](const std::string &s) {
+        std::string out;
+        for (char c : s) {
+          out += c;
+          if (c == '\"')
+            out += '\"';
+        }
+        return out;
+      };
+      auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+                    std::chrono::system_clock::now().time_since_epoch())
+                    .count();
+      command_audit_
+          << ns << "," << std::setprecision(9)
+          << std::chrono::duration<double>(Clock::now() - start).count()
+          << ",\"" << escape(command) << "\",\"" << escape(value) << "\"\n";
+    };
+    std::string raw;
+    try {
+      raw = transport.query(command);
+    } catch (const QueryFailure &e) {
+      audit(std::string(e.what()) + "; partial=" + e.partial_reply);
+      throw Failure(EXECUTION_FAILED,
+                    std::string(e.what()) +
+                        "; partial reply: " + e.partial_reply);
+    }
+    audit(raw);
+    auto reply = parse_dashboard_reply(raw, command);
+    if (reply.error != 0)
+      throw ControllerRejected("controller error " +
+                               std::to_string(reply.error) + " for " + command);
+    return reply.payload;
+  };
+  std::lock_guard<std::mutex> lock(command_mutex_);
+  if (!command_transport_)
+    command_transport_ = transport_();
   try {
-    raw = transport->query(command);
-  } catch (const QueryFailure &e) {
-    throw Failure(EXECUTION_FAILED, std::string(e.what()) +
-                                        "; partial reply: " + e.partial_reply);
+    return query(*command_transport_);
+  } catch (const ControllerRejected &) {
+    // A matching, well-formed negative reply does not corrupt the stream.
+    // Keep its exclusive session available for the next IK seed or Stop.
+    throw;
+  } catch (...) {
+    command_transport_.reset();
+    throw;
   }
-  auto reply = parse_dashboard_reply(raw, command);
-  if (reply.error != 0)
-    throw Failure(EXECUTION_FAILED, "controller error " +
-                                        std::to_string(reply.error) + " for " +
-                                        command);
-  return reply.payload;
 }
 Transform V4Driver::fk(const Joints &q) {
   return sdkPose(
@@ -132,6 +190,15 @@ Feedback V4Driver::readFeedback() {
       feedback_socket_->exact(
           b.data(), b.size(),
           static_cast<int>(std::max<int64_t>(1, remaining)));
+      if (feedback_audit_.is_open()) {
+        const int64_t ns =
+            std::chrono::duration_cast<std::chrono::nanoseconds>(
+                std::chrono::system_clock::now().time_since_epoch())
+                .count();
+        feedback_audit_.write(reinterpret_cast<const char *>(&ns), sizeof(ns));
+        feedback_audit_.write(reinterpret_cast<const char *>(b.data()),
+                              b.size());
+      }
       if (!sequence_.accept(b))
         continue;
       Feedback f;

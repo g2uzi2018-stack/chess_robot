@@ -5,8 +5,10 @@ This package delivers software for a six-axis Nova5 arm. It defaults to passive
 never initializes the cable reference automatically. The integrated source has
 been built and tested on AGX / ROS 2 Humble. See the delivered acceptance report
 for exact evidence. Hardware ServoJ/Stop certification remains outstanding.
-There is no collision environment or ACM. A geometric plan is not collision
-clearance.
+The launch now loads a sampled geometry/Jacobian guard for the supplied Nova5,
+camera and AG95 model. It includes the user-specified table plane and documented
+adjacency exclusions. It is not continuous collision checking or a complete
+scene model. See `docs/validation/business-node-2026-10-25.md` for real tests.
 
 ## Build and offline validation on AGX
 
@@ -56,13 +58,19 @@ provided as purported safe examples.
   lengths/angles are metres/radians, SDK positions are mm/degrees with rotation
   `Rz * Ry * Rx`. Every query has a bounded whole-operation timeout, error and
   matching-echo check. Unterminated controller notice bytes remain diagnostic.
-  A new connection per query isolates partial replies and lets Stop use an
-  independent connection. Read feedback is 1440-byte common-subset framing on
-  30004. Identical duplicate packets never refresh host freshness; altered equal
-  or regressing controller timestamps invalidate trust. No controller clock
+  Wire numbers use decimal notation; the real controller rejects exponent
+  notation in near-zero Euler angles. Commands share one ordered connection:
+  this controller rejects a second command session from the same host. Stop
+  uses that same session, with a separate acknowledgement budget. A valid
+  controller rejection preserves the session; ambiguous transport/framing
+  failures discard it without retrying motion. Read feedback is 1440-byte
+  common-subset framing on 30004. All equal timestamp packets are discarded
+  without refreshing freshness or advancing twist; real firmware can repeat a
+  millisecond timestamp with a changed payload. Regressing timestamps still
+  invalidate trust. No controller clock
   synchronization is assumed. Reconnection never restores reference validity.
 * `Model`/`Tracker` from `chess_robot_twist`: authoritative URDF geometry and
-  whole-arm framed-rod twist; the exported target is linked directly. Measured
+  whole-arm geometric rotation policy; the exported target is linked directly. Measured
   feedback alone advances the live tracker under a short mutex. Planning copies
   its full continuous history; invalid geometry/phase/joint jumps fail explicitly.
   No joint angle wrapping or turn guessing occurs. All planner and executor
@@ -71,8 +79,11 @@ provided as purported safe examples.
 * `Planner`: checked PTP transfers/Home and incremental seeded IK for vertical
   descent/retreat. Current and Home IK seeds are candidates; both SDK FK(IK) and
   URDF FK must agree with the requested TCP. Candidates are selected using configured positive weights for duration and
-  endpoint absolute net twist, total twist and geometric energy. Hard path limits
-  remain mandatory regardless of these preferences. There is no hidden lateral or orientation transfer
+  endpoint absolute net twist, total twist and geometric energy. This weighted
+  preference is not an absolute minimum-twist guarantee: a much faster solution
+  may retain more twist. Motion profile duration changes the tradeoff; the tests
+  include an FK-verified 330° / -30° equivalent pair. Hard path limits remain
+  mandatory regardless of the preference. There is no hidden lateral or orientation transfer
   in DESCEND/RETREAT. They require current XY and attitude already aligned within
   configured tolerances, preserve actual model XY/attitude exactly as the desired
   line, and check every interpolated FK against it. The actual arm remains subject
@@ -84,7 +95,9 @@ provided as purported safe examples.
   dwell. The common feedback subset does not validate a firmware-dependent queue
   completion offset: idle mode plus measured arrival is the supported completion
   evidence. An owned ambiguous motion send is stopped on fault/cancel/shutdown,
-  and fresh stationary idle feedback must verify Stop. A stop verification failure
+  and fresh stationary idle feedback must verify Stop. Stop can wait behind a
+  bounded in-flight query; its total deadline includes command connection/I/O
+  and acknowledgement budgets plus the measured dwell. A stop verification failure
   returns STOP_FAILED even when the ROS terminal status is canceled. Passive
   monitoring and plan-only jobs never own motion and never issue Stop.
 * `node.cpp`: ROS transport only, one joined task worker and one joined feedback
@@ -118,8 +131,41 @@ The fixture is external to this C++ node; there is no synthetic joint generator
 in the production driver. Fixture state never reports hardware_certified=true.
 
 If Stop acknowledgement or measured stop verification fails, the node latches
-FAULT and refuses goals and reference initialization. On-site recovery followed
-by a node restart is required. A fault cannot be cleared by submitting Home.
+FAULT and refuses goals and reference initialization. Establish real stationary
+idle feedback and resolve the failure before restarting with an explicitly
+verified Home reference. A fault cannot be cleared by submitting Home.
+
+## Bounded hardware commissioning
+
+`config/commissioning.yaml` is an overlay for explicit local acceptance. Its saved
+`hardware.enable` remains false. Backend `commissioning` uses the same production
+Planner, V4 driver and Executor, while `hardware_certified` remains false. It
+does not set the production verification booleans to true.
+
+This backend requires a loaded GeometryGuard, joint displacement from Home at
+most 0.12 rad and TCP radius at most 0.04 m (template: 0.1 rad / 0.03 m), software
+joint caps at most 0.02 rad/s and 0.05 rad/s², profiles no faster than those caps,
+freshness at most 0.1 s, tracking tolerance at most 0.01 rad and net/total twist
+bounds at most 20°. These velocity/acceleration caps constrain the planned
+trajectory, not the controller's physical servo response. The commissioning
+measured-speed trip threshold is `1.5 * joint_velocity_cap + 0.002 rad/s`
+(template: 0.032 rad/s); actual feedback is recorded separately. Every execution
+sample is checked before the first ServoJ; measured feedback is checked during
+execution. It is a local test mode, not a global workspace authorization.
+
+The optional `safety.model_file` loads the geometry exported by
+`tools/analysis/workspace_analysis.py --probe-only`: table z=-0.010 m with 20 mm
+clearance, moving robot plus the 21-opening gripper envelope, 10 mm nonadjacent
+group separation, 5° joint margin, normalized Jacobian sigma_min >=0.05 and
+condition <=80. Fixed/tool and directly adjacent groups are excluded. FK, TCP
+and joint bounds must match the live node model. Regenerate the file after model
+or attachment changes. The geometry file's provenance and exclusions are the
+same as `docs/analysis/arm-workspace-2026-10-24.md`.
+
+`audit.directory` optionally records real command/reply latency and raw feedback
+for acceptance. It must name a new directory with an existing parent. Raw
+feedback records consist of an int64 host UTC nanosecond receipt followed by
+the 1440 controller bytes, little endian. It is disabled by default.
 
 ## Sampling and remaining acceptance
 
@@ -145,14 +191,14 @@ physical calibration. Workspace and caps require operator verification; URDF
 velocity/effort zeros are never used as operating limits. The 0.25 m approach
 clearance is a configurable task parameter, not a clearance measurement at Home.
 
-Hardware execution requires backend=hardware AND all five booleans under
+Production hardware execution requires backend=hardware AND all five booleans under
 `hardware` true. All default to false. Setting them is an operator attestation,
 not automatic certification: verify TCP calibration, joint/software limits,
 workspace, physical cable reference/twist range, SDK/URDF FK equivalence, actual
 ServoJ timing/ACK latency, interpolation/tracking, Stop behavior/latency and
 command ownership on the target controller before any physical acceptance.
-ServoJ support exists in code but remains uncertified. Per-command connection
-setup may exceed 30 ms on a controller and will cause schedule-overrun failure;
-measure this before enabling, and use a validated persistent transport if needed.
+ServoJ support remains subject to the measured local acceptance scope. An
+ordered persistent transport avoids per-command connection setup, but ACK
+latency and host scheduling can still exceed the 30 ms period and cause failure.
 No native MovJ/MovL bypass is offered. This package cannot prevent commands from
 other controller clients; deployment must enforce exclusive motion ownership.

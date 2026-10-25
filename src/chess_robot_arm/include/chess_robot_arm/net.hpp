@@ -164,9 +164,7 @@ public:
     try {
       while (response.size() < 16384) {
         char c;
-        exact_until(
-            &c, 1,
-            std::min(deadline, Steady::now() + std::chrono::milliseconds(500)));
+        exact_until(&c, 1, deadline);
         response += c;
         if (c == ';')
           return response;

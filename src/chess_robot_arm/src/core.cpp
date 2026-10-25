@@ -25,8 +25,9 @@ double maxSpeed(const Feedback &f) {
 }
 } // namespace
 void Config::validate() const {
-  require(backend == "read_only" || backend == "hardware",
-          "backend must be read_only or hardware");
+  require(backend == "read_only" || backend == "hardware" ||
+              backend == "commissioning",
+          "backend must be read_only, hardware or commissioning");
   require(!urdf.empty(), "urdf_file is required");
   in_addr address{};
   require(inet_pton(AF_INET, ip.c_str(), &address) == 1,
@@ -34,7 +35,8 @@ void Config::validate() const {
   require(!test_fixture || ip == "127.0.0.1",
           "test_fixture requires IPv4 loopback");
   require(dashboard_port > 0 && dashboard_port < 65536 && feedback_port > 0 &&
-              feedback_port < 65536 && timeout_ms > 0 && timeout_ms <= 5000,
+              feedback_port < 65536 && timeout_ms > 0 && timeout_ms <= 5000 &&
+              stop_ack_timeout_ms > 0 && stop_ack_timeout_ms <= 5000,
           "invalid network bounds");
   for (size_t i = 0; i < 6; ++i)
     require(std::isfinite(home[i]) && positive(velocity[i]) &&
@@ -83,7 +85,8 @@ void Config::validate() const {
               sample_period >= 0.004 && sample_period <= 0.1 &&
               max_samples >= 2 && max_samples <= 100000 && servo_ahead >= 20 &&
               servo_ahead <= 100 && servo_gain >= 200 && servo_gain <= 1000 &&
-              stop_timeout > 2 * double(timeout_ms) / 1000 + dwell,
+              stop_timeout >
+                  (2 * double(timeout_ms) + stop_ack_timeout_ms) / 1000 + dwell,
           "sampling or ServoJ configuration out of bounds");
   for (double weight : {cost_duration, cost_net, cost_total, cost_energy})
     require(positive(weight), "invalid candidate cost weight");
@@ -96,8 +99,28 @@ void Config::validate() const {
     for (size_t j = 0; j < i; ++j)
       require(profiles[i].name != profiles[j].name, "duplicate profile");
   }
+  if (backend == "commissioning") {
+    require(!test_fixture && !safety_model_file.empty(),
+            "commissioning requires real geometry guard");
+    require(positive(commissioning_joint_radius) &&
+                commissioning_joint_radius <= .12 &&
+                positive(commissioning_tcp_radius) &&
+                commissioning_tcp_radius <= .04 && freshness <= .1 &&
+                max_tracking_error <= .01 &&
+                twist_limits.net_limit_rad <= pi / 9 &&
+                twist_limits.total_limit_rad <= pi / 9,
+            "commissioning envelope/feedback/twist limits too wide");
+    for (size_t j = 0; j < 6; ++j)
+      require(velocity[j] <= .02 && acceleration[j] <= .05,
+              "commissioning joint caps too high");
+    for (const auto &p : profiles)
+      require(p.speed <= .02 && p.acceleration <= .05,
+              "commissioning profile too fast");
+  }
 }
 bool Config::hardwareAllowed() const {
+  if (backend == "commissioning")
+    return enable && !test_fixture && !safety_model_file.empty();
   return backend == "hardware" && enable && tcp_verified && limits_verified &&
          execution_verified && servo_certified;
 }
@@ -211,8 +234,10 @@ void State::initialize() {
 }
 Planner::Planner(const Config &c,
                  std::shared_ptr<const chess_robot_twist::Model> m,
-                 Kinematics &k, std::function<void()> cb)
-    : config_(c), model_(m), kinematics_(k), checkpoint_(std::move(cb)) {}
+                 Kinematics &k, std::function<void()> cb,
+                 std::function<void(const Joints &)> safety_check)
+    : config_(c), model_(m), kinematics_(k), checkpoint_(std::move(cb)),
+      safety_check_(std::move(safety_check)) {}
 void Planner::check(const Joints &q, chess_robot_twist::Tracker &tracker,
                     bool downward) {
   checkpoint_();
@@ -222,21 +247,31 @@ void Planner::check(const Joints &q, chess_robot_twist::Tracker &tracker,
   tracker.advance(q);
   if (!chess_robot_twist::withinLimits(tracker.metrics(), config_.twist_limits))
     throw Failure(PLANNING_FAILED, "geometric twist limit");
+  if (safety_check_)
+    safety_check_(q);
 }
 Joints Planner::solve(const Transform &tcp, const Joints &seed) {
   checkpoint_();
-  const auto flange = tcp * config_.flange_tcp.inverse();
-  auto q = kinematics_.ik(flange, seed);
-  if (!model_->withinJointBounds(q))
-    throw Failure(PLANNING_FAILED, "IK outside joint bounds");
-  auto sdk = kinematics_.fk(q) * config_.flange_tcp;
-  auto local = model_->tcp(q);
-  for (const auto &actual : {sdk, local})
-    if ((actual.translation() - tcp.translation()).norm() >
-            config_.position_tolerance ||
-        rotationDistance(actual, tcp) > config_.rotation_tolerance)
-      throw Failure(PLANNING_FAILED, "FK(IK) or SDK/model disagreement");
-  return q;
+  try {
+    const auto flange = tcp * config_.flange_tcp.inverse();
+    auto q = kinematics_.ik(flange, seed);
+    if (!model_->withinJointBounds(q))
+      throw Failure(PLANNING_FAILED, "IK outside joint bounds");
+    auto sdk = kinematics_.fk(q) * config_.flange_tcp;
+    auto local = model_->tcp(q);
+    for (const auto &actual : {sdk, local})
+      if ((actual.translation() - tcp.translation()).norm() >
+              config_.position_tolerance ||
+          rotationDistance(actual, tcp) > config_.rotation_tolerance)
+        throw Failure(PLANNING_FAILED, "FK(IK) or SDK/model disagreement");
+    return q;
+  } catch (const Failure &e) {
+    if (e.code == CANCELED || e.code == FEEDBACK_FAULT ||
+        e.code == PLANNING_FAILED)
+      throw;
+    throw Failure(PLANNING_FAILED,
+                  std::string("kinematics query: ") + e.what());
+  }
 }
 void Planner::timePath(Segment &s, const Profile &p) {
   // Global conservative dilation checks finite-difference velocity and
@@ -342,6 +377,8 @@ Segment Planner::vertical(const std::string &phase, const Joints &a,
   return s;
 }
 Plan Planner::plan(const Goal &g, const Snapshot &state) {
+  if (config_.backend == "commissioning" && !safety_check_)
+    throw Failure(HARDWARE_DISABLED, "commissioning geometry guard missing");
   if (static_cast<uint8_t>(g.operation) > static_cast<uint8_t>(Operation::Home))
     throw Failure(INVALID_GOAL, "unknown operation");
   if (!state.fresh)
@@ -515,8 +552,10 @@ bool TaskGate::initialize(State &s, std::string &detail) {
   }
 }
 Executor::Executor(const Config &c, Driver &d, State &s, TaskGate &g,
-                   std::shared_ptr<const chess_robot_twist::Model> m)
-    : config_(c), driver_(d), state_(s), gate_(g), model_(m) {}
+                   std::shared_ptr<const chess_robot_twist::Model> m,
+                   std::function<void(const Joints &)> safety_check)
+    : config_(c), driver_(d), state_(s), gate_(g), model_(m),
+      safety_check_(std::move(safety_check)) {}
 void Executor::checkpoint() {
   if (gate_.canceled())
     throw Failure(CANCELED, "goal canceled");
@@ -529,6 +568,18 @@ void Executor::checkpoint() {
       !chess_robot_twist::withinLimits(s.tracker.metrics(),
                                        config_.twist_limits))
     throw Failure(EXECUTION_FAILED, "measured path policy violation");
+  if (safety_check_) {
+    try {
+      safety_check_(s.feedback.q);
+    } catch (const Failure &e) {
+      throw Failure(EXECUTION_FAILED,
+                    std::string("measured geometry: ") + e.what());
+    }
+  }
+  for (size_t j = 0; j < 6; ++j)
+    if (config_.backend == "commissioning" &&
+        std::abs(s.feedback.speed[j]) > config_.velocity[j] * 1.5 + .002)
+      throw Failure(EXECUTION_FAILED, "commissioning measured speed cap");
 }
 void Executor::waitUntil(Clock::time_point time) {
   while (Clock::now() < time) {
@@ -565,12 +616,19 @@ void Executor::arrival(const Joints &goal, double timeout) {
 void Executor::run(const Plan &plan) {
   if (!config_.hardwareAllowed())
     throw Failure(HARDWARE_DISABLED, "hardware prerequisites are false");
+  if (config_.backend == "commissioning" && !safety_check_)
+    throw Failure(HARDWARE_DISABLED, "commissioning geometry guard missing");
   if (plan.segments.empty() || plan.segments.size() > 3)
     throw Failure(EXECUTION_FAILED, "invalid execution plan");
   for (const auto &segment : plan.segments)
     if (segment.samples.size() < 2 ||
         segment.samples.size() > config_.max_samples)
       throw Failure(EXECUTION_FAILED, "invalid segment sample count");
+  // Check the whole exact execution plan before the first actuation call.
+  if (safety_check_)
+    for (const auto &segment : plan.segments)
+      for (const auto &sample : segment.samples)
+        safety_check_(sample.q);
   checkpoint();
   {
     auto initial = state_.snapshot();
@@ -631,7 +689,8 @@ void Executor::run(const Plan &plan) {
 void Executor::stopOwned() {
   if (!owned_)
     return;
-  // Separate driver connection; never serialized behind SDK planning queries.
+  // Uses the controller's one permitted command session. Any in-flight call
+  // has a bounded deadline and is included in the configured stop budget.
   auto deadline =
       Clock::now() + std::chrono::duration<double>(config_.stop_timeout);
   try {

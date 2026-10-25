@@ -1,5 +1,6 @@
 #include "chess_robot_arm/core.hpp"
 #include "chess_robot_arm/driver.hpp"
+#include "chess_robot_arm/geometry_guard.hpp"
 #include "chess_robot_arm/net.hpp"
 #include <chess_robot_interfaces/action/move_arm.hpp>
 #include <chess_robot_interfaces/msg/arm_state.hpp>
@@ -56,6 +57,12 @@ class ArmNode final : public rclcpp::Node {
   std::shared_ptr<const chess_robot_twist::Model> model_;
   std::unique_ptr<V4Driver> driver_;
   std::unique_ptr<State> state_;
+  std::unique_ptr<GeometryGuard> geometry_guard_;
+  std::function<void(const Joints &)> safetyCheck() {
+    if (!geometry_guard_)
+      return {};
+    return [this](const Joints &q) { geometry_guard_->check(q); };
+  }
   TaskGate gate_;
   std::atomic<bool> shutdown_{false}, feedback_shutdown_{false};
   std::thread feedback_thread_, worker_thread_;
@@ -104,6 +111,8 @@ class ArmNode final : public rclcpp::Node {
     c.dashboard_port = param("controller.dashboard_port", c.dashboard_port);
     c.feedback_port = param("controller.feedback_port", c.feedback_port);
     c.timeout_ms = param("controller.timeout_ms", c.timeout_ms);
+    c.stop_ack_timeout_ms =
+        param("controller.stop_ack_timeout_ms", c.stop_ack_timeout_ms);
     auto h = array("home.joint_positions_rad",
                    std::vector<double>(c.home.begin(), c.home.end()), 6);
     std::copy(h.begin(), h.end(), c.home.begin());
@@ -174,6 +183,10 @@ class ArmNode final : public rclcpp::Node {
     PARAM(limits_verified, "hardware.limits_verified");
     PARAM(execution_verified, "hardware.execution_profile_verified");
     PARAM(servo_certified, "hardware.servoj_certified");
+    PARAM(safety_model_file, "safety.model_file");
+    PARAM(audit_directory, "audit.directory");
+    PARAM(commissioning_joint_radius, "commissioning.joint_radius_rad");
+    PARAM(commissioning_tcp_radius, "commissioning.tcp_radius_m");
 #undef PARAM
     int64_t count = param<int64_t>("sampling.max_samples", 20000);
     if (count < 2 || count > 100000)
@@ -255,24 +268,28 @@ class ArmNode final : public rclcpp::Node {
   void process(const std::shared_ptr<Handle> &h) {
     auto result = std::make_shared<Move::Result>();
     bool success = false;
-    Executor executor(config_, *driver_, *state_, gate_, model_);
+    Executor executor(config_, *driver_, *state_, gate_, model_, safetyCheck());
     try {
       if (shutdown_ || gate_.canceled())
         throw Failure(CANCELED, "canceled before planning");
       const auto goal = decode(*h->get_goal());
       auto planning_deadline = Clock::now() + std::chrono::duration<double>(
                                                   config_.planning_timeout);
-      Planner planner(config_, model_, *driver_, [this, planning_deadline]() {
-        if (Clock::now() > planning_deadline)
-          throw Failure(PLANNING_FAILED, "planning deadline exceeded");
-        if (shutdown_ || gate_.canceled())
-          throw Failure(CANCELED, "planning canceled");
-        auto s = state_->snapshot();
-        if (!s.fresh)
-          throw Failure(FEEDBACK_FAULT, "feedback lost during planning");
-        if (!s.reference)
-          throw Failure(REFERENCE_INVALID, "reference lost during planning");
-      });
+      Planner planner(
+          config_, model_, *driver_,
+          [this, planning_deadline]() {
+            if (Clock::now() > planning_deadline)
+              throw Failure(PLANNING_FAILED, "planning deadline exceeded");
+            if (shutdown_ || gate_.canceled())
+              throw Failure(CANCELED, "planning canceled");
+            auto s = state_->snapshot();
+            if (!s.fresh)
+              throw Failure(FEEDBACK_FAULT, "feedback lost during planning");
+            if (!s.reference)
+              throw Failure(REFERENCE_INVALID,
+                            "reference lost during planning");
+          },
+          safetyCheck());
       auto start = state_->snapshot();
       auto plan = planner.plan(goal, start);
       result->trajectory = trajectory(plan);
@@ -296,7 +313,9 @@ class ArmNode final : public rclcpp::Node {
       success = true;
     } catch (const std::exception &e) {
       auto failure = dynamic_cast<const Failure *>(&e);
-      result->code = failure ? failure->code : PLANNING_FAILED;
+      result->code =
+          failure ? failure->code
+                  : (executor.attempted() ? EXECUTION_FAILED : PLANNING_FAILED);
       result->detail = e.what();
       // executed means motion was attempted, including ambiguous send/ACK
       // outcomes.
@@ -389,7 +408,8 @@ class ArmNode final : public rclcpp::Node {
     msg.busy = v.busy;
     msg.feedback_fresh = s.fresh;
     msg.reference_valid = s.reference;
-    msg.hardware_certified = config_.hardwareAllowed() && !config_.test_fixture;
+    msg.hardware_certified = config_.backend == "hardware" &&
+                             config_.hardwareAllowed() && !config_.test_fixture;
     msg.simulated = config_.test_fixture;
     msg.controller_mode = s.feedback.mode;
     msg.diagnostic = s.diagnostic + (v.detail.empty() ? "" : "; " + v.detail);
@@ -435,6 +455,8 @@ public:
         config_.urdf, "base_link", "Link6", config_.flange_tcp, config_.home);
     if (!model_->withinJointBounds(config_.home))
       throw Failure(INVALID_GOAL, "Home outside URDF bounds");
+    if (!config_.safety_model_file.empty())
+      geometry_guard_ = std::make_unique<GeometryGuard>(config_, model_);
     driver_ = std::make_unique<V4Driver>(config_);
     state_ = std::make_unique<State>(config_, model_);
     state_pub_ = create_publisher<chess_robot_interfaces::msg::ArmState>(
@@ -505,11 +527,14 @@ public:
         create_wall_timer(std::chrono::milliseconds(50), [this] { publish(); });
     feedback_thread_ = std::thread([this] { feedbackLoop(); });
     worker_thread_ = std::thread([this] { workerLoop(); });
-    RCLCPP_INFO(
-        get_logger(),
-        "backend=%s, actuation prerequisites=%s; no automatic enable/reference",
-        config_.backend.c_str(),
-        config_.hardwareAllowed() ? "verified by configuration" : "false");
+    RCLCPP_INFO(get_logger(),
+                "backend=%s, actuation gate=%s; no automatic enable/reference",
+                config_.backend.c_str(),
+                config_.hardwareAllowed()
+                    ? (config_.backend == "commissioning"
+                           ? "bounded commissioning, uncertified"
+                           : "production attestations")
+                    : "disabled");
   }
   ~ArmNode() override {
     shutdown_ = true;

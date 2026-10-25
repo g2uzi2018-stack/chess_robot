@@ -35,18 +35,19 @@ inline void validate_feedback(const FeedbackFrame &b) {
 class FeedbackSequence {
   bool have_last_ = false;
   uint64_t last_ = 0;
-  FeedbackFrame last_frame_{};
 
 public:
   bool accept(const FeedbackFrame &b) {
     validate_feedback(b);
     const auto stamp = feedback_field<uint64_t>(b, 32);
-    if (have_last_ && stamp == last_ && b == last_frame_)
+    // TimeStamp is a millisecond wall-clock field, not a packet sequence.
+    // The real firmware can publish different payloads on the same tick.
+    // Discard them without refreshing freshness or advancing cable history.
+    if (have_last_ && stamp == last_)
       return false;
-    if (have_last_ && stamp <= last_)
+    if (have_last_ && stamp < last_)
       throw std::runtime_error("non-increasing controller timestamp");
     last_ = stamp;
-    last_frame_ = b;
     have_last_ = true;
     return true;
   }

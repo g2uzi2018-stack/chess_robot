@@ -1,0 +1,2556 @@
+{
+  "status": "PASS",
+  "mode": "read_only",
+  "motion_goals_attempted": 0,
+  "goals": [
+    {
+      "label": "grid_-0.35_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.35,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(-350.000037406,-750.000452440,474.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.04986714501865208,
+      "feedback_rows": 1,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351512748511198,
+        -0.5765186076960511,
+        0.2749880750340971
+      ]
+    },
+    {
+      "label": "grid_-0.25_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(-250.000037406,-750.000452440,474.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.04839365999214351,
+      "feedback_rows": 1,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351694329718473,
+        -0.5765184708407989,
+        0.27498755792334906
+      ]
+    },
+    {
+      "label": "grid_-0.15_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.15,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6845,
+      "elapsed_s": 6.954807467001956,
+      "feedback_rows": 136,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351301944105152,
+        -0.576518559515135,
+        0.2749869150271914
+      ],
+      "duration_s": 205.32
+    },
+    {
+      "label": "grid_-0.05_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5746,
+      "elapsed_s": 6.484660743008135,
+      "feedback_rows": 134,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351749480008638,
+        -0.5765190155103032,
+        0.27498794758888706
+      ],
+      "duration_s": 172.35
+    },
+    {
+      "label": "grid_0.05_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        0.05,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5746,
+      "elapsed_s": 6.610854577011196,
+      "feedback_rows": 136,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351427279528942,
+        -0.5765186810434083,
+        0.2749875331466297
+      ],
+      "duration_s": 172.35
+    },
+    {
+      "label": "grid_0.15_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6845,
+      "elapsed_s": 6.776851217990043,
+      "feedback_rows": 139,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351156953159493,
+        -0.5765184991315562,
+        0.27498755792334906
+      ],
+      "duration_s": 205.32
+    },
+    {
+      "label": "grid_0.25_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        0.25,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(249.999962594,-750.000452440,474.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.022887678002007306,
+      "feedback_rows": 6,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035197557301475,
+        -0.5765184282263797,
+        0.27498767890083875
+      ]
+    },
+    {
+      "label": "grid_0.35_-0.75_0.025",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.75,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(349.999962594,-750.000452440,474.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.04920130199752748,
+      "feedback_rows": 1,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351152945545853,
+        -0.5765193626867204,
+        0.2749882423367403
+      ]
+    },
+    {
+      "label": "grid_-0.35_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.35,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4984,
+      "elapsed_s": 6.193752496008528,
+      "feedback_rows": 121,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351449690892856,
+        -0.5765185602352166,
+        0.27498721362257045
+      ],
+      "duration_s": 149.49
+    },
+    {
+      "label": "grid_-0.25_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4080,
+      "elapsed_s": 5.806185428024037,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351005899893823,
+        -0.5765184714256796,
+        0.2749874382287242
+      ],
+      "duration_s": 122.37
+    },
+    {
+      "label": "grid_-0.15_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.15,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3939,
+      "elapsed_s": 5.7127699780103285,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350974622500783,
+        -0.5765186400246033,
+        0.27498709264519394
+      ],
+      "duration_s": 118.14
+    },
+    {
+      "label": "grid_-0.05_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3814,
+      "elapsed_s": 5.8754785869969055,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351792456040434,
+        -0.5765187838480909,
+        0.2749874101719282
+      ],
+      "duration_s": 114.39
+    },
+    {
+      "label": "grid_0.05_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        0.05,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3814,
+      "elapsed_s": 6.308539388002828,
+      "feedback_rows": 129,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351847431339053,
+        -0.5765184426947287,
+        0.27498729632269764
+      ],
+      "duration_s": 114.39
+    },
+    {
+      "label": "grid_0.15_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3939,
+      "elapsed_s": 5.800948468007846,
+      "feedback_rows": 118,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350861542709055,
+        -0.5765188622069544,
+        0.2749873294691138
+      ],
+      "duration_s": 118.14
+    },
+    {
+      "label": "grid_0.25_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        0.25,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4080,
+      "elapsed_s": 6.0176525239949115,
+      "feedback_rows": 122,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035113473280953,
+        -0.5765187845884363,
+        0.27498744916400136
+      ],
+      "duration_s": 122.37
+    },
+    {
+      "label": "grid_0.35_-0.65_0.025",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.65,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4984,
+      "elapsed_s": 6.203466250008205,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351549915998224,
+        -0.5765188619287748,
+        0.2749873294691195
+      ],
+      "duration_s": 149.49
+    },
+    {
+      "label": "grid_-0.35_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.35,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3850,
+      "elapsed_s": 5.817703851003898,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351441826608493,
+        -0.5765186026282635,
+        0.27498789613326446
+      ],
+      "duration_s": 115.47
+    },
+    {
+      "label": "grid_-0.25_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3837,
+      "elapsed_s": 5.777049921976868,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035155156217526,
+        -0.5765192404276718,
+        0.2749883230396748
+      ],
+      "duration_s": 115.08
+    },
+    {
+      "label": "grid_-0.15_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.15,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3951,
+      "elapsed_s": 5.792412805982167,
+      "feedback_rows": 118,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351187693789295,
+        -0.5765183334248216,
+        0.27498693980401095
+      ],
+      "duration_s": 118.5
+    },
+    {
+      "label": "grid_-0.05_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4010,
+      "elapsed_s": 5.869551932992181,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035165142286995,
+        -0.576518702128695,
+        0.274986991259206
+      ],
+      "duration_s": 120.269999999
+    },
+    {
+      "label": "grid_0.05_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        0.05,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3989,
+      "elapsed_s": 5.847568005003268,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350946799332826,
+        -0.5765187900050711,
+        0.2749878526709545
+      ],
+      "duration_s": 119.639999999
+    },
+    {
+      "label": "grid_0.15_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3936,
+      "elapsed_s": 5.732465184992179,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351842351843874,
+        -0.5765185148855032,
+        0.27498729632262736
+      ],
+      "duration_s": 118.05
+    },
+    {
+      "label": "grid_0.25_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        0.25,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3818,
+      "elapsed_s": 5.76505483299843,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351273365744863,
+        -0.5765186687570444,
+        0.2749873912405969
+      ],
+      "duration_s": 114.51
+    },
+    {
+      "label": "grid_0.35_-0.55_0.025",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.55,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3844,
+      "elapsed_s": 6.3536646729917265,
+      "feedback_rows": 129,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351250897501455,
+        -0.5765187898716934,
+        0.2749875910700759
+      ],
+      "duration_s": 115.29
+    },
+    {
+      "label": "grid_-0.35_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.35,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3958,
+      "elapsed_s": 5.935083404008765,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035112020710076,
+        -0.5765186972094745,
+        0.2749875331466297
+      ],
+      "duration_s": 118.71
+    },
+    {
+      "label": "grid_-0.25_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4101,
+      "elapsed_s": 6.02661564401933,
+      "feedback_rows": 123,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303521545036317,
+        -0.5765184265282751,
+        0.27498729632269764
+      ],
+      "duration_s": 123.0
+    },
+    {
+      "label": "grid_-0.15_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.15,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4071,
+      "elapsed_s": 6.790918451006291,
+      "feedback_rows": 138,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351235491012464,
+        -0.5765180757756024,
+        0.2749865623572265
+      ],
+      "duration_s": 122.1
+    },
+    {
+      "label": "grid_-0.05_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4205,
+      "elapsed_s": 5.944949322001776,
+      "feedback_rows": 121,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303521440124726,
+        -0.5765185278913761,
+        0.2749877368240813
+      ],
+      "duration_s": 126.12
+    },
+    {
+      "label": "grid_0.05_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        0.05,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4205,
+      "elapsed_s": 6.050296317000175,
+      "feedback_rows": 123,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351666137578857,
+        -0.5765188669055255,
+        0.2749875910700637
+      ],
+      "duration_s": 126.12
+    },
+    {
+      "label": "grid_0.15_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4077,
+      "elapsed_s": 5.874895398999797,
+      "feedback_rows": 121,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351376565160588,
+        -0.5765189544179995,
+        0.27498776868812635
+      ],
+      "duration_s": 122.28
+    },
+    {
+      "label": "grid_0.25_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        0.25,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4071,
+      "elapsed_s": 5.900973537005484,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350864517010752,
+        -0.5765188461744809,
+        0.2749875910699999
+      ],
+      "duration_s": 122.1
+    },
+    {
+      "label": "grid_0.35_-0.45_0.025",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.45,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3964,
+      "elapsed_s": 6.566630594985327,
+      "feedback_rows": 133,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351607688051993,
+        -0.5765189378812792,
+        0.27498764699607614
+      ],
+      "duration_s": 118.89
+    },
+    {
+      "label": "grid_-0.35_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.35,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4089,
+      "elapsed_s": 5.979659934004303,
+      "feedback_rows": 122,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030352394422284264,
+        -0.576518817164563,
+        0.27498744916382045
+      ],
+      "duration_s": 122.639999999
+    },
+    {
+      "label": "grid_-0.25_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4482,
+      "elapsed_s": 6.152369229996111,
+      "feedback_rows": 125,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035119802731523,
+        -0.5765190748666759,
+        0.27498744331864083
+      ],
+      "duration_s": 134.43
+    },
+    {
+      "label": "grid_-0.15_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.15,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5206,
+      "elapsed_s": 6.373204767995048,
+      "feedback_rows": 130,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351398919606497,
+        -0.5765188339164722,
+        0.2749873294691138
+      ],
+      "duration_s": 156.149999999
+    },
+    {
+      "label": "grid_-0.05_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5857,
+      "elapsed_s": 6.64173522600322,
+      "feedback_rows": 136,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035140056577228,
+        -0.5765192124154295,
+        0.27498832303975085
+      ],
+      "duration_s": 175.68
+    },
+    {
+      "label": "grid_0.05_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        0.05,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5857,
+      "elapsed_s": 6.7608216399967205,
+      "feedback_rows": 137,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351583687682024,
+        -0.5765186798832199,
+        0.27498709264512367
+      ],
+      "duration_s": 175.68
+    },
+    {
+      "label": "grid_0.15_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5224,
+      "elapsed_s": 6.348879368015332,
+      "feedback_rows": 131,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035143468964328,
+        -0.5765194830543845,
+        0.2749884199550702
+      ],
+      "duration_s": 156.69
+    },
+    {
+      "label": "grid_0.25_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        0.25,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4461,
+      "elapsed_s": 6.012400333973346,
+      "feedback_rows": 123,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351500076985664,
+        -0.5765191305847839,
+        0.27498756301324856
+      ],
+      "duration_s": 133.799999999
+    },
+    {
+      "label": "grid_0.35_-0.35_0.025",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.35,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4101,
+      "elapsed_s": 6.248377797979629,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035107246691941,
+        -0.5765189545513626,
+        0.27498803028906954
+      ],
+      "duration_s": 123.0
+    },
+    {
+      "label": "grid_-0.35_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.35,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4493,
+      "elapsed_s": 6.659433341992553,
+      "feedback_rows": 136,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303512255687688,
+        -0.5765189264056969,
+        0.2749877686882024
+      ],
+      "duration_s": 134.759999999
+    },
+    {
+      "label": "grid_-0.25_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5841,
+      "elapsed_s": 6.7197850109951105,
+      "feedback_rows": 136,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351578332820376,
+        -0.576518708749145,
+        0.2749876528413479
+      ],
+      "duration_s": 175.2
+    },
+    {
+      "label": "grid_-0.15_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.15,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "guard joint limit margin",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 3.9139155659941025,
+      "feedback_rows": 84,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035109184709687,
+        -0.5765188500825233,
+        0.2749873294691138
+      ]
+    },
+    {
+      "label": "grid_-0.05_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "kinematics query: controller error -1 for InverseKin(-49.998458952,-250.000298481,258.955462553,179.999763499,0.000033944,173.140364601,useJointNear=1,jointNear={46.717900000,-10.141000000,159.798800000,-59.657500000,-90.000100000,-36.422500000},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 1.991287270997418,
+      "feedback_rows": 40,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351183742912704,
+        -0.5765191966742975,
+        0.2749877439113498
+      ]
+    },
+    {
+      "label": "grid_0.05_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        0.05,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "kinematics query: controller error -1 for InverseKin(50.001452559,-249.999649641,258.955434068,179.999695381,0.000061341,173.140364601,useJointNear=1,jointNear={69.337700000,-10.141100000,159.798700000,-59.657400000,-90.000000000,-13.802700000},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 2.0476070099975914,
+      "feedback_rows": 41,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035140195079207,
+        -0.5765188175774346,
+        0.27498771076470063
+      ]
+    },
+    {
+      "label": "grid_0.15_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "guard joint limit margin",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 3.893508497014409,
+      "feedback_rows": 78,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351455873182234,
+        -0.5765189142811202,
+        0.2749877686882024
+      ]
+    },
+    {
+      "label": "grid_0.25_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        0.25,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5857,
+      "elapsed_s": 6.59066140797222,
+      "feedback_rows": 130,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351374409337623,
+        -0.5765189660384185,
+        0.27498738539512746
+      ],
+      "duration_s": 175.68
+    },
+    {
+      "label": "grid_0.35_-0.25_0.025",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4471,
+      "elapsed_s": 6.090057179972064,
+      "feedback_rows": 125,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351493789928897,
+        -0.5765191644755313,
+        0.2749880055123869
+      ],
+      "duration_s": 134.1
+    },
+    {
+      "label": "grid_-0.25_-0.65_0.1",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.65,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6218,
+      "elapsed_s": 7.25156217100448,
+      "feedback_rows": 146,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035140195079207,
+        -0.5765188175774346,
+        0.27498771076470063
+      ],
+      "duration_s": 186.51
+    },
+    {
+      "label": "grid_-0.05_-0.65_0.1",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.65,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4979,
+      "elapsed_s": 6.189276847988367,
+      "feedback_rows": 128,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351657583844376,
+        -0.5765186689187513,
+        0.2749875331466297
+      ],
+      "duration_s": 149.339999999
+    },
+    {
+      "label": "grid_0.15_-0.65_0.1",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.65,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5219,
+      "elapsed_s": 6.174454997002613,
+      "feedback_rows": 126,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351606869585213,
+        -0.5765189422933625,
+        0.27498776868812635
+      ],
+      "duration_s": 156.54
+    },
+    {
+      "label": "grid_0.35_-0.65_0.1",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.65,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: guard singularity threshold",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.3045141189941205,
+      "feedback_rows": 11,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351585333700366,
+        -0.5765190583825667,
+        0.27498808621526216
+      ]
+    },
+    {
+      "label": "grid_-0.25_-0.45_0.1",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.45,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4101,
+      "elapsed_s": 5.998546897986671,
+      "feedback_rows": 118,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350896960216877,
+        -0.5765190586608395,
+        0.2749880862153382
+      ],
+      "duration_s": 123.0
+    },
+    {
+      "label": "grid_-0.05_-0.45_0.1",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.45,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4073,
+      "elapsed_s": 5.879462532990146,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351339819215197,
+        -0.5765191524958951,
+        0.27498774391134395
+      ],
+      "duration_s": 122.16
+    },
+    {
+      "label": "grid_0.15_-0.45_0.1",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.45,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4065,
+      "elapsed_s": 5.845675188989844,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035148125875905,
+        -0.5765187774405454,
+        0.2749877107647767
+      ],
+      "duration_s": 121.919999999
+    },
+    {
+      "label": "grid_0.35_-0.45_0.1",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.45,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4215,
+      "elapsed_s": 5.892877429985674,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351290672905394,
+        -0.5765194174189924,
+        0.27498884015115455
+      ],
+      "duration_s": 126.419999999
+    },
+    {
+      "label": "grid_-0.25_-0.25_0.1",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.25,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5339,
+      "elapsed_s": 6.470925939007429,
+      "feedback_rows": 131,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351760840305796,
+        -0.5765189542729261,
+        0.27498803028907537
+      ],
+      "duration_s": 160.14
+    },
+    {
+      "label": "grid_-0.05_-0.25_0.1",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.25,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6974,
+      "elapsed_s": 7.837197251996258,
+      "feedback_rows": 159,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351688381185668,
+        -0.5765185029056034,
+        0.2749870347218868
+      ],
+      "duration_s": 209.19
+    },
+    {
+      "label": "grid_0.15_-0.25_0.1",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.25,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6343,
+      "elapsed_s": 7.50634810901829,
+      "feedback_rows": 155,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303521291181908,
+        -0.5765185633689303,
+        0.27498735424599363
+      ],
+      "duration_s": 190.26
+    },
+    {
+      "label": "grid_0.35_-0.25_0.1",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.25,
+        0.1
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4346,
+      "elapsed_s": 5.99225742300041,
+      "feedback_rows": 123,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351188822823408,
+        -0.5765191244835927,
+        0.27498774391142
+      ],
+      "duration_s": 130.35
+    },
+    {
+      "label": "grid_-0.25_-0.65_0.2",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.65,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(-250.000037406,-650.000452440,649.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.029427525005303323,
+      "feedback_rows": 5,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035122259446695,
+        -0.5765189424382546,
+        0.2749875070872515
+      ]
+    },
+    {
+      "label": "grid_-0.05_-0.65_0.2",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.65,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 13025,
+      "elapsed_s": 9.082178064010805,
+      "feedback_rows": 178,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350679805745465,
+        -0.5765189999007045,
+        0.2749879475889573
+      ],
+      "duration_s": 390.72
+    },
+    {
+      "label": "grid_0.15_-0.65_0.2",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.65,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: guard singularity threshold",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.23362089399597608,
+      "feedback_rows": 15,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035202083903401,
+        -0.576518349898539,
+        0.27498697679872286
+      ]
+    },
+    {
+      "label": "grid_0.35_-0.65_0.2",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.65,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(349.999962594,-650.000452440,649.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.04101642401656136,
+      "feedback_rows": 1,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350487960613102,
+        -0.5765183949398494,
+        0.274986857104086
+      ]
+    },
+    {
+      "label": "grid_-0.25_-0.45_0.2",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.45,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5481,
+      "elapsed_s": 6.44133689100272,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351011210541456,
+        -0.5765192847511064,
+        0.27498806143858257
+      ],
+      "duration_s": 164.399999999
+    },
+    {
+      "label": "grid_-0.05_-0.45_0.2",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.45,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5214,
+      "elapsed_s": 6.164641812007176,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351808637146864,
+        -0.5765186966244273,
+        0.2749876528413479
+      ],
+      "duration_s": 156.39
+    },
+    {
+      "label": "grid_0.15_-0.45_0.2",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.45,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5214,
+      "elapsed_s": 6.290886895003496,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035146105119826,
+        -0.5765184989979315,
+        0.2749872963226216
+      ],
+      "duration_s": 156.39
+    },
+    {
+      "label": "grid_0.35_-0.45_0.2",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.45,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6348,
+      "elapsed_s": 7.103869266982656,
+      "feedback_rows": 145,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351607688051993,
+        -0.5765189378812792,
+        0.27498764699607614
+      ],
+      "duration_s": 190.41
+    },
+    {
+      "label": "grid_-0.25_-0.25_0.2",
+      "operation": 3,
+      "target_m": [
+        -0.25,
+        -0.25,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4963,
+      "elapsed_s": 6.277602738991845,
+      "feedback_rows": 129,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035181283153789,
+        -0.5765193054819086,
+        0.2749880614386464
+      ],
+      "duration_s": 148.86
+    },
+    {
+      "label": "grid_-0.05_-0.25_0.2",
+      "operation": 3,
+      "target_m": [
+        -0.05,
+        -0.25,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4973,
+      "elapsed_s": 6.370767115004128,
+      "feedback_rows": 131,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035140189389324,
+        -0.576518817883996,
+        0.2749875910699999
+      ],
+      "duration_s": 149.16
+    },
+    {
+      "label": "grid_0.15_-0.25_0.2",
+      "operation": 3,
+      "target_m": [
+        0.15,
+        -0.25,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4962,
+      "elapsed_s": 6.300532852008473,
+      "feedback_rows": 129,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351342793537173,
+        -0.5765191364632288,
+        0.2749880055123811
+      ],
+      "duration_s": 148.829999999
+    },
+    {
+      "label": "grid_0.35_-0.25_0.2",
+      "operation": 3,
+      "target_m": [
+        0.35,
+        -0.25,
+        0.2
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5099,
+      "elapsed_s": 6.282738537003752,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351104082812892,
+        -0.5765187841265568,
+        0.2749874101719224
+      ],
+      "duration_s": 152.94
+    },
+    {
+      "label": "edge_0",
+      "operation": 3,
+      "target_m": [
+        0,
+        -0.1,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(-0.000037406,-100.000452440,474.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.06810162198962644,
+      "feedback_rows": 7,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351590097643075,
+        -0.5765190327026686,
+        0.27498812648965376
+      ]
+    },
+    {
+      "label": "edge_1",
+      "operation": 3,
+      "target_m": [
+        0,
+        -0.15,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: guard self clearance",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.3400096370023675,
+      "feedback_rows": 7,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351506025621092,
+        -0.5765190985194975,
+        0.274988086215268
+      ]
+    },
+    {
+      "label": "edge_2",
+      "operation": 3,
+      "target_m": [
+        0,
+        -0.2,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "kinematics query: controller error -1 for InverseKin(0.001174159,-199.999879796,292.910781370,179.999681716,0.000088725,173.140364600,useJointNear=1,jointNear={47.546200000,-40.708200000,159.771800000,-29.063400000,-90.000100000,-35.594100000},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 1.732810964982491,
+      "feedback_rows": 35,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351456691649015,
+        -0.5765189098690371,
+        0.2749876469961522
+      ]
+    },
+    {
+      "label": "edge_3",
+      "operation": 3,
+      "target_m": [
+        0,
+        -0.79,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: kinematics query: controller error -1 for InverseKin(-0.000037406,-790.000452440,474.999999999,179.999870034,-0.000004842,173.140189978,useJointNear=1,jointNear={79.490013123,16.960006714,83.389991760,-10.350000381,-90.000000000,-3.649987698},user=0,tool=0)",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 0.0394146449980326,
+      "feedback_rows": 1,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035166381409189,
+        -0.5765186353340073,
+        0.274986970953074
+      ]
+    },
+    {
+      "label": "edge_4",
+      "operation": 3,
+      "target_m": [
+        -0.5,
+        -0.5,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4210,
+      "elapsed_s": 5.910220208985265,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035125805349183,
+        -0.5765187961064281,
+        0.27498767177278294
+      ],
+      "duration_s": 126.269999999
+    },
+    {
+      "label": "edge_5",
+      "operation": 3,
+      "target_m": [
+        0.5,
+        -0.5,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4210,
+      "elapsed_s": 5.914568080013851,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303514326912903,
+        -0.5765186518709173,
+        0.2749870926451179
+      ],
+      "duration_s": 126.269999999
+    },
+    {
+      "label": "edge_6",
+      "operation": 3,
+      "target_m": [
+        -0.65,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4108,
+      "elapsed_s": 5.873377000010805,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035132666927908,
+        -0.5765192233804087,
+        0.2749878825378142
+      ],
+      "duration_s": 123.209999999
+    },
+    {
+      "label": "edge_7",
+      "operation": 3,
+      "target_m": [
+        0.65,
+        -0.25,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4101,
+      "elapsed_s": 7.1159135549969506,
+      "feedback_rows": 146,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035148125875905,
+        -0.5765187774405454,
+        0.2749877107647767
+      ],
+      "duration_s": 123.0
+    },
+    {
+      "label": "edge_8",
+      "operation": 3,
+      "target_m": [
+        0,
+        0.3,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.529018642774145,
+        0.46919122942452157,
+        -0.5290174824287588,
+        0.4691901204343992
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "geometric twist limit",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 3.171320210007252,
+      "feedback_rows": 67,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035138035794285,
+        -0.5765189339732948,
+        0.2749879085970173
+      ]
+    },
+    {
+      "label": "yaw_-180",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.4691912294245215,
+        -0.5290186427741449,
+        -0.46919012043439917,
+        -0.5290174824287587
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4521,
+      "elapsed_s": 6.191393801011145,
+      "feedback_rows": 123,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351819940539645,
+        -0.5765186356936425,
+        0.2749876158467156
+      ],
+      "duration_s": 135.6
+    },
+    {
+      "label": "yaw_-90",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.705840969679034,
+        -0.04230436968036927,
+        -0.705839365016507,
+        -0.04230433336671393
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4080,
+      "elapsed_s": 6.036505345982732,
+      "feedback_rows": 122,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035086814227194,
+        -0.5765185825383254,
+        0.27498749415484863
+      ],
+      "duration_s": 122.37
+    },
+    {
+      "label": "yaw_-45",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.6683012064877045,
+        0.23102950369719172,
+        -0.6682997100762051,
+        0.23102892316887105
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3959,
+      "elapsed_s": 5.766754609998316,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351224281756767,
+        -0.5765189781517189,
+        0.27498790859702316
+      ],
+      "duration_s": 118.74
+    },
+    {
+      "label": "yaw_45",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.3091977862641602,
+        0.6359228437010538,
+        -0.3091971386369537,
+        0.635921375082823
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3959,
+      "elapsed_s": 5.773713637987385,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351131567450205,
+        -0.5765186359721339,
+        0.27498761584670983
+      ],
+      "duration_s": 118.74
+    },
+    {
+      "label": "yaw_90",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.04230436968036938,
+        0.705840969679034,
+        -0.04230433336671404,
+        0.705839365016507
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4080,
+      "elapsed_s": 5.8928534270089585,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351069492586803,
+        -0.5765189705840386,
+        0.27498776868812635
+      ],
+      "duration_s": 122.37
+    },
+    {
+      "label": "yaw_180",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        -0.4691912294245214,
+        0.5290186427741449,
+        0.46919012043439906,
+        0.5290174824287587
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4521,
+      "elapsed_s": 6.2653148749959655,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303518108053143,
+        -0.5765186849359053,
+        0.274986812358544
+      ],
+      "duration_s": 135.6
+    }
+  ],
+  "home_sha256": "165f3ec9727f78bd5069538aa0029fd96275574dfd882db472a08b36a1be634a",
+  "initial": {
+    "tcp_m": [
+      0.03035100200610001,
+      -0.5765193343676036,
+      0.27498836203143473
+    ],
+    "quaternion_xyzw": [
+      0.529018642774145,
+      0.46919122942452157,
+      -0.5290174824287588,
+      0.4691901204343992
+    ],
+    "joints_rad": [
+      1.3873619188099282,
+      0.29600795831732624,
+      1.4554280552146095,
+      -0.18064110154136825,
+      -1.5707963267948966,
+      -0.06370526421513609
+    ],
+    "mode": 5
+  },
+  "final": {
+    "mode": 5,
+    "reference_valid": true,
+    "fresh": true,
+    "joints_rad": [
+      1.3873628509163098,
+      0.29600795831732624,
+      1.4554313841659723,
+      -0.18064253299045419,
+      -1.5707968594271147,
+      -0.06370430298043014
+    ],
+    "tcp_m": [
+      0.030351629223982976,
+      -0.5765188217918265,
+      0.2749873294691138
+    ],
+    "net_twist_rad": 8.78010867289003e-07,
+    "total_twist_rad": 8.78010867289003e-07
+  }
+}

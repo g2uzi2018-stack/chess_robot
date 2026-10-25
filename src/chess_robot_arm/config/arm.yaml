@@ -8,6 +8,7 @@ chess_robot_arm:
       dashboard_port: 29999
       feedback_port: 30004
       timeout_ms: 500
+      stop_ack_timeout_ms: 1500
     # Nominal URDF transform, NOT a measured physical TCP calibration.
     tcp:
       translation_m: [0.0, 0.0, 0.2]
@@ -55,10 +56,14 @@ chess_robot_arm:
     planning_timeout_s: 30.0
     gripper_timeout_s: 15.0
     arrival_timeout_s: 10.0
-    stop_timeout_s: 2.0
+    stop_timeout_s: 4.0
     hardware:
       enable: false
       tcp_verified: false
       limits_verified: false
       execution_profile_verified: false
       servoj_certified: false
+    # Optional sampled collision/Jacobian guard exported from this robot URDF.
+    # An explicit matching file is mandatory for backend=commissioning.
+    safety: {model_file: ""}
+    commissioning: {joint_radius_rad: 0.1, tcp_radius_m: 0.03}

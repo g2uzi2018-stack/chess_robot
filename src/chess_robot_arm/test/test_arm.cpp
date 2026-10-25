@@ -1,6 +1,7 @@
 #include "chess_robot_arm/core.hpp"
 #include "chess_robot_arm/dashboard_reply.hpp"
 #include "chess_robot_arm/driver.hpp"
+#include "chess_robot_arm/geometry_guard.hpp"
 #include "chess_robot_arm/net.hpp"
 #include <Eigen/Dense>
 #include <cstring>
@@ -116,7 +117,9 @@ class Loopback {
 
 public:
   int port = 0;
-  explicit Loopback(const std::vector<std::string> &fragments) {
+  explicit Loopback(
+      const std::vector<std::string> &fragments,
+      std::chrono::milliseconds delay = std::chrono::milliseconds(0)) {
     fd_ = socket(AF_INET, SOCK_STREAM, 0);
     if (fd_ < 0)
       throw std::runtime_error("fixture socket");
@@ -130,7 +133,7 @@ public:
     if (getsockname(fd_, reinterpret_cast<sockaddr *>(&a), &len))
       throw std::runtime_error("fixture getsockname");
     port = ntohs(a.sin_port);
-    thread_ = std::thread([this, fragments] {
+    thread_ = std::thread([this, fragments, delay] {
       pollfd p{fd_, POLLIN, 0};
       if (poll(&p, 1, 2000) <= 0)
         return;
@@ -141,6 +144,7 @@ public:
       pollfd in{peer, POLLIN, 0};
       if (poll(&in, 1, 1000) > 0)
         (void)recv(peer, command, sizeof(command), 0);
+      std::this_thread::sleep_for(delay);
       for (const auto &f : fragments) {
         size_t off = 0;
         while (off < f.size()) {
@@ -202,6 +206,16 @@ TEST(Protocol, RotationUnitsAndBranchBoundaries) {
     EXPECT_LT((t.translation() - round.translation()).norm(), 1e-12);
   }
 }
+TEST(Protocol, StopUsesWholeDedicatedAcknowledgementBudget) {
+  Loopback server({"0,{},Stop();"}, std::chrono::milliseconds(600));
+  auto c = config();
+  c.backend = "hardware";
+  c.dashboard_port = server.port;
+  c.enable = c.tcp_verified = c.limits_verified = c.execution_verified =
+      c.servo_certified = true;
+  V4Driver driver(c);
+  EXPECT_NO_THROW(driver.stop());
+}
 TEST(Protocol, TypedSdkAndGatedZeroActuation) {
   auto c = config();
   std::vector<std::string> calls;
@@ -233,6 +247,168 @@ TEST(Protocol, ControllerErrorAndEchoRefused) {
   });
   EXPECT_THROW(mismatch.fk(c.home), std::runtime_error);
 }
+TEST(Protocol, NearZeroAnglesUseDecimalWireFormat) {
+  auto c = config();
+  std::string command;
+  V4Driver driver(c, [&] {
+    return std::make_unique<ReplyTransport>([&](const std::string &s) {
+      command = s;
+      return "0,{0,0,0,0,0,0}," + s + ";";
+    });
+  });
+  auto target = sdkPose({{30, -576, 480, 179.9997, .000034052, 173.14}});
+  driver.ik(target, c.home);
+  const auto numeric =
+      command.substr(command.find('(') + 1,
+                     command.find(",useJointNear") - command.find('(') - 1);
+  EXPECT_EQ(numeric.find_first_of("eE"), std::string::npos);
+  EXPECT_NE(command.find("0.000034052"), std::string::npos);
+}
+TEST(Protocol, OrderedConnectionReusedAndDiscardedOnBadReply) {
+  auto c = config();
+  int created = 0, calls = 0;
+  V4Driver driver(c, [&] {
+    ++created;
+    return std::make_unique<ReplyTransport>([&](const std::string &s) {
+      ++calls;
+      return calls == 3 ? "0,{},WrongEcho();" : "0,{0,0,0,0,0,0}," + s + ";";
+    });
+  });
+  driver.fk(c.home);
+  driver.fk(c.home);
+  EXPECT_EQ(created, 1);
+  EXPECT_THROW(driver.fk(c.home), std::exception);
+  driver.fk(c.home);
+  EXPECT_EQ(created, 2);
+}
+TEST(Protocol, StopWorksWithExclusiveControllerSession) {
+  auto c = config();
+  c.backend = "hardware";
+  c.enable = c.tcp_verified = c.limits_verified = c.execution_verified =
+      c.servo_certified = true;
+  int created = 0;
+  bool stopped = false;
+  V4Driver driver(c, [&] {
+    if (++created > 1)
+      throw std::runtime_error("IP:Port occupied");
+    return std::make_unique<ReplyTransport>([&](const std::string &s) {
+      if (s == "Stop()") {
+        stopped = true;
+        return "0,{}," + s + ";";
+      }
+      return "0,{0,0,0,0,0,0}," + s + ";";
+    });
+  });
+  driver.fk(c.home);
+  EXPECT_NO_THROW(driver.stop());
+  EXPECT_EQ(created, 1);
+  EXPECT_TRUE(stopped);
+}
+TEST(GeometryGuard, HomePassesAndWristSingularityIsRejected) {
+  auto c = config();
+  c.safety_model_file = ARM_TEST_GUARD;
+  auto m = model(c);
+  GeometryGuard guard(c, m);
+  EXPECT_NO_THROW(guard.check(c.home));
+  auto q = c.home;
+  q[4] = 0;
+  EXPECT_THROW(guard.check(q), Failure);
+}
+TEST(GeometryGuard, MissingOrInconsistentGeometryFailsClosed) {
+  auto c = config();
+  c.safety_model_file = "/definitely-missing-arm-geometry.yaml";
+  EXPECT_THROW(GeometryGuard(c, model(c)), std::exception);
+  c.safety_model_file = ARM_TEST_GUARD;
+  c.flange_tcp.translation().z() = .21;
+  EXPECT_THROW(GeometryGuard(c, model(c)), Failure);
+}
+TEST(Commissioning, NarrowCapsAndGuardAreMandatory) {
+  auto c = config();
+  c.backend = "commissioning";
+  c.enable = true;
+  EXPECT_THROW(c.validate(), Failure);
+  c.safety_model_file = ARM_TEST_GUARD;
+  c.freshness = .1;
+  c.max_tracking_error = .005;
+  c.velocity.fill(.02);
+  c.acceleration.fill(.05);
+  c.profiles = {{"conservative", .01, .04}};
+  c.twist_limits = {pi / 9, pi / 9};
+  EXPECT_NO_THROW(c.validate());
+  EXPECT_TRUE(c.hardwareAllowed());
+  auto m = model(c);
+  OfflineKinematics k(m);
+  Planner no_guard(c, m, k, [] {});
+  Goal goal;
+  goal.operation = Operation::Home;
+  EXPECT_THROW(no_guard.plan(goal, trusted(c, m)), Failure);
+  GeometryGuard guard(c, m);
+  auto q = c.home;
+  q[0] += .11;
+  EXPECT_THROW(guard.check(q), Failure);
+  c.commissioning_tcp_radius = .05;
+  EXPECT_THROW(c.validate(), Failure);
+}
+TEST(Planner, GeometryGuardIsAppliedToActualSamples) {
+  auto c = config();
+  auto m = model(c);
+  OfflineKinematics k(m);
+  size_t checked = 0;
+  Planner planner(
+      c, m, k, [] {},
+      [&](const Joints &) {
+        ++checked;
+        throw Failure(PLANNING_FAILED, "injected geometry reject");
+      });
+  Goal goal;
+  goal.operation = Operation::Home;
+  EXPECT_THROW(planner.plan(goal, trusted(c, m)), Failure);
+  EXPECT_GT(checked, 0u);
+}
+TEST(Planner, TwistPreferenceIsWeightedAndCanBeOverruledByTime) {
+  auto c = config();
+  c.safety_model_file = ARM_TEST_GUARD;
+  auto m = model(c);
+  GeometryGuard geometry(c, m);
+  auto current = c.home, neutral = c.home;
+  current[5] += 330 * pi / 180;
+  neutral[5] -= 30 * pi / 180;
+  // Two exact FK-equivalent inverse solutions, not an accept-all IK mock.
+  class EquivalentSolutions final : public Kinematics {
+    std::shared_ptr<const chess_robot_twist::Model> m_;
+    Joints home_, wound_, neutral_;
+
+  public:
+    EquivalentSolutions(std::shared_ptr<const chess_robot_twist::Model> m,
+                        Joints h, Joints a, Joints b)
+        : m_(m), home_(h), wound_(a), neutral_(b) {}
+    Transform fk(const Joints &q) override { return m_->flange(q); }
+    Joints ik(const Transform &target, const Joints &seed) override {
+      if ((target.matrix() - m_->flange(wound_).matrix()).norm() > 1e-8)
+        throw Failure(PLANNING_FAILED, "fixture target has no known inverse");
+      return std::abs(seed[5] - home_[5]) > .1 ? wound_ : neutral_;
+    }
+  } k(m, c.home, current, neutral);
+  auto s = trusted(c, m);
+  for (int i = 1; i <= 120; ++i) {
+    auto q = c.home;
+    q[5] += (current[5] - c.home[5]) * i / 120;
+    s.tracker.advance(q);
+  }
+  s.feedback.q = current;
+  Goal goal;
+  goal.operation = Operation::Pregrasp;
+  goal.target = m->tcp(current);
+  goal.target.translation().z() -= c.clearance;
+  Planner normal(c, m, k, [] {}, [&](const Joints &q) { geometry.check(q); });
+  auto a = normal.plan(goal, s);
+  EXPECT_NEAR(a.segments.back().samples.back().q[5], current[5], 1e-10);
+  c.cost_duration = .001;
+  Planner twist_priority(
+      c, m, k, [] {}, [&](const Joints &q) { geometry.check(q); });
+  auto b = twist_priority.plan(goal, s);
+  EXPECT_NEAR(b.segments.back().samples.back().q[5], neutral[5], 1e-10);
+}
 TEST(Feedback, DuplicateAndTimestampFaults) {
   FeedbackSequence seq;
   auto f = frame(100);
@@ -240,11 +416,28 @@ TEST(Feedback, DuplicateAndTimestampFaults) {
   EXPECT_FALSE(seq.accept(f));
   auto changed = f;
   field<double>(changed, 432, 1);
-  EXPECT_THROW(seq.accept(changed), std::runtime_error);
+  EXPECT_FALSE(seq.accept(changed));
   EXPECT_THROW(seq.accept(frame(99)), std::runtime_error);
   auto bad = frame(101);
   field<double>(bad, 480, std::numeric_limits<double>::quiet_NaN());
   EXPECT_THROW(seq.accept(bad), std::runtime_error);
+  EXPECT_TRUE(seq.accept(frame(101)));
+}
+TEST(Protocol, ValidNegativeReplyKeepsExclusiveSession) {
+  auto c = config();
+  int created = 0, calls = 0;
+  V4Driver driver(c, [&] {
+    if (++created > 1)
+      throw std::runtime_error("exclusive session lost");
+    return std::make_unique<ReplyTransport>([&](const std::string &s) {
+      if (++calls == 1)
+        return "-1,{}," + s + ";";
+      return "0,{0,0,0,0,0,0}," + s + ";";
+    });
+  });
+  EXPECT_THROW(driver.fk(c.home), Failure);
+  EXPECT_NO_THROW(driver.fk(c.home));
+  EXPECT_EQ(created, 1);
 }
 TEST(Validation, ConfigurationCaptureAndPose) {
   auto c = config();

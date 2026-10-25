@@ -38,7 +38,8 @@ struct Profile {
 };
 struct Config {
   std::string backend = "read_only", ip = "127.0.0.1", urdf;
-  int dashboard_port = 29999, feedback_port = 30004, timeout_ms = 500;
+  int dashboard_port = 29999, feedback_port = 30004, timeout_ms = 500,
+      stop_ack_timeout_ms = 1500;
   Joints home{{1.3873624514421463, 0.29600795831732624, 1.4554299194273725,
                -0.18064158423931584, -1.5707963267948966,
                -0.06370430298043014}};
@@ -54,7 +55,7 @@ struct Config {
          joint_tolerance = 0.015;
   double joint_step = 0.025, cartesian_step = 0.002, sample_period = 0.03;
   double planning_timeout = 30.0, gripper_timeout = 15.0,
-         arrival_timeout = 10.0, stop_timeout = 2.0;
+         arrival_timeout = 10.0, stop_timeout = 4.0;
   double servo_ahead = 50, servo_gain = 500, max_tracking_error = 0.15;
   size_t max_samples = 20000;
   double cost_duration = 1.0, cost_net = 1.0, cost_total = 1.0,
@@ -67,6 +68,11 @@ struct Config {
   bool test_fixture = false;
   bool enable = false, tcp_verified = false, limits_verified = false,
        execution_verified = false, servo_certified = false;
+  // Bounded commissioning uses the real planner/executor, without asserting
+  // production TCP/ServoJ certification. It never reports certified=true.
+  std::string safety_model_file;
+  std::string audit_directory;
+  double commissioning_joint_radius = 0.1, commissioning_tcp_radius = 0.03;
   void validate() const;
   bool hardwareAllowed() const;
   const Profile &profile(const std::string &) const;
@@ -143,6 +149,7 @@ class Planner {
   std::shared_ptr<const chess_robot_twist::Model> model_;
   Kinematics &kinematics_;
   std::function<void()> checkpoint_;
+  std::function<void(const Joints &)> safety_check_;
   Segment ptp(const std::string &, const Joints &, const Joints &,
               chess_robot_twist::Tracker &, const Profile &);
   Segment vertical(const std::string &, const Joints &, const Transform &,
@@ -153,7 +160,8 @@ class Planner {
 
 public:
   Planner(const Config &, std::shared_ptr<const chess_robot_twist::Model>,
-          Kinematics &, std::function<void()>);
+          Kinematics &, std::function<void()>,
+          std::function<void(const Joints &)> safety_check = {});
   Plan plan(const Goal &, const Snapshot &);
 };
 // Admission, confirmation and cancellation lifecycle, independent of ROS
@@ -193,13 +201,15 @@ class Executor {
   TaskGate &gate_;
   std::shared_ptr<const chess_robot_twist::Model> model_;
   bool owned_ = false, attempted_ = false;
+  std::function<void(const Joints &)> safety_check_;
   void checkpoint();
   void waitUntil(Clock::time_point);
   void arrival(const Joints &, double timeout);
 
 public:
   Executor(const Config &, Driver &, State &, TaskGate &,
-           std::shared_ptr<const chess_robot_twist::Model>);
+           std::shared_ptr<const chess_robot_twist::Model>,
+           std::function<void(const Joints &)> safety_check = {});
   void run(const Plan &);
   void stopOwned();
   bool owned() const { return owned_; }

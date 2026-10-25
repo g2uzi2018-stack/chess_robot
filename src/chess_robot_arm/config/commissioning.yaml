@@ -1,0 +1,23 @@
+# Overlay for explicitly authorized, local real-hardware acceptance only.
+# Load after arm.yaml and home.yaml. Keep enable false in the saved template.
+# Supply safety.model_file explicitly using the matching generated geometry.
+chess_robot_arm:
+  ros__parameters:
+    backend: commissioning
+    hardware: {enable: false}
+    commissioning: {joint_radius_rad: 0.1, tcp_radius_m: 0.03}
+    limits:
+      velocity_rad_s: [0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
+      acceleration_rad_s2: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+    profiles:
+      names: [commissioning_slow]
+      commissioning_slow: {speed_rad_s: 0.01, acceleration_rad_s2: 0.04}
+    twist: {net_limit_rad: 0.3490658503988659, total_limit_rad: 0.3490658503988659}
+    feedback: {freshness_s: 0.1}
+    tolerances:
+      stationary_rad_s: 0.002
+      dwell_s: 0.4
+      position_m: 0.001
+      rotation_rad: 0.005
+      joint_rad: 0.0005
+      tracking_rad: 0.005
