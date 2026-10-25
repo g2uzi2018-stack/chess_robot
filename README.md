@@ -42,3 +42,10 @@ tools/description/          # 模型生成、检查和纯 URDF 资源导出工�
 - [参考材料与来源](reference/dobot/README.md)
 
 初始化日期：2026-10-20（Asia/Taipei）。
+
+## 夹爪控制（测试中）
+
+- `src/chess_robot_gripper/`：独立 C++ AG95 命令与反馈节点，支持模拟和 Nova5 末端 RS485 透传。
+- 命令 `/gripper/command`、状态 `/gripper/state`；启动和接口见[夹爪节点说明](src/chess_robot_gripper/README.md)。
+- 已完成软件回归和真实只读反馈验证；实物开合/棋子夹持仍待验收。
+- 证据见[首版验证报告](docs/validation/gripper-node-20261025/REPORT.md)。

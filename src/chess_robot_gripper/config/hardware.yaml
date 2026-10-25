@@ -1,0 +1,12 @@
+gripper_node:
+  ros__parameters:
+    backend: tcp_rtu
+    # Nova5 tool RS485 transparent port; verified with read-only AG95 registers.
+    host: "192.168.30.234"
+    port: 60000
+    slave_id: 1
+    enable_commands: false
+    max_force_percent: 30
+    io_timeout_ms: 150
+    poll_period_ms: 100
+    feedback_max_age_sec: 1.0
