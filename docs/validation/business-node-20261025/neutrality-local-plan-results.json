@@ -1,0 +1,301 @@
+{
+  "status": "PASS",
+  "mode": "commissioning",
+  "motion_goals_attempted": 0,
+  "goals": [
+    {
+      "label": "25mm_0_precheck",
+      "operation": 3,
+      "target_m": [
+        0.05498473257334632,
+        -0.5762154863498845,
+        0.2532330401914967
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4729,
+      "elapsed_s": 2.8243321210029535,
+      "feedback_rows": 54,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.02998568981575137,
+        -0.5762154634920209,
+        0.27323304013164695
+      ],
+      "duration_s": 141.84
+    },
+    {
+      "label": "25mm_1_precheck",
+      "operation": 3,
+      "target_m": [
+        0.029984732573346325,
+        -0.5762154863498845,
+        0.27823304019149675
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5788,
+      "elapsed_s": 3.6219709329889156,
+      "feedback_rows": 75,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.029985718337514747,
+        -0.576215310150799,
+        0.2732332628331582
+      ],
+      "duration_s": 173.61
+    },
+    {
+      "label": "30mm_0_precheck",
+      "operation": 3,
+      "target_m": [
+        0.029984732573346325,
+        -0.5462154863498845,
+        0.2532330401914967
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "commissioning Home envelope",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 2.599000459013041,
+      "feedback_rows": 59,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.029985053635492233,
+        -0.576215229901424,
+        0.2732334667789223
+      ]
+    },
+    {
+      "label": "30mm_1_precheck",
+      "operation": 0,
+      "target_m": [
+        0.029984732573346325,
+        -0.5762154863498845,
+        0.22323304019149676
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 2865,
+      "elapsed_s": 2.09216132198344,
+      "feedback_rows": 41,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.02998584383358288,
+        -0.5762154752604923,
+        0.27323332019114766
+      ],
+      "duration_s": 85.92
+    },
+    {
+      "label": "35mm_0_precheck",
+      "operation": 0,
+      "target_m": [
+        -0.005015267426653678,
+        -0.5762154863498845,
+        0.2532330401914967
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 1882,
+      "elapsed_s": 1.5097109939961229,
+      "feedback_rows": 32,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.029985431498041816,
+        -0.5762156267306673,
+        0.2732338179184507
+      ],
+      "duration_s": 56.43
+    },
+    {
+      "label": "35mm_1_precheck",
+      "operation": 0,
+      "target_m": [
+        0.029984732573346325,
+        -0.6112154863498845,
+        0.2532330401914967
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 14,
+      "detail": "no checked pregrasp candidate: commissioning Home envelope",
+      "executed": false,
+      "samples": 0,
+      "elapsed_s": 1.8037800320016686,
+      "feedback_rows": 39,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.02998643190163201,
+        -0.5762151732575844,
+        0.27323320531577966
+      ]
+    },
+    {
+      "label": "35mm_2_precheck",
+      "operation": 3,
+      "target_m": [
+        0.029984732573346325,
+        -0.5762154863498845,
+        0.28823304019149676
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 6429,
+      "elapsed_s": 3.9793021919904277,
+      "feedback_rows": 77,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.029985687055365057,
+        -0.576214848471605,
+        0.273232511994551
+      ],
+      "duration_s": 192.839999999
+    },
+    {
+      "label": "35mm_3_precheck",
+      "operation": 3,
+      "target_m": [
+        0.049984732573346326,
+        -0.5562154863498845,
+        0.27323304019149675
+      ],
+      "quaternion_xyzw": [
+        0.529992905300391,
+        0.4699639113232304,
+        -0.5282709923065915,
+        0.4681572396881538
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 5273,
+      "elapsed_s": 3.2299450840218924,
+      "feedback_rows": 69,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.029984638431905315,
+        -0.5762151526714665,
+        0.2732334669983715
+      ],
+      "duration_s": 158.16
+    }
+  ],
+  "home_sha256": "165f3ec9727f78bd5069538aa0029fd96275574dfd882db472a08b36a1be634a",
+  "initial": {
+    "tcp_m": [
+      0.029984732573346325,
+      -0.5762154863498845,
+      0.27323304019149675
+    ],
+    "quaternion_xyzw": [
+      0.529992905300391,
+      0.4699639113232304,
+      -0.5282709923065915,
+      0.4681572396881538
+    ],
+    "joints_rad": [
+      1.3868882756100578,
+      0.298377971950415,
+      1.4563268720825113,
+      -0.18042107450105727,
+      -1.571315909523571,
+      -0.06368896483702696
+    ],
+    "mode": 5
+  },
+  "local_origin_tcp_m": [
+    0.029984732573346325,
+    -0.5762154863498845,
+    0.27323304019149675
+  ],
+  "approach_clearance_m": 0.02,
+  "reference_initializations": 1,
+  "batches": [
+    {
+      "batch": "25mm",
+      "status": "PASS"
+    },
+    {
+      "batch": "30mm",
+      "status": "PASS"
+    },
+    {
+      "batch": "35mm",
+      "status": "PASS"
+    }
+  ],
+  "final": {
+    "mode": 5,
+    "reference_valid": true,
+    "fresh": true,
+    "joints_rad": [
+      1.3868897403486573,
+      0.298377971950415,
+      1.4563263394502934,
+      -0.1804205918031097,
+      -1.5713149774171895,
+      -0.06368992191054372
+    ],
+    "tcp_m": [
+      0.029985229197400154,
+      -0.5762150802868443,
+      0.2732327481185024
+    ],
+    "net_twist_rad": -0.0006278685098671521,
+    "total_twist_rad": 0.0013577849541611398
+  }
+}

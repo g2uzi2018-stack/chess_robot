@@ -78,11 +78,14 @@ provided as purported safe examples.
   bound policy. Signed/total twist are radians; energy is geometric rad²/m.
 * `Planner`: checked PTP transfers/Home and incremental seeded IK for vertical
   descent/retreat. Current and Home IK seeds are candidates; both SDK FK(IK) and
-  URDF FK must agree with the requested TCP. Candidates are selected using configured positive weights for duration and
-  endpoint absolute net twist, total twist and geometric energy. This weighted
-  preference is not an absolute minimum-twist guarantee: a much faster solution
-  may retain more twist. Motion profile duration changes the tradeoff; the tests
-  include an FK-verified 330° / -30° equivalent pair. Hard path limits remain
+  URDF FK must agree with the requested TCP. Checked candidates prioritize total
+  twist, then absolute net twist, then duration. Values within the 5° neutral
+  band are equivalent; leaving the current-seed incumbent requires more than
+  2° angular improvement, or (for equivalent twist) more than 1 s time saving.
+  These incumbent deadbands suppress switching from numerical noise without
+  mutable planning state. Legacy cost weights remain accepted but have no ranking
+  effect. Tests cover a slow-profile, FK-verified 330° / -30° equivalent pair,
+  noisy near-neutral comparisons, and an unsafe unwind candidate. Hard path limits remain
   mandatory regardless of the preference. There is no hidden lateral or orientation transfer
   in DESCEND/RETREAT. They require current XY and attitude already aligned within
   configured tolerances, preserve actual model XY/attitude exactly as the desired

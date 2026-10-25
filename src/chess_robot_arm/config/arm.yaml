@@ -41,6 +41,11 @@ chess_robot_arm:
       joint_rad: 0.015
       tracking_rad: 0.15
     twist:
+      # Total twist, then absolute net; time is considered only inside deadbands.
+      neutral_band_rad: 0.08726646259971647
+      switch_hysteresis_rad: 0.03490658503988659
+      duration_hysteresis_s: 1.0
+      # Legacy weights accepted for configuration compatibility; no ranking effect.
       cost_duration: 1.0
       cost_net: 1.0
       cost_total: 1.0

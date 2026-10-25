@@ -60,6 +60,8 @@ struct Config {
   size_t max_samples = 20000;
   double cost_duration = 1.0, cost_net = 1.0, cost_total = 1.0,
          cost_energy = 0.01;
+  double neutral_band = 5 * pi / 180, twist_hysteresis = 2 * pi / 180,
+         duration_hysteresis = 1.0;
   chess_robot_twist::Limits twist_limits;
   chess_robot_twist::TrackerOptions tracker_options;
   std::vector<Profile> profiles{{"conservative", 0.25, 0.5}};
@@ -144,6 +146,11 @@ void validateCapture(const std::string &frame, double stamp, double now,
                      const Config &);
 double jointDistance(const Joints &, const Joints &);
 double rotationDistance(const Transform &, const Transform &);
+// Incumbent is the checked current-seed branch. Deadbands are anchored to it;
+// this pure comparison cannot mutate live history, including during plan-only.
+bool preferCandidate(const chess_robot_twist::Metrics &candidate, double duration,
+                     const chess_robot_twist::Metrics &incumbent,
+                     double incumbent_duration, const Config &);
 class Planner {
   Config config_;
   std::shared_ptr<const chess_robot_twist::Model> model_;

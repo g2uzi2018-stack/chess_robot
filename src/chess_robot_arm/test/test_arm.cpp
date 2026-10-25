@@ -365,7 +365,7 @@ TEST(Planner, GeometryGuardIsAppliedToActualSamples) {
   EXPECT_THROW(planner.plan(goal, trusted(c, m)), Failure);
   EXPECT_GT(checked, 0u);
 }
-TEST(Planner, TwistPreferenceIsWeightedAndCanBeOverruledByTime) {
+TEST(Planner, NeutralityPrecedesTimeForExactEquivalentSolutions) {
   auto c = config();
   c.safety_model_file = ARM_TEST_GUARD;
   auto m = model(c);
@@ -402,12 +402,53 @@ TEST(Planner, TwistPreferenceIsWeightedAndCanBeOverruledByTime) {
   goal.target.translation().z() -= c.clearance;
   Planner normal(c, m, k, [] {}, [&](const Joints &q) { geometry.check(q); });
   auto a = normal.plan(goal, s);
-  EXPECT_NEAR(a.segments.back().samples.back().q[5], current[5], 1e-10);
-  c.cost_duration = .001;
+  EXPECT_NEAR(a.segments.back().samples.back().q[5], neutral[5], 1e-10);
+  EXPECT_EQ(s.tracker.lastJoints(), current);
+  c.cost_duration = 1e9;
+  c.profiles = {{"conservative", .01, .04}};
+  c.max_samples = 100000;
   Planner twist_priority(
       c, m, k, [] {}, [&](const Joints &q) { geometry.check(q); });
   auto b = twist_priority.plan(goal, s);
   EXPECT_NEAR(b.segments.back().samples.back().q[5], neutral[5], 1e-10);
+  c.profiles = {{"conservative", .25, .5}};
+  Planner blocked_neutral(c, m, k, [] {}, [&](const Joints &q) {
+    geometry.check(q);
+    if (q[5] < current[5] - .01)
+      throw Failure(PLANNING_FAILED, "injected blocked unwind path");
+  });
+  auto safe = blocked_neutral.plan(goal, s);
+  EXPECT_NEAR(safe.segments.back().samples.back().q[5], current[5], 1e-10);
+  c.twist_limits = {.001, .001};
+  Planner tight(c, m, k, [] {}, [&](const Joints &q) { geometry.check(q); });
+  EXPECT_THROW(tight.plan(goal, s), Failure);
+  EXPECT_EQ(s.tracker.lastJoints(), current);
+}
+TEST(Planner, NeutralBandAndIncumbentHysteresisPreventChatter) {
+  auto c = config();
+  chess_robot_twist::Metrics a, b;
+  a.total = a.net = 4 * pi / 180;
+  b.total = b.net = 6 * pi / 180;
+  // Across the neutral boundary, sub-hysteresis jitter retains the incumbent.
+  for (int i = 0; i < 100; ++i) {
+    a.total = a.net = (4 + .1 * std::sin(i)) * pi / 180;
+    EXPECT_FALSE(preferCandidate(a, 10, b, 10.5, c));
+    EXPECT_FALSE(preferCandidate(b, 10, a, 10.5, c));
+  }
+  a.total = a.net = 1 * pi / 180;
+  b.total = b.net = 10 * pi / 180;
+  EXPECT_TRUE(preferCandidate(a, 1000, b, 1, c));
+  EXPECT_FALSE(preferCandidate(b, 1, a, 1000, c));
+  b.total = b.net = 1 * pi / 180;
+  EXPECT_TRUE(preferCandidate(a, 1, b, 3, c));
+  EXPECT_FALSE(preferCandidate(a, 2.5, b, 3, c));
+  // Net cancellation is not neutrality when local absolute twist stays large.
+  a.net = 0; a.total = 1;
+  b.net = .2; b.total = .2;
+  EXPECT_FALSE(preferCandidate(a, 1, b, 100, c));
+  c.urdf = ARM_TEST_URDF;
+  c.twist_hysteresis = c.neutral_band;
+  EXPECT_THROW(c.validate(), Failure);
 }
 TEST(Feedback, DuplicateAndTimestampFaults) {
   FeedbackSequence seq;
@@ -654,6 +695,7 @@ class FixtureDriver final : public Driver {
 public:
   size_t servo_calls = 0, stop_calls = 0;
   bool cancel_on_servo = false, fail_stop = false;
+  int servo_delay_ms = 0;
   FixtureDriver(const Config &c,
                 std::shared_ptr<const chess_robot_twist::Model> m, State &s,
                 TaskGate &g)
@@ -669,6 +711,7 @@ public:
   }
   void servo(const Joints &q, double) override {
     ++servo_calls;
+    std::this_thread::sleep_for(std::chrono::milliseconds(servo_delay_ms));
     auto f = feedback(config_, stamp_++);
     f.q = q;
     state_.update(f);
@@ -733,6 +776,31 @@ TEST(Executor, MeasuredDwellCancelStopAndFailure) {
   EXPECT_THROW(failing.run(stationaryPlan(c)), Failure);
   EXPECT_THROW(failing.stopOwned(), Failure);
   EXPECT_TRUE(failing.owned());
+}
+TEST(Executor, SlowServoReplyAbortsWithoutReplayAndVerifiesStop) {
+  auto c = hardwareFixture();
+  auto m = model(c);
+  State state(c, m);
+  initializeFixture(state, c);
+  TaskGate gate;
+  ASSERT_TRUE(gate.reserve("slow-reply"));
+  FixtureDriver driver(c, m, state, gate);
+  driver.servo_delay_ms = 90;
+  Executor executor(c, driver, state, gate, m);
+  auto plan = stationaryPlan(c);
+  plan.segments.front().samples.push_back({c.home, 2 * c.sample_period});
+  try {
+    executor.run(plan);
+    FAIL();
+  } catch (const Failure &e) {
+    EXPECT_EQ(e.code, EXECUTION_FAILED);
+    EXPECT_NE(std::string(e.what()).find("previous_io_s="), std::string::npos);
+  }
+  EXPECT_EQ(driver.servo_calls, 1u);
+  EXPECT_TRUE(executor.owned());
+  EXPECT_NO_THROW(executor.stopOwned());
+  EXPECT_EQ(driver.stop_calls, 1u);
+  EXPECT_FALSE(executor.owned());
 }
 TEST(Executor, GripperFailureCannotRunRetreat) {
   auto c = hardwareFixture();

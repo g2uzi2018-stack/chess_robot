@@ -174,6 +174,9 @@ class ArmNode final : public rclcpp::Node {
     PARAM(cost_net, "twist.cost_net");
     PARAM(cost_total, "twist.cost_total");
     PARAM(cost_energy, "twist.cost_energy");
+    PARAM(neutral_band, "twist.neutral_band_rad");
+    PARAM(twist_hysteresis, "twist.switch_hysteresis_rad");
+    PARAM(duration_hysteresis, "twist.duration_hysteresis_s");
     PARAM(twist_limits.net_limit_rad, "twist.net_limit_rad");
     PARAM(twist_limits.total_limit_rad, "twist.total_limit_rad");
     PARAM(tracker_options.max_joint_step_rad, "reference.max_joint_step_rad");

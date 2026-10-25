@@ -18,10 +18,18 @@ def main():
     parser.add_argument('--controller-ip',required=True,type=lambda s:str(ipaddress.IPv4Address(s)))
     parser.add_argument('--project-root',type=pathlib.Path,default=pathlib.Path(__file__).resolve().parents[2])
     parser.add_argument('--execute-local',action='store_true')
+    parser.add_argument('--initialize-reference-at-home',action='store_true',
+                        help='Explicitly establish one reference at the previously verified neutral Home; never reset between tasks')
+    parser.add_argument('--expanded-local',action='store_true',
+                        help='25/30/35 mm batches, 20 mm approach; real actions, no replay')
+    parser.add_argument('--expanded-plan-only',action='store_true')
     parser.add_argument('--strict-twist',action='store_true')
     parser.add_argument('--negative-local',action='store_true')
     parser.add_argument('--scan',action='store_true');args=parser.parse_args()
     if (args.scan or args.negative_local) and args.execute_local:parser.error('scan/negative tests never execute')
+    if args.expanded_local and not args.execute_local:parser.error('expanded-local requires execute-local')
+    if args.expanded_plan_only and args.execute_local:parser.error('expanded-plan-only never executes')
+    if not args.initialize_reference_at_home:parser.error('explicit --initialize-reference-at-home required; no automatic zeroing')
     assert os.environ['ROS_DOMAIN_ID']=='96' and os.environ['ROS_LOCALHOST_ONLY']=='1'
     root=args.project_root.resolve();out=pathlib.Path(args.out)
     out.mkdir(parents=True,exist_ok=False)
@@ -29,7 +37,7 @@ def main():
     home=np.array(json.loads((root/'config/arm/home_reference.json').read_text())['joint_positions_rad'])
     reference_sha=hashlib.sha256((root/'config/arm/home.yaml').read_bytes()).hexdigest()
     rclpy.init();node=rclpy.create_node('business_hardware_acceptance')
-    commissioning=args.execute_local or args.negative_local
+    commissioning=args.execute_local or args.negative_local or args.expanded_plan_only
     state=None;joint=None;rows=[];states=[];events=[];active=None;report={'status':'STARTING','mode':'commissioning' if commissioning else 'read_only','motion_goals_attempted':0,'goals':events,'home_sha256':reference_sha}
     def receive_state(m):
         nonlocal state
@@ -46,6 +54,9 @@ def main():
     cmd=[str(root/'install/chess_robot_arm/lib/chess_robot_arm/arm_node'),'--ros-args','--params-file',str(cfg/'arm.yaml'),'--params-file',str(cfg/'home.yaml')]
     if commissioning:cmd+=['--params-file',str(cfg/'commissioning.yaml')]
     if args.execute_local:cmd+=['-p','hardware.enable:=true']
+    if args.expanded_local or args.expanded_plan_only:
+        cmd+=['-p','commissioning.tcp_radius_m:=0.04','-p','commissioning.joint_radius_rad:=0.12',
+              '-p','approach_clearance_m:=0.02']
     cmd+=['-p','controller.ip:='+args.controller_ip,'-p','urdf_file:='+str(model),'-p','safety.model_file:='+str(cfg/'nova5_ag95_geometry.yaml')]
     cmd+=['-p','audit.directory:='+str(out/'audit')]
     if args.strict_twist:cmd+=['-p','twist.net_limit_rad:=0.001','-p','twist.total_limit_rad:=0.001']
@@ -86,6 +97,10 @@ def main():
         if cancelled_at is not None:item['cancel_to_verified_terminal_s']=time.monotonic()-cancelled_at
         if r.final_tcp_valid:
             p=r.final_tcp.pose.position;item['final_tcp_m']=[p.x,p.y,p.z]
+        if execute:
+            item['arrival_feedback']={'fresh':state.feedback_fresh,'reference_valid':state.reference_valid,
+                                     'mode':state.controller_mode,'joints_rad':list(joint.position),
+                                     'net_twist_rad':state.signed_twist_rad,'total_twist_rad':state.total_twist_rad}
         if r.trajectory.points:
             times=[p.time_from_start.sec+p.time_from_start.nanosec/1e9 for p in r.trajectory.points]
             item['duration_s']=times[-1]
@@ -110,7 +125,47 @@ def main():
         tick=time.monotonic();wait(lambda:time.monotonic()-tick>.6)
         response=future(initialize.call_async(InitializeReference.Request()));assert response.success,response.detail
         wait(lambda:state.reference_valid);report['status']='RUNNING';save()
-        if args.execute_local:
+        if args.expanded_local or args.expanded_plan_only:
+            origin=np.asarray(p);clearance=.02
+            report['local_origin_tcp_m']=p;report['approach_clearance_m']=clearance
+            report['reference_initializations']=1;report['batches']=[]
+            if args.execute_local:
+                goal('initial_home',4,execute=True)
+                stop_target=(origin+[0,0,.003-clearance]).tolist()
+                goal('cancel_precheck',0,stop_target,q)
+                goal('cancel_verified',0,stop_target,q,execute=True,cancel=True)
+                goal('home_after_cancel',4,execute=True)
+            # Every target's entire PREGRASP -> DESCEND -> RETREAT chain is
+            # planned first. Actual phase actions each require measured arrival.
+            # No gripper confirmation is fabricated: no grip is attempted here.
+            batches=[('25mm',[[.025,0,0],[0,0,.025]]),
+                     ('30mm',[[0,.030,0],[0,0,-.030]]),
+                     ('35mm',[[-.035,0,0],[0,-.035,0],[0,0,.035],[.020,.020,.020]])]
+            # 2026-10-25 plan03 rejected front 30 / back 35 mm on the
+            # joint envelope. Preserve them in planning evidence; never execute.
+            if args.execute_local:
+                batches=[('25mm',[[.025,0,0]]),('30mm',[[0,0,-.030]]),
+                         ('35mm',[[-.035,0,0],[0,0,.035],[.020,.020,.020]])]
+            for batch,deltas in batches:
+                record={'batch':batch,'status':'RUNNING'};report['batches'].append(record);save()
+                for index,delta in enumerate(deltas):
+                    label=batch+'_'+str(index);pre=origin+delta
+                    grasp=(pre-[0,0,clearance]).tolist()
+                    # Some pregrasp points would descend outside the local
+                    # sphere; validate/execute only PREGRASP at those points.
+                    full=np.linalg.norm(np.asarray(delta)-[0,0,clearance])<.038
+                    goal(label+'_precheck',3 if full else 0,grasp,q,allow_reject=args.expanded_plan_only)
+                    if not args.execute_local:continue
+                    goal(label+'_pregrasp',0,grasp,q,execute=True)
+                    if full:
+                        goal(label+'_descend_precheck',1,grasp,q)
+                        goal(label+'_descend',1,grasp,q,execute=True)
+                        goal(label+'_retreat_precheck',2,grasp,q)
+                        goal(label+'_retreat',2,grasp,q,execute=True)
+                    goal(label+'_home',4,execute=True)
+                record['status']='PASS';save()
+            if args.execute_local:goal('final_home',4,execute=True)
+        elif args.execute_local:
             # First real ServoJ is a measured Home hold; then exercise Stop by
             # cancelling a 2 mm lift only after measured displacement appears.
             goal('initial_home',4,execute=True)
@@ -161,7 +216,15 @@ def main():
         assert hashlib.sha256((root/'config/arm/home.yaml').read_bytes()).hexdigest()==reference_sha
         report['status']='PASS';save()
     except Exception as e:
-        report['status']='FAILED';report['error']=repr(e);save();raise
+        report['status']='FAILED';report['error']=repr(e)
+        for batch in report.get('batches',[]):
+            if batch['status']=='RUNNING':batch.update(status='FAILED',error=repr(e))
+        if state is not None and joint is not None:
+            report['failure_feedback']={'fresh':state.feedback_fresh,'reference_valid':state.reference_valid,
+                                        'mode':state.controller_mode,'joints_rad':list(joint.position),
+                                        'tcp_m':pose_values()[0],'net_twist_rad':state.signed_twist_rad,
+                                        'total_twist_rad':state.total_twist_rad}
+        save();raise
     finally:
         if active is not None:
             try:future(active.cancel_goal_async(),5)

@@ -90,6 +90,9 @@ void Config::validate() const {
           "sampling or ServoJ configuration out of bounds");
   for (double weight : {cost_duration, cost_net, cost_total, cost_energy})
     require(positive(weight), "invalid candidate cost weight");
+  require(positive(neutral_band) && positive(twist_hysteresis) &&
+              twist_hysteresis < neutral_band && positive(duration_hysteresis),
+          "invalid selection deadbands");
   require(!profiles.empty() && profiles.size() <= 32, "invalid profile count");
   for (size_t i = 0; i < profiles.size(); ++i) {
     require(!profiles[i].name.empty() && profiles[i].name.size() <= 64 &&
@@ -231,6 +234,23 @@ void State::initialize() {
     throw Failure(FEEDBACK_FAULT, "reference requires fresh stationary dwell");
   tracker_.initializeAtHome(last_.q, config_.home_tolerance);
   diagnostic_ = "explicit Home reference initialized";
+}
+bool preferCandidate(const chess_robot_twist::Metrics &a, double duration,
+                     const chess_robot_twist::Metrics &b, double incumbent_duration,
+                     const Config &c) {
+  // Total first prevents cancellation of opposing local twists from masquerading
+  // as neutral. Absolute net breaks total-twist ties. Time cannot buy twist
+  // outside the explicit angular deadband, at any profile speed or weight.
+  for (auto pair : {std::pair<double, double>{a.total, b.total},
+                    {std::abs(a.net), std::abs(b.net)}}) {
+    const double av = std::max(0.0, pair.first - c.neutral_band);
+    const double bv = std::max(0.0, pair.second - c.neutral_band);
+    if (av < bv - c.twist_hysteresis) return true;
+    if (bv < av - c.twist_hysteresis) return false;
+  }
+  // Equivalent twist: require meaningful time savings to leave the incumbent.
+  // Energy and legacy angular weights no longer trade against neutrality.
+  return duration < incumbent_duration - c.duration_hysteresis;
 }
 Planner::Planner(const Config &c,
                  std::shared_ptr<const chess_robot_twist::Model> m,
@@ -402,19 +422,19 @@ Plan Planner::plan(const Goal &g, const Snapshot &state) {
     std::optional<Segment> best;
     std::optional<chess_robot_twist::Tracker> best_tracker;
     std::string last;
-    double best_cost = std::numeric_limits<double>::infinity();
+    double best_duration = 0;
+    chess_robot_twist::Metrics best_metrics;
     for (const auto &seed : {start, config_.home}) {
       try {
         auto trial = t;
         auto q = solve(pre, seed);
         auto s = ptp("PREGRASP", start, q, trial, p);
         auto metrics = trial.metrics();
-        double cost = config_.cost_duration * s.samples.back().time +
-                      config_.cost_net * std::abs(metrics.net) +
-                      config_.cost_total * metrics.total +
-                      config_.cost_energy * metrics.energy;
-        if (cost < best_cost) {
-          best_cost = cost;
+        double duration = s.samples.back().time;
+        if (!best || preferCandidate(metrics, duration, best_metrics,
+                                     best_duration, config_)) {
+          best_metrics = metrics;
+          best_duration = duration;
           best = std::move(s);
           best_tracker = trial;
         }
@@ -655,6 +675,7 @@ void Executor::run(const Plan &plan) {
     }
     gate_.phase(segment.phase);
     auto start = Clock::now();
+    double previous_io_s = 0;
     if (jointDistance(state_.snapshot().feedback.q, segment.samples.front().q) >
         config_.joint_tolerance)
       throw Failure(EXECUTION_FAILED, "segment start drift");
@@ -666,9 +687,12 @@ void Executor::run(const Plan &plan) {
           std::chrono::duration_cast<Clock::duration>(
               std::chrono::duration<double>(x.time - config_.sample_period));
       waitUntil(due);
+      const double late_s = std::chrono::duration<double>(Clock::now() - due).count();
       if (Clock::now() - due >
           std::chrono::duration<double>(config_.sample_period))
-        throw Failure(EXECUTION_FAILED, "ServoJ schedule overrun");
+        throw Failure(EXECUTION_FAILED, "ServoJ schedule overrun: sample=" +
+                      std::to_string(i) + " late_s=" + std::to_string(late_s) +
+                      " previous_io_s=" + std::to_string(previous_io_s));
       auto measured = state_.snapshot();
       if (jointDistance(measured.feedback.q, segment.samples[i - 1].q) >
           config_.max_tracking_error)
@@ -680,7 +704,9 @@ void Executor::run(const Plan &plan) {
       // motion.
       owned_ = true;
       attempted_ = true;
+      const auto io_start = Clock::now();
       driver_.servo(x.q, config_.sample_period);
+      previous_io_s = std::chrono::duration<double>(Clock::now() - io_start).count();
     }
     arrival(segment.samples.back().q, config_.arrival_timeout);
     owned_ = false;

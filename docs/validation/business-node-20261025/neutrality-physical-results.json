@@ -1,0 +1,442 @@
+{
+  "status": "FAILED",
+  "mode": "commissioning",
+  "motion_goals_attempted": 7,
+  "goals": [
+    {
+      "label": "initial_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 67,
+      "elapsed_s": 3.0026327329978812,
+      "feedback_rows": 60,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030354612177227378,
+        -0.576520255297575,
+        0.27499927878163294
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.3873643156549094,
+          0.29599214579835387,
+          1.45542659047601,
+          -0.18064349838634933,
+          -1.570788204153572,
+          -0.06369759514343451
+        ],
+        "net_twist_rad": 1.517624974956e-05,
+        "total_twist_rad": 1.821313611372055e-05
+      },
+      "duration_s": 1.98
+    },
+    {
+      "label": "cancel_precheck",
+      "operation": 0,
+      "target_m": [
+        0.029985838137512322,
+        -0.5762155058849658,
+        0.25623388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 224,
+      "elapsed_s": 0.3481240459950641,
+      "feedback_rows": 7,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030354468167087336,
+        -0.576520189624733,
+        0.2749985982633244
+      ],
+      "duration_s": 6.689999999
+    },
+    {
+      "label": "cancel_verified",
+      "operation": 0,
+      "target_m": [
+        0.029985838137512322,
+        -0.5762155058849658,
+        0.25623388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": false,
+      "code": 17,
+      "detail": "goal canceled",
+      "executed": true,
+      "samples": 224,
+      "elapsed_s": 4.280072434979957,
+      "feedback_rows": 86,
+      "cancel_requested": true,
+      "cancel_to_verified_terminal_s": 1.0096951180021279,
+      "final_tcp_m": [
+        0.03018826842140013,
+        -0.57638352541809,
+        0.27541647084163806
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.387146202761632,
+          0.2965400579031241,
+          1.4527991157445377,
+          -0.17695044296846602,
+          -1.5710206981167358,
+          -0.06369615537197018
+        ],
+        "net_twist_rad": -0.0006002728872565866,
+        "total_twist_rad": 0.0020793991252950617
+      },
+      "duration_s": 6.689999999
+    },
+    {
+      "label": "home_after_cancel",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 104,
+      "elapsed_s": 4.223463921982329,
+      "feedback_rows": 85,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035034308265175,
+        -0.5765132374363576,
+        0.2749847345287793
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.3873609867035468,
+          0.2960017331782782,
+          1.4554452326036404,
+          -0.1806420502925066,
+          -1.5708016531170768,
+          -0.063699509290468
+        ],
+        "net_twist_rad": 3.1501017085378002e-06,
+        "total_twist_rad": 1.6916952170487054e-05
+      },
+      "duration_s": 3.09
+    },
+    {
+      "label": "25mm_0_precheck",
+      "operation": 3,
+      "target_m": [
+        0.05498583813751232,
+        -0.5762155058849658,
+        0.25323388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4729,
+      "elapsed_s": 2.780520935979439,
+      "feedback_rows": 54,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351244921640475,
+        -0.5765188668958888,
+        0.27498991755279756
+      ],
+      "duration_s": 141.84
+    },
+    {
+      "label": "25mm_0_pregrasp",
+      "operation": 0,
+      "target_m": [
+        0.05498583813751232,
+        -0.5762155058849658,
+        0.25323388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 1219,
+      "elapsed_s": 38.665751716005616,
+      "feedback_rows": 778,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.05498811563824648,
+        -0.5762168521506361,
+        0.2728989563368135
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.4307261708396886,
+          0.3032090460363596,
+          1.4507494138115584,
+          -0.1796416171842615,
+          -1.571163976183382,
+          -0.01985594235995314
+        ],
+        "net_twist_rad": 0.08544414872701209,
+        "total_twist_rad": 0.0893763511758767
+      },
+      "duration_s": 36.54
+    },
+    {
+      "label": "25mm_0_descend_precheck",
+      "operation": 1,
+      "target_m": [
+        0.05498583813751232,
+        -0.5762155058849658,
+        0.25323388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 1861,
+      "elapsed_s": 0.9808859629847575,
+      "feedback_rows": 20,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.054988204199075824,
+        -0.5762149014603516,
+        0.27289917289549864
+      ],
+      "duration_s": 55.8
+    },
+    {
+      "label": "25mm_0_descend",
+      "operation": 1,
+      "target_m": [
+        0.05498583813751232,
+        -0.5762155058849658,
+        0.25323388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 1861,
+      "elapsed_s": 57.957654163998086,
+      "feedback_rows": 1160,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.054993344960226426,
+        -0.5762017145410743,
+        0.2528777507689097
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.4307309645296504,
+          0.31380166940360893,
+          1.4982136023394954,
+          -0.23764047203622518,
+          -1.571163976183382,
+          -0.01985594235995314
+        ],
+        "net_twist_rad": 0.09042830700455903,
+        "total_twist_rad": 0.11381844714641984
+      },
+      "duration_s": 55.8
+    },
+    {
+      "label": "25mm_0_retreat_precheck",
+      "operation": 2,
+      "target_m": [
+        0.05498583813751232,
+        -0.5762155058849658,
+        0.25323388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 1651,
+      "elapsed_s": 0.9394069469999522,
+      "feedback_rows": 20,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.05499207680134107,
+        -0.5762088765289608,
+        0.2528906114411722
+      ],
+      "duration_s": 49.5
+    },
+    {
+      "label": "25mm_0_retreat",
+      "operation": 2,
+      "target_m": [
+        0.05498583813751232,
+        -0.5762155058849658,
+        0.25323388010125686
+      ],
+      "quaternion_xyzw": [
+        0.5299923924820006,
+        0.46996396333041107,
+        -0.5282705954744173,
+        0.4681582158192702
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 1651,
+      "elapsed_s": 51.59996896100347,
+      "feedback_rows": 1033,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.05499376004101217,
+        -0.5762151594126227,
+        0.27292828998180013
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.4307357582196127,
+          0.3031869750888256,
+          1.4506928216383943,
+          -0.17957210867981044,
+          -1.5711645088155999,
+          -0.019852588441455325
+        ],
+        "net_twist_rad": 0.08545104271943432,
+        "total_twist_rad": 0.08942288852430352
+      },
+      "duration_s": 49.5
+    },
+    {
+      "label": "25mm_0_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 16,
+      "detail": "ServoJ schedule overrun",
+      "executed": true,
+      "samples": 1221,
+      "elapsed_s": 12.70802897401154,
+      "feedback_rows": 256,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.04756539540621321,
+        -0.5764152947248762,
+        0.27355160777022686
+      ],
+      "arrival_feedback": {
+        "fresh": true,
+        "reference_valid": true,
+        "mode": 5,
+        "joints_rad": [
+          1.4176685588569755,
+          0.30101450142959346,
+          1.4521303959948189,
+          -0.1798966315033934,
+          -1.5710513244692716,
+          -0.033082692119616
+        ],
+        "net_twist_rad": 0.05969288073472137,
+        "total_twist_rad": 0.06245782336237285
+      },
+      "duration_s": 36.6
+    }
+  ],
+  "home_sha256": "165f3ec9727f78bd5069538aa0029fd96275574dfd882db472a08b36a1be634a",
+  "initial": {
+    "tcp_m": [
+      0.029985838137512322,
+      -0.5762155058849658,
+      0.2732338801012569
+    ],
+    "quaternion_xyzw": [
+      0.5299923924820006,
+      0.46996396333041107,
+      -0.5282705954744173,
+      0.4681582158192702
+    ],
+    "joints_rad": [
+      1.3868897403486573,
+      0.2983770065545199,
+      1.4563259399761297,
+      -0.18042010910516212,
+      -1.5713149774171895,
+      -0.06368944337378533
+    ],
+    "mode": 5
+  },
+  "local_origin_tcp_m": [
+    0.029985838137512322,
+    -0.5762155058849658,
+    0.2732338801012569
+  ],
+  "approach_clearance_m": 0.02,
+  "reference_initializations": 1,
+  "batches": [
+    {
+      "batch": "25mm",
+      "status": "RUNNING"
+    }
+  ],
+  "error": "AssertionError(('25mm_0_home', 16, 'ServoJ schedule overrun'))"
+}
