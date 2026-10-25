@@ -8,11 +8,129 @@
 #include <gtest/gtest.h>
 #include <limits>
 #include <thread>
+#include <fstream>
+#include <condition_variable>
+#include <deque>
 
 using namespace chess_robot_arm;
 namespace {
+struct StreamFixtureState {
+  std::mutex mutex;
+  std::condition_variable cv;
+  std::deque<std::string> queued;
+  std::atomic<int> acknowledged{0};
+  int sent=0, stops=0, delay_ms=90;
+  std::vector<std::string> sent_commands;
+  bool wrong_echo=false, repeat_id=false;
+};
+class StreamFixture : public CommandTransport {
+  std::shared_ptr<StreamFixtureState> state_;
+  std::optional<std::string> held_;
+  Clock::time_point ready_;
+public:
+  explicit StreamFixture(std::shared_ptr<StreamFixtureState> s):state_(s){}
+  bool streaming() const override {return true;}
+  std::string query(const std::string &command) override {
+    if (command!="Stop()") throw std::runtime_error("only Stop query expected");
+    ++state_->stops; return "0,{},Stop();";
+  }
+  void send(const std::string &command) override {
+    std::lock_guard<std::mutex> l(state_->mutex);
+    if(command=="Stop()") ++state_->stops;
+    else { ++state_->sent;state_->sent_commands.push_back(command); }
+    state_->queued.push_back(command); state_->cv.notify_one();
+  }
+  std::string receive(int timeout_ms) override {
+    if (!held_) {
+      std::unique_lock<std::mutex> l(state_->mutex);
+      if(!state_->cv.wait_for(l,std::chrono::milliseconds(timeout_ms),[&]{return !state_->queued.empty();}))
+        throw std::runtime_error("fixture receive deadline");
+      held_=state_->queued.front();state_->queued.pop_front();
+      ready_=Clock::now()+std::chrono::milliseconds(state_->acknowledged ? 0 : state_->delay_ms);
+    }
+    std::this_thread::sleep_until(std::min(ready_,Clock::now()+std::chrono::milliseconds(timeout_ms)));
+    if(Clock::now()<ready_) throw QueryFailure("socket deadline exceeded","");
+    auto command=*held_;held_.reset();
+    if(command=="Stop()") return "0,{},Stop();";
+    int id=++state_->acknowledged;
+    if(state_->repeat_id) id=1;
+    return "0,{"+std::to_string(id)+"},"+(state_->wrong_echo ? "Other()" : command)+";";
+  }
+};
+Config streamConfig() {
+  Config c; c.servo_max_pending=4;c.motion_paused=false;c.controller_family="v4";c.controller_firmware="4.6.2.4-test-fixture"; c.backend="hardware";c.enable=c.tcp_verified=c.limits_verified=c.execution_verified=c.servo_certified=true;
+  return c;
+}
+}
+TEST(Streaming, DelayedAckDoesNotBlockSubsequentSends) {
+  auto c=streamConfig();auto shared=std::make_shared<StreamFixtureState>();
+  V4Driver driver(c,[shared]{return std::make_unique<StreamFixture>(shared);});
+  driver.beginStream();
+  for(int i=0;i<3;++i) driver.servo(c.home,.03);
+  EXPECT_EQ(shared->sent,3);EXPECT_EQ(shared->acknowledged,0);
+  EXPECT_NO_THROW(driver.endStream());EXPECT_EQ(shared->acknowledged,3);
+  EXPECT_NO_THROW(driver.stop());EXPECT_EQ(shared->stops,1);
+}
+TEST(Streaming, ExplorationWindowCovers125msReplyWithoutChangingDeadline) {
+  auto c=streamConfig();c.servo_max_pending=6;
+  auto shared=std::make_shared<StreamFixtureState>();shared->delay_ms=125;
+  V4Driver driver(c,[shared]{return std::make_unique<StreamFixture>(shared);});
+  driver.beginStream();auto start=Clock::now();
+  for(int i=0;i<5;++i) {
+    if(i) std::this_thread::sleep_until(start+std::chrono::milliseconds(30*i));
+    EXPECT_NO_THROW(driver.servo(c.home,.03));
+  }
+  EXPECT_NO_THROW(driver.endStream());EXPECT_EQ(shared->acknowledged,5);
+  EXPECT_DOUBLE_EQ(c.servo_ack_timeout,.15);
+  EXPECT_NO_THROW(driver.stop());EXPECT_EQ(shared->stops,1);
+}
+TEST(Streaming, LateReplyFailsMotionButPreservesExclusiveSessionForStop) {
+  auto c=streamConfig();auto shared=std::make_shared<StreamFixtureState>();shared->delay_ms=200;
+  int connections=0;
+  V4Driver driver(c,[&] {
+    if(++connections>1) throw std::runtime_error("IP:Port has been occupied");
+    return std::make_unique<StreamFixture>(shared);
+  });
+  driver.beginStream();driver.servo(c.home,.03);
+  std::this_thread::sleep_for(std::chrono::milliseconds(165));
+  EXPECT_THROW(driver.checkStream(),Failure);
+  EXPECT_NO_THROW(driver.stop());
+  EXPECT_EQ(connections,1);EXPECT_EQ(shared->sent,1);
+  EXPECT_EQ(shared->acknowledged,1);EXPECT_EQ(shared->stops,1);
+}
+TEST(Streaming, StopDrainCannotWaitForeverForMissingReply) {
+  auto c=streamConfig();c.timeout_ms=100;c.stop_ack_timeout_ms=100;auto shared=std::make_shared<StreamFixtureState>();shared->delay_ms=2000;
+  int connections=0;
+  V4Driver driver(c,[&] {
+    if(++connections>1) throw std::runtime_error("IP:Port has been occupied");
+    return std::make_unique<StreamFixture>(shared);
+  });
+  driver.beginStream();driver.servo(c.home,.03);
+  std::this_thread::sleep_for(std::chrono::milliseconds(165));
+  auto start=Clock::now();EXPECT_THROW(driver.stop(),std::exception);
+  EXPECT_LT(std::chrono::duration<double>(Clock::now()-start).count(),2.0);
+  EXPECT_EQ(connections,1);EXPECT_EQ(shared->sent,1);EXPECT_EQ(shared->stops,1);
+}
+TEST(Streaming, WindowDeadlineAndEchoFaultsStopWithoutReplay) {
+  for(int variant=0;variant<4;++variant) {
+    auto c=streamConfig();auto shared=std::make_shared<StreamFixtureState>();
+    if(variant==1) shared->delay_ms=300;
+    if(variant==2) shared->wrong_echo=true;
+    if(variant==3) shared->repeat_id=true;
+    V4Driver driver(c,[shared]{return std::make_unique<StreamFixture>(shared);});
+    driver.beginStream();
+    for(int i=0;i<4;++i) driver.servo(c.home,.03);
+    if(variant==0) EXPECT_THROW(driver.servo(c.home,.03),Failure);
+    else EXPECT_THROW(driver.endStream(),Failure);
+    EXPECT_NO_THROW(driver.stop());
+    EXPECT_EQ(shared->sent,4);EXPECT_EQ(shared->stops,1);
+  }
+}
+namespace {
 Config config() {
   Config c;
+  c.motion_paused=false;c.controller_family="v4";c.controller_firmware="4.6.2.4-test-fixture";
+  c.default_profile="conservative";
   c.urdf = ARM_TEST_URDF;
   c.workspace_min = Eigen::Vector3d(-2, -2, -2);
   c.workspace_max = Eigen::Vector3d(2, 2, 2);
@@ -264,7 +382,7 @@ TEST(Protocol, NearZeroAnglesUseDecimalWireFormat) {
   EXPECT_EQ(numeric.find_first_of("eE"), std::string::npos);
   EXPECT_NE(command.find("0.000034052"), std::string::npos);
 }
-TEST(Protocol, OrderedConnectionReusedAndDiscardedOnBadReply) {
+TEST(Protocol, AmbiguousReplyKeepsSessionLockedWithoutReconnect) {
   auto c = config();
   int created = 0, calls = 0;
   V4Driver driver(c, [&] {
@@ -278,8 +396,9 @@ TEST(Protocol, OrderedConnectionReusedAndDiscardedOnBadReply) {
   driver.fk(c.home);
   EXPECT_EQ(created, 1);
   EXPECT_THROW(driver.fk(c.home), std::exception);
-  driver.fk(c.home);
-  EXPECT_EQ(created, 2);
+  EXPECT_THROW(driver.fk(c.home),Failure);
+  EXPECT_EQ(created, 1);
+  EXPECT_EQ(calls,3);
 }
 TEST(Protocol, StopWorksWithExclusiveControllerSession) {
   auto c = config();
@@ -976,4 +1095,248 @@ TEST(Validation, ImpossibleReferenceToleranceRejectedAtStartup) {
   c = config();
   c.tracker_options.max_phase_step_rad = pi;
   EXPECT_THROW(c.validate(), Failure);
+}
+TEST(ReferenceRestore, ReplaysWindingAndRejectsUnattestedOrMovedHandoff) {
+  auto c=config(); auto m=model(c);auto expected=trusted(c,m).tracker;
+  const auto path="/tmp/chess_arm_history_"+std::to_string(getpid())+".bin";
+  Joints last=c.home;
+  {
+    std::ofstream out(path,std::ios::binary);
+    for(int i=0;i<=50;++i) {
+      auto bytes=frame(100+i);last=c.home;last[0]+=.001*i;
+      field<uint64_t>(bytes,24,(i==0 || i==50) ? 5 : 7);
+      for(size_t j=0;j<6;++j) field<double>(bytes,432+8*j,last[j]*180/pi);
+      int64_t host=1000000000LL+i*1000000LL;
+      out.write(reinterpret_cast<char *>(&host),sizeof(host));
+      out.write(reinterpret_cast<char *>(bytes.data()),bytes.size());
+      expected.advance(last);
+    }
+  }
+  State state(c,m);
+  auto f=feedback(c,1000);f.q=last;state.update(f);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+  f.controller_stamp++;f.received=Clock::now();state.update(f);
+  EXPECT_THROW(state.restore({path},false),Failure);
+  EXPECT_NO_THROW(state.restore({path},true));
+  auto restored=state.snapshot();EXPECT_TRUE(restored.reference);
+  EXPECT_NEAR(restored.tracker.metrics().net,expected.metrics().net,1e-10);
+  EXPECT_GT(restored.tracker.metrics().total,.01);
+  EXPECT_THROW(state.restore({path},true),Failure);
+  State moved(c,m);f.q[0]+=.01;f.controller_stamp++;f.received=Clock::now();moved.update(f);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));f.controller_stamp++;f.received=Clock::now();moved.update(f);
+  EXPECT_THROW(moved.restore({path},true),Failure);EXPECT_FALSE(moved.snapshot().reference);
+  std::remove(path.c_str());
+}
+TEST(Exploration, ConfiguredStageBoundsPreserveGlobalGuards) {
+  auto c=config();c.backend="exploration";c.enable=true;c.safety_model_file=ARM_TEST_GUARD;
+  c.freshness=.1;c.max_tracking_error=.005;c.velocity.fill(.02);c.acceleration.fill(.05);
+  c.profiles={{"near",.01,.04},{"wide",.02,.04}};c.default_profile="near";
+  c.exploration_boundaries={{"near",.08,.3,pi/6},{"wide",.7,3,pi}};
+  EXPECT_NO_THROW(c.validate());EXPECT_TRUE(c.hardwareAllowed());
+  auto effective=c.forProfile("wide");EXPECT_EQ(effective.commissioning_tcp_radius,.7);
+  EXPECT_EQ(effective.twist_limits.total_limit_rad,pi);
+  GeometryGuard guard(effective,model(c));EXPECT_NO_THROW(guard.check(c.home));
+  auto singular=c.home;singular[2]=.035;EXPECT_THROW(guard.check(singular),Failure);
+  EXPECT_THROW(c.forProfile("unconfigured"),Failure);
+  c.exploration_boundaries.back().twist_limit=3*pi;EXPECT_THROW(c.validate(),Failure);
+}
+TEST(Planner, SingleQuinticUsesProfileCapsWithoutDuplicateBlending) {
+  auto c=config();c.profiles={{"conservative",.01,.04}};
+  auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  s.feedback.q[0]+=.05;s.tracker.advance(s.feedback.q);
+  Planner planner(c,m,k,[]{});Goal g;g.operation=Operation::Home;
+  auto plan=planner.plan(g,s);const auto &samples=plan.segments.front().samples;
+  EXPECT_LT(samples.back().time,9.6);
+  Joints previous{};
+  for(size_t i=1;i<samples.size();++i)
+    for(size_t j=0;j<6;++j) {
+      double v=(samples[i].q[j]-samples[i-1].q[j])/c.sample_period;
+      EXPECT_LE(std::abs(v),.01+1e-10);
+      EXPECT_LE(std::abs(v-previous[j])/c.sample_period,.04+1e-10);
+      previous[j]=v;
+    }
+  for(double v:previous) EXPECT_LE(std::abs(v)/c.sample_period,.04+1e-10);
+}
+TEST(ReferenceRestore, PreservesRecorded330DegreesRatherThanPrincipalMinus30) {
+  auto c=config();auto m=model(c);auto expected=trusted(c,m).tracker;
+  const auto path="/tmp/chess_arm_full_turn_"+std::to_string(getpid())+".bin";
+  Joints last=c.home;
+  {
+    std::ofstream out(path,std::ios::binary);
+    for(int i=0;i<=400;++i) {
+      auto bytes=frame(100+i);last=c.home;last[5]+=330*pi/180*i/400;
+      field<uint64_t>(bytes,24,(i==0 || i==400) ? 5 : 7);
+      for(size_t j=0;j<6;++j) field<double>(bytes,432+8*j,last[j]*180/pi);
+      int64_t host=1000000000LL+i*1000000LL;
+      out.write(reinterpret_cast<char *>(&host),sizeof(host));out.write(reinterpret_cast<char *>(bytes.data()),bytes.size());
+      expected.advance(last);
+    }
+  }
+  State state(c,m);auto f=feedback(c,1000);f.q=last;state.update(f);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));f.controller_stamp++;f.received=Clock::now();state.update(f);
+  ASSERT_NO_THROW(state.restore({path},true));auto restored=state.snapshot();
+  EXPECT_NEAR(restored.tracker.metrics().net,expected.metrics().net,1e-10);
+  EXPECT_GT(std::abs(restored.tracker.metrics().net),5.0);
+  EXPECT_GT(restored.tracker.metrics().total,5.0);std::remove(path.c_str());
+}
+TEST(ReferenceRestore, StationaryServoHoldRequiresSeparateStoppedAuditAndDwell) {
+  for(int variant=0;variant<5;++variant) {
+    SCOPED_TRACE(variant);
+    auto c=config();c.stationary_speed=.002;auto m=model(c);auto expected=trusted(c,m).tracker;
+    auto base="/tmp/chess_arm_hold_"+std::to_string(getpid())+"_"+std::to_string(variant);
+    auto path=base+".bin",stopped=base+"_stopped.bin";Joints last=c.home;
+    {
+      std::ofstream out(path,std::ios::binary);
+      for(int i=0;i<=12;++i) {
+        auto bytes=frame(100+i);last=c.home;last[5]+=.2*std::min(i,10)/10;
+        field<uint64_t>(bytes,24,i==0 ? 5 : 7);
+        for(size_t j=0;j<6;++j) field<double>(bytes,432+8*j,last[j]*180/pi);
+        if(i>0 && (i<=10 || variant==1)) field<double>(bytes,480,.01*180/pi);
+        if(i==11 && variant==4) field<double>(bytes,480,std::numeric_limits<double>::quiet_NaN());
+        int64_t host=1000000000LL+i*10000000LL;
+        out.write(reinterpret_cast<char *>(&host),sizeof(host));out.write(reinterpret_cast<char *>(bytes.data()),bytes.size());
+        expected.advance(last);
+      }
+    }
+    {
+      auto bytes=frame(200);field<uint64_t>(bytes,24,5);
+      auto joined=last;if(variant==2) joined[5]+=.01;
+      for(size_t j=0;j<6;++j) field<double>(bytes,432+8*j,joined[j]*180/pi);
+      int64_t host=2000000000LL;std::ofstream out(stopped,std::ios::binary);
+      out.write(reinterpret_cast<char *>(&host),sizeof(host));out.write(reinterpret_cast<char *>(bytes.data()),bytes.size());
+    }
+    State state(c,m);auto f=feedback(c,1000);f.q=last;state.update(f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));f.controller_stamp++;f.received=Clock::now();state.update(f);
+    std::vector<std::string> files{path};if(variant!=3) files.push_back(stopped);
+    if(variant==0) {
+      ASSERT_NO_THROW(state.restore(files,true));
+      EXPECT_NEAR(state.snapshot().tracker.metrics().net,expected.metrics().net,1e-10);
+      EXPECT_GT(state.snapshot().tracker.metrics().total,.1);
+    } else EXPECT_THROW(state.restore(files,true),std::exception);
+    std::remove(path.c_str());std::remove(stopped.c_str());
+  }
+}
+TEST(Planner, SmoothVerticalRetainsLineAndProfileDerivativeBounds) {
+  auto c=config();c.profiles={{"conservative",.02,.04}};
+  auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  Goal g;g.operation=Operation::Descend;g.target=m->tcp(c.home);g.target.translation().z()-=.05;
+  Planner planner(c,m,k,[]{});auto plan=planner.plan(g,s);const auto &samples=plan.segments.front().samples;
+  Joints previous{};auto origin=m->tcp(c.home);
+  for(size_t i=0;i<samples.size();++i) {
+    auto actual=m->tcp(samples[i].q);
+    EXPECT_LE((actual.translation().head<2>()-origin.translation().head<2>()).norm(),c.position_tolerance);
+    EXPECT_LE(rotationDistance(actual,origin),c.rotation_tolerance);
+    if(!i)continue;
+    for(size_t j=0;j<6;++j) {
+      double v=(samples[i].q[j]-samples[i-1].q[j])/c.sample_period;
+      EXPECT_LE(std::abs(v),.02+1e-10);EXPECT_LE(std::abs(v-previous[j])/c.sample_period,.04+1e-10);previous[j]=v;
+    }
+  }
+  for(double v:previous) EXPECT_LE(std::abs(v)/c.sample_period,.04+1e-10);
+}
+TEST(Streaming, ControllerFollowingHorizonIsIndependentOfSendPeriod) {
+  auto c=streamConfig();c.servo_command_time=.1;auto shared=std::make_shared<StreamFixtureState>();
+  V4Driver driver(c,[shared]{return std::make_unique<StreamFixture>(shared);});
+  driver.beginStream();driver.servo(c.home,.03);driver.endStream();
+  ASSERT_EQ(shared->sent_commands.size(),1u);
+  EXPECT_NE(shared->sent_commands.front().find("t=0.100000000"),std::string::npos);
+  auto invalid=config();invalid.servo_command_time=.01;EXPECT_THROW(invalid.validate(),Failure);
+}
+TEST(Protocol, CoalescedRepliesAreRetainedAcrossReceives) {
+  Loopback server({"0,{},One();0,{},Two();"});
+  Socket socket("127.0.0.1",server.port,500);socket.send_command("One()",500);
+  EXPECT_EQ(socket.receive_reply(500),"0,{},One();");
+  EXPECT_EQ(socket.receive_reply(500),"0,{},Two();");
+}
+
+TEST(Protocol, LongFragmentedReplyAndOversizeBound) {
+  std::string payload(12000,'1');
+  Loopback server({"0,{"+payload.substr(0,3000),payload.substr(3000)+"},Large();"});
+  Socket socket("127.0.0.1",server.port,500);
+  EXPECT_EQ(parse_dashboard_reply(socket.query("Large()",500),"Large()").payload,payload);
+  Loopback oversized({"0,{"+std::string(17000,'1')+"},Large();"});
+  Socket capped("127.0.0.1",oversized.port,500);
+  EXPECT_THROW(capped.query("Large()",500),QueryFailure);
+}
+
+TEST(FeedbackTimestamp, ReceiptClockIsIndependentOfControllerAndPublication) {
+  auto c=config();auto b=frame(123456789);field<uint64_t>(b,24,5);
+  const auto received=Clock::now();
+  const int64_t ros=42000000017LL;
+  auto f=decodeFeedbackFrame(b,received,ros);
+  EXPECT_EQ(f.ros_received_ns,ros);EXPECT_EQ(f.controller_stamp,123456789u);
+  EXPECT_EQ(f.received,received);
+  State state(c,model(c));state.update(f);
+  std::this_thread::sleep_for(std::chrono::milliseconds(25));
+  EXPECT_EQ(state.snapshot().feedback.ros_received_ns,ros);
+  EXPECT_THROW(decodeFeedbackFrame(FeedbackFrame{},received,ros),std::runtime_error);
+}
+TEST(SpeedModes, DefaultAliasOfficialCapsAndPauseGate) {
+  auto c=config();c.profiles={{"low",.708,1.416},{"high",2.36,4.72},{"conservative",.708,1.416}};
+  c.default_profile="high";
+  EXPECT_EQ(c.profile("").name,"high");
+  EXPECT_DOUBLE_EQ(c.profile("low").speed,.708);
+  EXPECT_DOUBLE_EQ(c.profile("conservative").speed,.708);
+  c.backend="hardware";c.enable=c.tcp_verified=c.limits_verified=c.execution_verified=c.servo_certified=true;
+  EXPECT_TRUE(c.hardwareAllowed());c.motion_paused=true;EXPECT_FALSE(c.hardwareAllowed());
+  c.motion_paused=false;c.controller_family="v3";EXPECT_FALSE(c.hardwareAllowed());
+  c.controller_family="v4";c.controller_firmware="3.5.5";EXPECT_FALSE(c.hardwareAllowed());
+}
+TEST(SpeedModes, BothProfilesKeepDerivativeAndSampleGuards) {
+  for (const auto &name : {"low","high"}) {
+    auto c=config();c.profiles={{"low",.708,1.416},{"high",2.36,4.72}};c.default_profile="low";
+    auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+    for(int i=0;i<10;++i){s.feedback.q[0]+=.05;s.tracker.advance(s.feedback.q);}
+    Planner p(c,m,k,[]{});Goal g;g.operation=Operation::Home;g.profile=name;
+    auto plan=p.plan(g,s);const auto &samples=plan.segments.front().samples;
+    Joints previous_velocity{};
+    for(size_t i=1;i<samples.size();++i) {
+      double dt=samples[i].time-samples[i-1].time;EXPECT_GT(dt,0);
+      for(size_t j=0;j<6;++j) {
+        double v=(samples[i].q[j]-samples[i-1].q[j])/dt;
+        EXPECT_LE(std::abs(v),std::min(c.profile(name).speed,c.velocity[j])+1e-8);
+        EXPECT_LE(std::abs(v-previous_velocity[j])/dt,std::min(c.profile(name).acceleration,c.acceleration[j])+1e-7);
+        previous_velocity[j]=v;
+      }
+    }
+  }
+}
+
+TEST(Roundtrip, ZeroClearanceIsDirectTcpAndReturnUsesPredictedEndpoint) {
+  auto c=config();c.clearance=0;c.home_roundtrip_precheck=true;
+  EXPECT_NO_THROW(c.validate());
+  auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  auto target_q=c.home;target_q[0]+=.04;
+  // Use a real reachable TCP transform with fixed outward orientation for this
+  // node semantic test; the runner's manifest retains the formal Home orientation.
+  Goal g;g.operation=Operation::Pregrasp;g.target=m->tcp(target_q);
+  auto untouched=s.tracker.lastJoints();
+  Planner p(c,m,k,[]{});auto plan=p.plan(g,s);
+  ASSERT_EQ(plan.segments.size(),1u);
+  auto end=plan.segments.front().samples.back().q;
+  EXPECT_LT((m->tcp(end).translation()-g.target.translation()).norm(),1e-5);
+  EXPECT_NE(plan.selection.find("home_return_checked=true"),std::string::npos);
+  EXPECT_EQ(s.tracker.lastJoints(),untouched);
+  // Only the predicted return reverses q0; a Home->Home fake would not. Reject
+  // that reverse path specifically and ensure no outward plan is admitted.
+  double last=c.home[0];bool reversed=false;
+  Planner blocked(c,m,k,[]{},[&](const Joints &q){
+    const double displacement=q[0]-c.home[0];
+    if(q[0]<last-1e-7 && displacement>.005 && displacement<.035) {
+      reversed=true;throw Failure(PLANNING_FAILED,"test return-only obstacle");
+    }
+    last=q[0];
+  });
+  EXPECT_THROW(blocked.plan(g,s),Failure);EXPECT_TRUE(reversed);
+  EXPECT_EQ(s.tracker.lastJoints(),untouched);
+}
+TEST(Roundtrip, RejectsOffsetAndWrongStartButKeepsFormalHome) {
+  auto c=config();c.home_roundtrip_precheck=true;
+  EXPECT_THROW(c.validate(),Failure);c.clearance=0;EXPECT_NO_THROW(c.validate());
+  auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  Planner p(c,m,k,[]{});Goal g;g.operation=Operation::Pregrasp;g.target=m->tcp(c.home);
+  auto off=s;off.feedback.q[0]+=.03;
+  EXPECT_THROW(p.plan(g,off),Failure);
+  g.operation=Operation::Home;EXPECT_NO_THROW(p.plan(g,off));
+  g.operation=Operation::Sequence;EXPECT_THROW(p.plan(g,s),Failure);
 }

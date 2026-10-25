@@ -8,6 +8,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <poll.h>
+#include <netinet/tcp.h>
 #include <stdexcept>
 #include <string>
 #include <sys/socket.h>
@@ -34,6 +35,7 @@ inline long long utc_ns() {
 
 class Socket {
   int fd_ = -1;
+  std::string buffered_;
 
   void wait_for(short events, Steady::time_point deadline) {
     for (;;) {
@@ -70,6 +72,12 @@ class Socket {
         throw std::runtime_error(std::string("recv: ") + std::strerror(errno));
       if (got == 0)
         throw std::runtime_error("connection closed before complete response");
+#ifdef TCP_QUICKACK
+      // QUICKACK is temporary on Linux; request it after each receive instead
+      // of assuming a one-time setting permanently disables delayed ACKs.
+      int quick_ack=1;
+      (void)setsockopt(fd_,IPPROTO_TCP,TCP_QUICKACK,&quick_ack,sizeof(quick_ack));
+#endif
       return static_cast<size_t>(got);
     }
   }
@@ -79,6 +87,35 @@ class Socket {
     while (done < n)
       done +=
           receive_until(static_cast<char *>(buffer) + done, n - done, deadline);
+  }
+  void send_until(const std::string &command, Steady::time_point deadline) {
+    size_t sent = 0;
+    while (sent < command.size()) {
+      wait_for(POLLOUT, deadline);
+      const auto n = send(fd_, command.data() + sent, command.size() - sent, MSG_NOSIGNAL);
+      if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)) continue;
+      if (n <= 0) throw std::runtime_error("send failed");
+      sent += static_cast<size_t>(n);
+    }
+  }
+  std::string reply_until(Steady::time_point deadline) {
+    try {
+      for (;;) {
+        auto end = buffered_.find(';');
+        if (end != std::string::npos) {
+          if (end >= 16384) throw std::runtime_error("oversized reply");
+          auto reply = buffered_.substr(0, end + 1);
+          buffered_.erase(0, end + 1);
+          return reply;
+        }
+        if (buffered_.size() >= 16384) throw std::runtime_error("oversized reply");
+        char bytes[4096];
+        auto count = receive_until(bytes, sizeof(bytes), deadline);
+        buffered_.append(bytes, count);
+      }
+    } catch (const std::exception &e) {
+      throw QueryFailure(e.what(), buffered_);
+    }
   }
 
 public:
@@ -96,6 +133,9 @@ public:
     if (fd_ < 0)
       throw std::runtime_error(std::string("socket: ") + std::strerror(errno));
     try {
+      int no_delay=1;
+      if (setsockopt(fd_,IPPROTO_TCP,TCP_NODELAY,&no_delay,sizeof(no_delay))<0)
+        throw std::runtime_error("cannot enable TCP_NODELAY");
       const int flags = fcntl(fd_, F_GETFL, 0);
       if (flags < 0 || fcntl(fd_, F_SETFL, flags | O_NONBLOCK) < 0)
         throw std::runtime_error(std::string("fcntl: ") + std::strerror(errno));
@@ -149,30 +189,15 @@ public:
     // Sending and the complete reply share one budget. Fragments do not reset
     // it.
     const auto deadline = Steady::now() + std::chrono::milliseconds(timeout_ms);
-    size_t sent = 0;
-    while (sent < command.size()) {
-      wait_for(POLLOUT, deadline);
-      const auto n =
-          send(fd_, command.data() + sent, command.size() - sent, MSG_NOSIGNAL);
-      if (n < 0 && (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR))
-        continue;
-      if (n <= 0)
-        throw std::runtime_error("send failed");
-      sent += static_cast<size_t>(n);
-    }
-    std::string response;
-    try {
-      while (response.size() < 16384) {
-        char c;
-        exact_until(&c, 1, deadline);
-        response += c;
-        if (c == ';')
-          return response;
-      }
-      throw std::runtime_error(
-          "oversized reply (maximum 16384 bytes including terminator)");
-    } catch (const std::exception &e) {
-      throw QueryFailure(e.what(), response);
-    }
+    send_until(command, deadline);
+    return reply_until(deadline);
+  }
+  void send_command(const std::string &command, int timeout_ms) {
+    if (timeout_ms <= 0) throw std::runtime_error("invalid send deadline");
+    send_until(command, Steady::now() + std::chrono::milliseconds(timeout_ms));
+  }
+  std::string receive_reply(int timeout_ms) {
+    if (timeout_ms <= 0) throw std::runtime_error("invalid receive deadline");
+    return reply_until(Steady::now() + std::chrono::milliseconds(timeout_ms));
   }
 };

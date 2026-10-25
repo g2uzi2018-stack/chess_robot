@@ -7,11 +7,14 @@ chess_robot_arm:
     hardware: {enable: false}
     commissioning: {joint_radius_rad: 0.1, tcp_radius_m: 0.03}
     limits:
-      velocity_rad_s: [0.02, 0.02, 0.02, 0.02, 0.02, 0.02]
-      acceleration_rad_s2: [0.05, 0.05, 0.05, 0.05, 0.05, 0.05]
+      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]
+      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]
     profiles:
-      names: [commissioning_slow]
-      commissioning_slow: {speed_rad_s: 0.01, acceleration_rad_s2: 0.04}
+      default: low
+      names: [low, high, commissioning_slow]
+      low: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      high: {speed_rad_s: 2.36, acceleration_rad_s2: 4.72}
+      commissioning_slow: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
     twist: {net_limit_rad: 0.3490658503988659, total_limit_rad: 0.3490658503988659}
     feedback: {freshness_s: 0.1}
     tolerances:
@@ -20,4 +23,4 @@ chess_robot_arm:
       position_m: 0.001
       rotation_rad: 0.005
       joint_rad: 0.0005
-      tracking_rad: 0.005
+      tracking_rad: 0.15

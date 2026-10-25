@@ -11,6 +11,7 @@ import re
 import socket
 import struct
 import threading
+import queue
 import time
 import xml.etree.ElementTree as ET
 import numpy as np
@@ -64,7 +65,8 @@ class ControllerFixture:
         self.command_id=0;self.stop_count=0;self.actuation=[];self.commands=[];self.forbidden=[]
         self.lock=threading.RLock();self.closed=threading.Event();self.threads=[]
         self.controls={'feedback_enabled':True,'duplicate_every':0,'hold_duplicates':False,
-                       'wrong_echo':'','notice':'','reject':'','mode':None}
+                       'wrong_echo':'','notice':'','reject':'','mode':None,'servo_ack_delay_s':0.0,
+                       'ignore_servo':False}
         self.dashboard=self.listener();self.feedback=self.listener()
         self.info={'host':'127.0.0.1','dashboard_port':self.dashboard.getsockname()[1],
                    'feedback_port':self.feedback.getsockname()[1],'simulation':True}
@@ -102,6 +104,17 @@ class ControllerFixture:
 
     def serve_dashboard(self,peer):
         peer.settimeout(.2);buffer=''
+        replies=queue.Queue()
+        def reply_writer():
+            try:
+                while not self.closed.is_set():
+                    item=replies.get()
+                    if item is None:return
+                    response,ready=item
+                    self.closed.wait(max(0,ready-time.monotonic()))
+                    peer.sendall(response.encode('ascii'))
+            except OSError:pass
+        self._start(reply_writer)
         try:
             while not self.closed.is_set():
                 try:chunk=peer.recv(4096)
@@ -112,9 +125,10 @@ class ControllerFixture:
                 while ')' in buffer:
                     end=buffer.index(')')+1;command=buffer[:end].strip();buffer=buffer[end:].lstrip(';\r\n ')
                     response=self.command(command)
-                    peer.sendall(response.encode('ascii'))
+                    delay=self.controls['servo_ack_delay_s'] if command.lower().startswith('servoj(') else 0
+                    replies.put((response,time.monotonic()+delay))
         except (OSError,UnicodeError):pass
-        finally:peer.close()
+        finally:replies.put(None);peer.close()
 
     @staticmethod
     def first_six(command):
@@ -145,7 +159,7 @@ class ControllerFixture:
                     elif name=='servoj':
                         target=np.radians(self.first_six(command));assert len(target)==6
                         duration=re.search(r'(?:,|\()\s*t\s*=\s*([-+0-9.eE]+)',command)
-                        self.start_q=q;self.target_q=target;self.start_time=time.monotonic()
+                        self.start_q=q;self.target_q=q if self.controls['ignore_servo'] else target;self.start_time=time.monotonic()
                         self.duration=float(duration[1]) if duration else .1
                         self.command_id+=1;payload=str(self.command_id);self.actuation.append(command)
                     elif name=='stop':

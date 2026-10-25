@@ -16,6 +16,7 @@ import rclpy
 from rclpy.action import ActionClient
 from chess_robot_interfaces.action import MoveArm
 from chess_robot_interfaces.msg import ArmState
+from sensor_msgs.msg import JointState
 from chess_robot_interfaces.srv import InitializeReference, ConfirmGrasp
 from arm_controller_fixture import ControllerFixture
 from scipy.spatial.transform import Rotation
@@ -45,11 +46,14 @@ def future(f,timeout=15):
     return f.result()
 
 class Session:
-    def __init__(self,execution=False):
-        self.fixture=ControllerFixture(PROJECT,OUT/('execution' if execution else 'readonly'))
+    def __init__(self,execution=False,current_modes=False):
+        label=('execution' if execution else 'readonly')+str(time.monotonic_ns())
+        self.fixture=ControllerFixture(PROJECT,OUT/label)
         info=self.fixture.info
         assert info['host']=='127.0.0.1' and info['simulation']
         self.latest=None
+        self.joints=[];self.states=[]
+        self.joint_sub=node.create_subscription(JointState,'/simulation/arm/joint_states',lambda m:self.joints.append(m),10)
         self.sub=node.create_subscription(ArmState,'/simulation/arm/state',self.receive,10)
         self.action=ActionClient(node,MoveArm,'/simulation/arm/move')
         self.init=node.create_client(InitializeReference,'/simulation/arm/initialize_reference')
@@ -61,9 +65,20 @@ class Session:
                  approach_clearance_m=.01,gripper_timeout_s=.5)
         p['controller'].update(ip=info['host'],dashboard_port=info['dashboard_port'],feedback_port=info['feedback_port'])
         p['hardware']={key:execution for key in p['hardware']}
-        parameter_file=OUT/('execution.yaml' if execution else 'readonly.yaml')
+        p['motion']={'paused':False} # loopback-only fixture opt-in
+        p['profiles']['default']='conservative'
+        if execution and not current_modes:
+            p['servo'].update(command_time_s=.2,aheadtime=100.0,gain=200.0,max_pending=6)
+            p['limits']['velocity_rad_s']=[.02]*6;p['limits']['acceleration_rad_s2']=[.05]*6
+            p['profiles']['conservative']={'speed_rad_s':.005,'acceleration_rad_s2':.01}
+            p['tolerances']['tracking_rad']=.005
+        if current_modes:
+            p['profiles']['default']='low'
+            p['servo'].update(command_time_s=.03,max_pending=6)
+            p['arrival_timeout_s']=1.0
+        parameter_file=OUT/(label+'.yaml')
         parameter_file.write_text(yaml.safe_dump(params))
-        self.log=open(OUT/('execution.log' if execution else 'readonly.log'),'w')
+        self.log=open(OUT/(label+'.log'),'w')
         binary=PROJECT/'install/chess_robot_arm/lib/chess_robot_arm/arm_node'
         self.process=subprocess.Popen([str(binary),'--ros-args','--params-file',str(parameter_file)],stdout=self.log,stderr=subprocess.STDOUT)
         assert self.action.wait_for_server(timeout_sec=10)
@@ -78,6 +93,7 @@ class Session:
     def receive(self,message):
         if self.latest is None:self.started=time.monotonic()
         self.latest=message
+        self.states.append(message)
     def goal(self,op,plan=True):
         g=MoveArm.Goal();g.operation=op;g.profile='conservative';g.plan_only=plan
         # Nominal TCP transform independently matches the URDF convention.
@@ -106,7 +122,7 @@ class Session:
         self.process.send_signal(signal.SIGINT)
         self.process.wait(timeout=8);self.log.close()
         self.fixture.close()
-        node.destroy_subscription(self.sub);node.destroy_client(self.init);node.destroy_client(self.confirm);self.action.destroy()
+        node.destroy_subscription(self.sub);node.destroy_subscription(self.joint_sub);node.destroy_client(self.init);node.destroy_client(self.confirm);self.action.destroy()
 
 session=None
 try:
@@ -139,6 +155,20 @@ try:
     session.fixture.controls['wrong_echo']='';session.idle()
     events.append('wrong SDK command echo aborts planning without actuation')
     session.fixture.controls['hold_duplicates']=True
+    # Allow already-in-flight unique frames to settle, then observe several
+    # publish ticks with the same unique feedback. Old now()-on-publish fails.
+    until=time.monotonic()+.06
+    spin_until(lambda:time.monotonic()>=until)
+    frozen=session.latest.header.stamp
+    until=time.monotonic()+.08
+    spin_until(lambda:time.monotonic()>=until)
+    assert session.latest.feedback_fresh
+    assert session.latest.header.stamp==frozen
+    assert session.latest.tcp.header.stamp==frozen
+    matches=[j for j in session.joints if j.header.stamp==frozen]
+    assert matches and max(abs(a-b) for a,b in zip(matches[-1].position,session.fixture.q))<1e-12
+    assert time.time_ns()-(frozen.sec*10**9+frozen.nanosec)>50_000_000
+    events.append('duplicate feedback: joint/state/TCP retain one receipt stamp across delayed publication')
     spin_until(lambda:not session.latest.feedback_fresh and not session.latest.reference_valid,3)
     session.fixture.controls['hold_duplicates']=False
     spin_until(lambda:session.latest.feedback_fresh)
@@ -147,6 +177,21 @@ try:
     session.close();assert not session.fixture.actuation
     events.append('readonly startup/goals/feedback fault/shutdown emitted zero ServoJ/Stop')
     session=None
+    session=Session(execution=True,current_modes=True)
+    # Exercise both public speed modes, including configurable empty-goal default.
+    for name in ['low','high','']:
+        g=session.goal(MoveArm.Goal.DESCEND,False);g.profile=name
+        h=session.send(g);assert h.accepted
+        r=session.result(h);assert r.code==MoveArm.Result.COMPLETED and r.executed,r.detail
+        session.idle();session.home()
+    events.append('low/high/default speed modes complete only after measured arrival')
+    session.fixture.controls['ignore_servo']=True
+    h=session.send(session.goal(MoveArm.Goal.DESCEND,False));assert h.accepted
+    r=session.result(h);assert r.code!=MoveArm.Result.COMPLETED and r.executed,r.detail
+    assert session.fixture.stop_count>=1
+    session.idle();session.fixture.controls['ignore_servo']=False
+    events.append('successful command acknowledgements with frozen encoders cannot report arrival')
+    session.close();session=None
     session=Session(execution=True)
     h=session.send(session.goal(MoveArm.Goal.GRASP_SEQUENCE,False));assert h.accepted
     busy=session.send(session.goal(MoveArm.Goal.HOME));assert not busy.accepted
@@ -178,6 +223,23 @@ try:
     session.idle();assert session.fixture.stop_count>=1
     events.append('ROS cancellation during ServoJ sends Stop and verifies stationary feedback')
     session.home()
+    session.fixture.controls['servo_ack_delay_s']=.125
+    h=session.send(session.goal(MoveArm.Goal.GRASP_SEQUENCE,False));assert h.accepted
+    spin_until(lambda:session.latest.phase=='WAIT_GRIPPER',25)
+    assert session.ack(session.latest.job_id).accepted
+    r=session.result(h);assert r.code==MoveArm.Result.COMPLETED and r.executed,r.detail
+    session.idle();session.fixture.controls['servo_ack_delay_s']=0
+    events.append('125ms delayed ServoJ replies preserve fixed-period sends and measured sequence arrival')
+    session.home()
+    session.fixture.controls['servo_ack_delay_s']=.2
+    stops=session.fixture.stop_count
+    h=session.send(session.goal(MoveArm.Goal.PREGRASP,False));assert h.accepted
+    r=session.result(h);assert r.code==MoveArm.Result.EXECUTION_FAILED and r.executed,r.detail
+    session.idle();assert session.fixture.stop_count>stops
+    assert session.latest.controller_mode==5 and session.latest.phase!='FAULT'
+    session.fixture.controls['servo_ack_delay_s']=0
+    events.append('200ms late ServoJ replies fail motion, drain without replay, then verify Stop')
+    session.home()
     session.fixture.controls['wrong_echo']='servoj'
     stops=session.fixture.stop_count
     h=session.send(session.goal(MoveArm.Goal.PREGRASP,False));assert h.accepted
@@ -185,7 +247,9 @@ try:
     assert r.code==MoveArm.Result.EXECUTION_FAILED and r.executed,r.detail
     session.idle();assert session.fixture.stop_count>stops
     session.fixture.controls['wrong_echo']=''
-    events.append('malformed ServoJ acknowledgement reports execution failure and verifies Stop')
+    events.append('malformed ServoJ acknowledgement reports execution failure and verifies Stop on original session')
+    session.close();session=None
+    session=Session(execution=True)
     session.home()
     count=len(session.fixture.actuation)
     h=session.send(session.goal(MoveArm.Goal.GRASP_SEQUENCE,False));assert h.accepted

@@ -23,3 +23,6 @@ src/dh_ag95_description/SOURCES.json text eol=lf
 reference/ag95/SOURCES.json text eol=lf
 tools/description/*.py text eol=lf
 .gitattributes text eol=lf
+
+# Preserve the pinned C++ SDK and its patch/provenance bytes.
+src/chess_robot_arm/third_party/dobot_v4/** -text -whitespace

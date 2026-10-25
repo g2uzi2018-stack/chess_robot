@@ -1,0 +1,6 @@
+# Explicit recovery only. The caller attests the gaps between stopped sessions.
+string[] audit_files
+bool no_unobserved_motion
+---
+bool success
+string detail

@@ -6,6 +6,8 @@
 #include <chess_robot_interfaces/msg/arm_state.hpp>
 #include <chess_robot_interfaces/srv/confirm_grasp.hpp>
 #include <chess_robot_interfaces/srv/initialize_reference.hpp>
+#include <chess_robot_interfaces/srv/restore_reference.hpp>
+#include <map>
 #include <condition_variable>
 #include <iomanip>
 #include <rclcpp/rclcpp.hpp>
@@ -58,7 +60,12 @@ class ArmNode final : public rclcpp::Node {
   std::unique_ptr<V4Driver> driver_;
   std::unique_ptr<State> state_;
   std::unique_ptr<GeometryGuard> geometry_guard_;
-  std::function<void(const Joints &)> safetyCheck() {
+  std::map<std::string,std::shared_ptr<GeometryGuard>> exploration_guards_;
+  std::function<void(const Joints &)> safetyCheck(const std::string &profile="") {
+    if (config_.backend=="exploration") {
+      auto guard=exploration_guards_.at(profile.empty() ? config_.default_profile : profile);
+      return [guard](const Joints &q) { guard->check(q); };
+    }
     if (!geometry_guard_)
       return {};
     return [this](const Joints &q) { geometry_guard_->check(q); };
@@ -80,6 +87,7 @@ class ArmNode final : public rclcpp::Node {
       confirm_;
   rclcpp::Service<chess_robot_interfaces::srv::InitializeReference>::SharedPtr
       initialize_;
+  rclcpp::Service<chess_robot_interfaces::srv::RestoreReference>::SharedPtr restore_;
   rclcpp::Publisher<chess_robot_interfaces::msg::ArmState>::SharedPtr
       state_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joints_pub_;
@@ -107,6 +115,10 @@ class ArmNode final : public rclcpp::Node {
     c.backend = param("backend", c.backend);
     c.ip = param("controller.ip", c.ip);
     c.test_fixture = param("test_fixture", false);
+    c.controller_family = param("controller.protocol_family", c.controller_family);
+    c.controller_firmware = param("controller.firmware_version", c.controller_firmware);
+    c.motion_paused = param("motion.paused", true);
+    c.default_profile = param("profiles.default", c.default_profile);
     c.urdf = param("urdf_file", std::string(""));
     c.dashboard_port = param("controller.dashboard_port", c.dashboard_port);
     c.feedback_port = param("controller.feedback_port", c.feedback_port);
@@ -150,6 +162,7 @@ class ArmNode final : public rclcpp::Node {
     }
 #define PARAM(field, name) c.field = param(name, c.field)
     PARAM(clearance, "approach_clearance_m");
+    PARAM(home_roundtrip_precheck, "testing.home_roundtrip_precheck");
     PARAM(downward_tolerance, "tolerances.downward_rad");
     PARAM(stamp_age, "capture.max_age_s");
     PARAM(stamp_future, "capture.future_tolerance_s");
@@ -169,6 +182,8 @@ class ArmNode final : public rclcpp::Node {
     PARAM(stop_timeout, "stop_timeout_s");
     PARAM(servo_ahead, "servo.aheadtime");
     PARAM(servo_gain, "servo.gain");
+    PARAM(servo_ack_timeout, "servo.ack_timeout_s");
+    PARAM(servo_command_time, "servo.command_time_s");
     PARAM(max_tracking_error, "tolerances.tracking_rad");
     PARAM(cost_duration, "twist.cost_duration");
     PARAM(cost_net, "twist.cost_net");
@@ -195,13 +210,30 @@ class ArmNode final : public rclcpp::Node {
     if (count < 2 || count > 100000)
       throw Failure(INVALID_GOAL, "sample budget out of range");
     c.max_samples = static_cast<size_t>(count);
+    int64_t window=param<int64_t>("servo.max_pending",6);
+    if (window<1 || window>8) throw Failure(INVALID_GOAL,"invalid ServoJ window");
+    c.servo_max_pending=size_t(window);
     auto profile_names =
-        param("profiles.names", std::vector<std::string>{"conservative"});
+        param("profiles.names", std::vector<std::string>{"low", "high", "conservative"});
     c.profiles.clear();
-    for (const auto &n : profile_names)
-      c.profiles.push_back(
-          {n, param("profiles." + n + ".speed_rad_s", 0.25),
-           param("profiles." + n + ".acceleration_rad_s2", 0.5)});
+    for (const auto &n : profile_names) {
+      const double speed = n=="high" ? 2.36 : .708;
+      const double acceleration = n=="high" ? 4.72 : 1.416;
+      c.profiles.push_back({n, param("profiles." + n + ".speed_rad_s", speed),
+          param("profiles." + n + ".acceleration_rad_s2", acceleration)});
+    }
+    if (c.backend=="exploration") {
+      auto stages=param("exploration.stages",std::vector<std::string>{});
+      for (const auto &name : stages)
+        c.exploration_boundaries.push_back({name,
+          param("exploration."+name+".tcp_radius_m",.08),
+          param("exploration."+name+".joint_radius_rad",.3),
+          param("exploration."+name+".twist_limit_rad",pi/6)});
+      if (!c.exploration_boundaries.empty()) {
+        c.commissioning_tcp_radius=c.exploration_boundaries.back().tcp_radius;
+        c.commissioning_joint_radius=c.exploration_boundaries.back().joint_radius;
+      }
+    }
     c.validate();
   }
   Goal decode(const Move::Goal &g) {
@@ -209,9 +241,10 @@ class ArmNode final : public rclcpp::Node {
       throw Failure(INVALID_GOAL, "unknown operation");
     Goal goal;
     goal.operation = static_cast<Operation>(g.operation);
-    goal.profile = g.profile;
+    goal.profile = g.profile.empty() ? config_.default_profile : g.profile;
     goal.plan_only = g.plan_only;
     config_.profile(g.profile);
+    config_.forProfile(g.profile);
     if (goal.operation != Operation::Home) {
       validateCapture(g.target.header.frame_id,
                       rclcpp::Time(g.target.header.stamp).seconds(),
@@ -242,7 +275,7 @@ class ArmNode final : public rclcpp::Node {
     auto s = state_->snapshot();
     r.final_tcp_valid = s.fresh;
     if (s.fresh)
-      r.final_tcp = poseMessage(model_->tcp(s.feedback.q), now());
+      r.final_tcp = poseMessage(model_->tcp(s.feedback.q), rclcpp::Time(s.feedback.ros_received_ns, get_clock()->get_clock_type()));
   }
   trajectory_msgs::msg::JointTrajectory trajectory(const Plan &plan) {
     trajectory_msgs::msg::JointTrajectory t;
@@ -271,7 +304,9 @@ class ArmNode final : public rclcpp::Node {
   void process(const std::shared_ptr<Handle> &h) {
     auto result = std::make_shared<Move::Result>();
     bool success = false;
-    Executor executor(config_, *driver_, *state_, gate_, model_, safetyCheck());
+    const auto effective=config_.forProfile(h->get_goal()->profile);
+    auto safety=safetyCheck(h->get_goal()->profile);
+    Executor executor(effective, *driver_, *state_, gate_, model_, safety);
     try {
       if (shutdown_ || gate_.canceled())
         throw Failure(CANCELED, "canceled before planning");
@@ -279,7 +314,7 @@ class ArmNode final : public rclcpp::Node {
       auto planning_deadline = Clock::now() + std::chrono::duration<double>(
                                                   config_.planning_timeout);
       Planner planner(
-          config_, model_, *driver_,
+          effective, model_, *driver_,
           [this, planning_deadline]() {
             if (Clock::now() > planning_deadline)
               throw Failure(PLANNING_FAILED, "planning deadline exceeded");
@@ -292,7 +327,7 @@ class ArmNode final : public rclcpp::Node {
               throw Failure(REFERENCE_INVALID,
                             "reference lost during planning");
           },
-          safetyCheck());
+          safety);
       auto start = state_->snapshot();
       auto plan = planner.plan(goal, start);
       result->trajectory = trajectory(plan);
@@ -302,6 +337,7 @@ class ArmNode final : public rclcpp::Node {
         result->code = PLAN_READY;
         result->detail =
             "PLAN_READY: sampled geometric plan only; movement not executed";
+        result->detail += plan.selection;
       } else {
         // Reject stale plans if the arm moved during SDK planning.
         if (jointDistance(state_->snapshot().feedback.q, start.feedback.q) >
@@ -311,6 +347,7 @@ class ArmNode final : public rclcpp::Node {
         result->code = COMPLETED;
         result->executed = true;
         result->detail = "measured arrival verified";
+        result->detail += plan.selection;
       }
       fillFinal(*result);
       success = true;
@@ -403,7 +440,7 @@ class ArmNode final : public rclcpp::Node {
     auto s = state_->snapshot();
     auto v = gate_.view();
     chess_robot_interfaces::msg::ArmState msg;
-    msg.header.stamp = now();
+    msg.header.stamp = rclcpp::Time(s.feedback.ros_received_ns, get_clock()->get_clock_type());
     msg.header.frame_id = "base_link";
     msg.backend = config_.backend;
     msg.phase = v.phase;
@@ -417,7 +454,7 @@ class ArmNode final : public rclcpp::Node {
     msg.controller_mode = s.feedback.mode;
     msg.diagnostic = s.diagnostic + (v.detail.empty() ? "" : "; " + v.detail);
     if (s.fresh) {
-      msg.tcp = poseMessage(model_->tcp(s.feedback.q), now());
+      msg.tcp = poseMessage(model_->tcp(s.feedback.q), rclcpp::Time(s.feedback.ros_received_ns, get_clock()->get_clock_type()));
       sensor_msgs::msg::JointState j;
       j.header = msg.header;
       j.name.assign(model_->jointNames().begin(), model_->jointNames().end());
@@ -460,7 +497,11 @@ public:
       throw Failure(INVALID_GOAL, "Home outside URDF bounds");
     if (!config_.safety_model_file.empty())
       geometry_guard_ = std::make_unique<GeometryGuard>(config_, model_);
-    driver_ = std::make_unique<V4Driver>(config_);
+    if (config_.backend=="exploration")
+      for (const auto &b : config_.exploration_boundaries)
+        exploration_guards_[b.profile]=std::make_shared<GeometryGuard>(config_.forProfile(b.profile),model_);
+    driver_ = std::make_unique<V4Driver>(config_, TransportFactory{},
+        [this] { return get_clock()->now().nanoseconds(); });
     state_ = std::make_unique<State>(config_, model_);
     state_pub_ = create_publisher<chess_robot_interfaces::msg::ArmState>(
         endpoint("state"), 10);
@@ -519,6 +560,12 @@ public:
                     res) {
               res->success = gate_.initialize(*state_, res->detail);
             });
+    restore_=create_service<chess_robot_interfaces::srv::RestoreReference>(
+        endpoint("restore_reference"),
+        [this](const std::shared_ptr<chess_robot_interfaces::srv::RestoreReference::Request> req,
+               std::shared_ptr<chess_robot_interfaces::srv::RestoreReference::Response> res) {
+          res->success=gate_.restore(*state_,req->audit_files,req->no_unobserved_motion,res->detail);
+        });
     parameter_lock_ = add_on_set_parameters_callback(
         [](const std::vector<rclcpp::Parameter> &) {
           rcl_interfaces::msg::SetParametersResult r;
@@ -534,7 +581,7 @@ public:
                 "backend=%s, actuation gate=%s; no automatic enable/reference",
                 config_.backend.c_str(),
                 config_.hardwareAllowed()
-                    ? (config_.backend == "commissioning"
+                    ? ((config_.backend == "commissioning" || config_.backend == "exploration")
                            ? "bounded commissioning, uncertified"
                            : "production attestations")
                     : "disabled");

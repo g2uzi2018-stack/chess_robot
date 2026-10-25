@@ -1,0 +1,42 @@
+# Explicitly authorized exploration. Stage names are speed profiles and checked
+# software boundaries, not production certification. Every stage uses real FK/IK,
+# sampled collision/Jacobian guards, one continuous twist history and measured arrival.
+chess_robot_arm:
+  ros__parameters:
+    backend: exploration
+    hardware: {enable: false}
+    approach_clearance_m: 0.05
+    planning_timeout_s: 60.0
+    sampling: {max_samples: 40000}
+    limits:
+      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]
+      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]
+    profiles:
+      default: low
+      names: [low, high, near, inner, middle, outer, full]
+      low: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      high: {speed_rad_s: 2.36, acceleration_rad_s2: 4.72}
+      near: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      inner: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      middle: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      outer: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      full: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+    exploration:
+      stages: [low, high, near, inner, middle, outer, full]
+      near: {tcp_radius_m: 0.08, joint_radius_rad: 0.3, twist_limit_rad: 0.5235987755982988}
+      inner: {tcp_radius_m: 0.18, joint_radius_rad: 0.7, twist_limit_rad: 1.0471975511965976}
+      middle: {tcp_radius_m: 0.40, joint_radius_rad: 1.5, twist_limit_rad: 2.0943951023931953}
+      outer: {tcp_radius_m: 0.70, joint_radius_rad: 3.0, twist_limit_rad: 3.141592653589793}
+      low: {tcp_radius_m: 0.08, joint_radius_rad: 0.3, twist_limit_rad: 0.5235987755982988}
+      high: {tcp_radius_m: 0.08, joint_radius_rad: 0.3, twist_limit_rad: 0.5235987755982988}
+      full: {tcp_radius_m: 1.10, joint_radius_rad: 6.0, twist_limit_rad: 6.283185307179586}
+    twist: {net_limit_rad: 6.283185307179586, total_limit_rad: 6.283185307179586}
+    servo: {ack_timeout_s: 0.15, max_pending: 6, command_time_s: 0.0, aheadtime: 100.0, gain: 200.0}
+    feedback: {freshness_s: 0.1}
+    tolerances:
+      stationary_rad_s: 0.002
+      dwell_s: 0.4
+      position_m: 0.001
+      rotation_rad: 0.005
+      joint_rad: 0.0005
+      tracking_rad: 0.15

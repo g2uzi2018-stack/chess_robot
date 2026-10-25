@@ -10,6 +10,43 @@ camera and AG95 model. It includes the user-specified table plane and documented
 adjacency exclusions. It is not continuous collision checking or a complete
 scene model. See `docs/validation/business-node-2026-10-25.md` for real tests.
 
+## Software repair baseline, 2026-10-25
+
+Firmware reported by the operator is `4.6.2.4-stable-d9efa2ce0-202509261512`.
+The pinned official C++ V4 API is now used for FK/IK/ServoJ/Stop command encoding
+and `CFeedbackData` decoding. See `third_party/dobot_v4/UPSTREAM.json`,
+`LOCAL.patch`, and `README.md` for provenance and minimal deviations.
+Full evidence: `docs/validation/software-repair-20261025.md` in the workspace.
+
+Motion stays paused with `motion.paused=true` and `hardware.enable=false`.
+There are two configurable modes: low = 0.708 rad/s, 1.416 rad/s²;
+high = 2.36 rad/s, 4.72 rad/s². Default is `profiles.default=low`.
+These are the pinned official Nova5 ROS2 planning limits and its 0.3 scaling,
+not a measurement of this controller's reproduction/reduced limits. Confirm those
+limits before any motion. 3 rad/s exceeds this official planning configuration.
+No SpeedFactor/VelJ/AccJ command is injected into ServoJ execution: streaming
+velocity comes from the checked trajectory timing; SDK percentage is not rad/s.
+Legacy profile names remain accepted by their matching overlays.
+
+`joint_states`, `state.header`, `state.tcp` and measured action final TCP use
+the ROS time sampled immediately after a complete feedback frame is received.
+The same snapshot supplies joints and FK; controller time is used only for
+ordering/duplicates. Publishing cannot freshen a receipt timestamp.
+
+## Finite Home -> exact TCP -> Home acceptance
+
+Use `tools/testing/arm_roundtrip.py` and its `arm_roundtrip_README.md` from the
+workspace root. `testing.home_roundtrip_precheck=true` with zero approach clearance
+keeps the existing action schema while checking every outward candidate's predicted
+return to formal Home using copied winding history. It never executes that return
+implicitly. The tool confirms both separately measured legs and keeps a finite
+26-point / at-most-38-target ledger, CSV and 3D status plots.
+
+Current device absolute speed/acceleration limits and real low/high qualification
+remain prerequisites. The tool applies source-backed limits, preserves the stricter
+existing exploration arrival/stop tolerances, and binds reusable qualification to
+all motion parameters. See `docs/validation/home-roundtrip-20261025/REPORT.md`.
+
 ## Build and offline validation on AGX
 
 From the workspace root, with ROS 2 Humble and the dependencies in
@@ -62,13 +99,24 @@ provided as purported safe examples.
   notation in near-zero Euler angles. Commands share one ordered connection:
   this controller rejects a second command session from the same host. Stop
   uses that same session, with a separate acknowledgement budget. A valid
-  controller rejection preserves the session; ambiguous transport/framing
-  failures discard it without retrying motion. Read feedback is 1440-byte
-  common-subset framing on 30004. All equal timestamp packets are discarded
-  without refreshing freshness or advancing twist; real firmware can repeat a
-  millisecond timestamp with a changed payload. Regressing timestamps still
-  invalidate trust. No controller clock
-  synchronization is assumed. Reconnection never restores reference validity.
+  controller rejection preserves the session. Ambiguous replies lock further
+  queries/motion without reconnecting; the original socket remains for Stop.
+  Real ServoJ uses a bounded asynchronous FIFO: six pending writes by default,
+  exact echoed commands/increasing queue IDs, 150 ms per acknowledgement.
+  A 125 ms reply fits at 30 ms send cadence; a deadline/overflow still fails
+  motion immediately. A bounded Stop-only drain may use an additional
+  controller.timeout_ms. On broken FIFO, Stop is sent once on the original
+  socket and only its exact acknowledgement is accepted within the Stop budget.
+  Old complete replies are only audited. No automatic reconnect/replay occurs;
+  a physically lost connection cannot guarantee a successful Stop and fails shut.
+  Executor still requires fresh mode=5 stationary feedback dwelling to verify it.
+  Framing retains coalesced/partial text and caps replies at 16 KiB. Feedback
+  decoding copies into the official LP64 structure with compile-time size/offset
+  assertions and validates the common 1440-byte header/finite fields.
+  Equal controller timestamps are discarded without advancing freshness/history;
+  regression invalidates trust. No controller clock synchronization is assumed.
+  Exploration defaults ServoJ horizon to the send period (30 ms), independently
+  of ACK budget. TCP_NODELAY/per-receive QUICKACK remain transport patches.
 * `Model`/`Tracker` from `chess_robot_twist`: authoritative URDF geometry and
   whole-arm geometric rotation policy; the exported target is linked directly. Measured
   feedback alone advances the live tracker under a short mutex. Planning copies
@@ -76,6 +124,15 @@ provided as purported safe examples.
   No joint angle wrapping or turn guessing occurs. All planner and executor
   samples also call `withinJointBounds`; mathematical model FK is not a joint
   bound policy. Signed/total twist are radians; energy is geometric rad²/m.
+  `/arm/restore_reference` explicitly replays original binary feedback audits
+  from a known stationary Home, preserving unwrapped local phases. It requires
+  idle admission, no latched fault, an explicit no-unobserved-motion attestation,
+  complete monotonic frames, valid recorded bounds/twist, and a fresh stationary
+  current endpoint within 0.001 rad of the last recorded endpoint with advancing
+  controller time. Gaps between stopped sessions are attested, never silently
+  reconstructed. The caller must use matching URDF/Home/TCP provenance. It
+  cannot overwrite a valid live reference and never initializes at the current
+  non-Home pose. A 330° replay test verifies it does not collapse to −30°.
 * `Planner`: checked PTP transfers/Home and incremental seeded IK for vertical
   descent/retreat. Current and Home IK seeds are candidates; both SDK FK(IK) and
   URDF FK must agree with the requested TCP. Checked candidates prioritize total
@@ -104,11 +161,13 @@ provided as purported safe examples.
   returns STOP_FAILED even when the ROS terminal status is canceled. Passive
   monitoring and plan-only jobs never own motion and never issue Stop.
 * `node.cpp`: ROS transport only, one joined task worker and one joined feedback
-  worker; no detached threads. Parameter values are immutable after startup.
+  worker; the driver owns a joined reply reader for each active stream. There
+  are no detached threads. Parameter values are immutable after startup.
   Feedback monitoring remains active while the task worker verifies shutdown stop.
 
 `/arm/move` operations are PREGRASP=0, DESCEND=1, RETREAT=2,
-GRASP_SEQUENCE=3, HOME=4. Profile names are mandatory (`conservative` by default).
+GRASP_SEQUENCE=3, HOME=4. An empty profile selects `profiles.default` (low);
+`conservative` remains a compatible low-mode alias.
 PREGRASP equals requested grasp position plus base +Z clearance with unchanged
 orientation. GRASP_SEQUENCE plans all three segments in advance and executes
 pregrasp → descent → WAIT_GRIPPER → retreat. `/arm/confirm_grasp` requires the
@@ -141,20 +200,28 @@ verified Home reference. A fault cannot be cleared by submitting Home.
 ## Bounded hardware commissioning
 
 `config/commissioning.yaml` is an overlay for explicit local acceptance. Its saved
-`hardware.enable` remains false. Backend `commissioning` uses the same production
+`hardware.enable` remains false and `motion.paused` defaults true. Backend `commissioning` uses the same production
 Planner, V4 driver and Executor, while `hardware_certified` remains false. It
 does not set the production verification booleans to true.
 
-This backend requires a loaded GeometryGuard, joint displacement from Home at
-most 0.12 rad and TCP radius at most 0.04 m (template: 0.1 rad / 0.03 m), software
-joint caps at most 0.02 rad/s and 0.05 rad/s², profiles no faster than those caps,
-freshness at most 0.1 s, tracking tolerance at most 0.01 rad and net/total twist
-bounds at most 20°. These velocity/acceleration caps constrain the planned
-trajectory, not the controller's physical servo response. The commissioning
-measured-speed trip threshold is `1.5 * joint_velocity_cap + 0.002 rad/s`
-(template: 0.032 rad/s); actual feedback is recorded separately. Every execution
-sample is checked before the first ServoJ; measured feedback is checked during
-execution. It is a local test mode, not a global workspace authorization.
+Commissioning requires a loaded GeometryGuard, joint displacement from Home at
+most 0.12 rad and TCP radius at most 0.04 m (template: 0.1 rad / 0.03 m),
+freshness at most 0.1 s and net/total twist at most 20°. The old debug-only speed
+ceiling and its derived instantaneous velocity trip are removed. Low/high timing
+uses the official limits above; measured tracking, bounds, geometry, twist,
+freshness, arrival and Stop checks remain mandatory. Tracking uses the existing
+normal 0.15 rad tolerance rather than the old slow-only 0.005 rad setting;
+stationary thresholds/dwell are not raised. This is not physical certification.
+
+`backend=exploration` remains an uncertified geometry-bound mode with its existing
+near/inner/middle/outer/full envelopes and global twist protections. Low/high
+aliases use only the near envelope; choosing a speed does not enlarge geometry.
+Legacy stages now use low timing. Servo horizon defaults to the 30 ms cadence,
+with aheadtime=100 and gain=200 retained. Saved enable is false and motion paused.
+The explorer advances recorded batches only after feedback-confirmed setup
+points, follows a fixed coverage checklist, records planning rejects, and aborts
+on execution faults. Checked waypoints can change a transfer path; saved failed
+trajectories are never replayed. See the operation guide and latest report.
 
 The optional `safety.model_file` loads the geometry exported by
 `tools/analysis/workspace_analysis.py --probe-only`: table z=-0.010 m with 20 mm
@@ -173,15 +240,14 @@ the 1440 controller bytes, little endian. It is disabled by default.
 ## Sampling and remaining acceptance
 
 Defaults are conservative software inputs, not certified operating limits.
-Transfer paths use quintic joint blend geometric vertices with maximum nominal
-0.025 rad spacing; the quintic derivative can increase adjacent spacing, and the
-tracker's independent 0.1 rad step gate remains authoritative. Cartesian IK uses
-2 mm vertical increments and rejects branch steps over 0.025 rad. Integer time
-dilation and subdivision preserve every vertex and fixed 30 ms ServoJ periods.
-Finite-difference velocity and acceleration checks include zero velocity at both
-segment boundaries. The dilation treats interpolation corner acceleration
-conservatively as inverse subdivision count. Samples, including timed inserts,
-are validated against bounds, workspace and twist. Downward-axis policy applies
+Transfer geometry is a straight joint-space path. Cartesian IK uses 2 mm
+vertical increments and rejects branch steps over 0.025 rad. C1 Hermite
+interpolation and a single quintic scalar time law produce fixed 30 ms samples;
+finite-difference velocity and acceleration checks, including zero velocity
+before/after each segment, iteratively dilate time until all profile/cap limits
+pass. The resulting path is rechecked for Cartesian line/attitude tolerance,
+twist and geometry, so smoothing cannot bypass any constraint. Every timed sample
+is validated against bounds, workspace and twist. Downward-axis policy applies
 to transfers to pregrasp and all vertical samples; Home PTP may change attitude.
 There is no claim of continuous collision checking, continuous extrema proof,
 or exact physical path tracking between samples. Tracking deviations and schedule
@@ -201,7 +267,8 @@ workspace, physical cable reference/twist range, SDK/URDF FK equivalence, actual
 ServoJ timing/ACK latency, interpolation/tracking, Stop behavior/latency and
 command ownership on the target controller before any physical acceptance.
 ServoJ support remains subject to the measured local acceptance scope. An
-ordered persistent transport avoids per-command connection setup, but ACK
-latency and host scheduling can still exceed the 30 ms period and cause failure.
+ordered persistent transport avoids per-command connection setup. The bounded
+reply FIFO tolerates ACK tail latency independently of the write cadence; missed
+write deadlines, acknowledgement limits and feedback faults still stop execution.
 No native MovJ/MovL bypass is offered. This package cannot prevent commands from
 other controller clients; deployment must enforce exclusive motion ownership.

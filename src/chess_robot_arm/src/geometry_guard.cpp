@@ -119,7 +119,7 @@ struct GeometryGuard::Impl {
     T tool = frames[6] * tcp;
     if ((tool.matrix() - model->tcp(q).matrix()).norm() > 1e-7)
       throw Failure(PLANNING_FAILED, "guard FK disagrees with actual URDF");
-    if (c.backend == "commissioning" &&
+    if ((c.backend == "commissioning" || c.backend == "exploration") &&
         (jointDistance(q, c.home) > c.commissioning_joint_radius ||
          (tool.translation() - model->tcp(c.home).translation()).norm() >
              c.commissioning_tcp_radius))

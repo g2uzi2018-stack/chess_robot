@@ -1,0 +1,28 @@
+{
+  "model": "Nova5",
+  "firmware_version": "4.6.2.4-stable-d9efa2ce0-202509261512",
+  "source": {
+    "kind": null,
+    "reference": null
+  },
+  "units": {
+    "velocity": "rad/s",
+    "acceleration": "rad/s2"
+  },
+  "velocity_rad_s": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ],
+  "acceleration_rad_s2": [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+  ]
+}

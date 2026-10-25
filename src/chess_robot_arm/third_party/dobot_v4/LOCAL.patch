@@ -1,0 +1,69 @@
+--- a/api/Dashboard.cpp
++++ b/api/Dashboard.cpp
+@@ -272,10 +272,10 @@
+ 
+ std::string CDashboard::PositiveKin(const CJointPoint& pt, int User, int Tool)
+ {
+-    std::string str = "PositiveKin(" + std::to_string(pt.j1) + "," + std::to_string(pt.j2) + "," +
+-                      std::to_string(pt.j3) + "," + std::to_string(pt.j4) + "," +
+-                      std::to_string(pt.j5) + "," + std::to_string(pt.j6) + "," +
+-                      std::to_string(User) + "," + std::to_string(Tool) + ")";
++    std::string str = "PositiveKin(" + wireNumber(pt.j1) + "," + wireNumber(pt.j2) + "," +
++                      wireNumber(pt.j3) + "," + wireNumber(pt.j4) + "," +
++                      wireNumber(pt.j5) + "," + wireNumber(pt.j6) + "," +
++                      "user=" + std::to_string(User) + ",tool=" + std::to_string(Tool) + ")";
+ 
+     return SendRecvMsg(str);
+ };
+--- a/api/Dashboard.h
++++ b/api/Dashboard.h
+@@ -4,16 +4,27 @@
+ #include "DescartesPoint.h"
+ #include "JointPoint.h"
+ #include <mutex>
++#include <iomanip>
++#include <locale>
+ 
+ namespace Dobot
+ {
++// Local wire-format patch: retain sub-microdegree values and reject exponent
++// notation seen to be rejected by the project's controller.
++inline std::string wireNumber(double value) {
++    std::ostringstream out;
++    out.imbue(std::locale::classic());
++    out << std::fixed << std::setprecision(9) << value;
++    return out.str();
++}
++
+ class CDashboard : public CDobotClient
+ {
+ public:
+     CDashboard();
+     virtual ~CDashboard();
+-    std::string SendRecvMsg(std::string& str);
+-    std::string SendRecvMsg(char* cmd);
++    virtual std::string SendRecvMsg(std::string& str);
++    virtual std::string SendRecvMsg(char* cmd);
+     /// <summary>
+     /// 复位，用于清除错误
+     /// </summary>
+@@ -447,8 +458,8 @@
+ {
+     std::unique_lock<std::mutex> lockValue(m_mutexSend);
+     std::ostringstream oss;
+-    oss << "InverseKin(" + std::to_string(pt.x) + "," + std::to_string(pt.y) + "," + std::to_string(pt.z) + "," +
+-               std::to_string(pt.rx) + "," + std::to_string(pt.ry) + "," + std::to_string(pt.rz);
++    oss << "InverseKin(" + wireNumber(pt.x) + "," + wireNumber(pt.y) + "," + wireNumber(pt.z) + "," +
++               wireNumber(pt.rx) + "," + wireNumber(pt.ry) + "," + wireNumber(pt.rz) + ",";
+     strSend = oss.str();
+     printArg(args...);
+     std::string str = strSend;
+@@ -835,6 +846,8 @@
+ {
+     std::unique_lock<std::mutex> lockValue(m_mutexSend);
+     std::ostringstream oss;
++    oss.imbue(std::locale::classic());
++    oss << std::fixed << std::setprecision(9);
+     oss << "ServoJ(" << pt.j1 << ',' << pt.j2 << ',' << pt.j3 << ',' << pt.j4 << ',' << pt.j5 << ',' << pt.j6 << ',';
+     strSend = oss.str();
+     printArg(args...);
