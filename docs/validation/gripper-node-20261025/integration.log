@@ -1,0 +1,13 @@
+PASS uninitialized MOVE rejected
+PASS initialize feedback and already-initialized no-op
+PASS invalid position, force, NaN deadline and operation rejected
+PASS mock move, busy exclusion, explicit cancellation rejection
+PASS hardware read-only mode emits zero register writes
+PASS fragmented RTU over TCP, confirmed move, empty grasp and explicit recovery
+PASS held flag invalidates on communication loss, read-only reconnect
+PASS contact: correct outcome, no automatic command replay
+PASS drop: correct outcome, no automatic command replay
+PASS bad_echo: correct outcome, no automatic command replay
+PASS stall: correct outcome, no automatic command replay
+PASS old_contact: correct outcome, no automatic command replay
+PASS bounded I/O timeout, invalid-feedback sentinels, goal rejection

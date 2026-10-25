@@ -1,0 +1,6 @@
+Starting >>> chess_robot_interfaces
+Finished <<< chess_robot_interfaces [0.83s]
+Starting >>> chess_robot_gripper
+Finished <<< chess_robot_gripper [17.1s]
+
+Summary: 2 packages finished [18.4s]
