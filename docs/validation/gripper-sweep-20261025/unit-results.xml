@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites tests="18" failures="0" disabled="0" errors="0" time="0.341" timestamp="2026-10-25T13:55:33" name="AllTests">
+  <testsuite name="Rtu" tests="6" failures="0" disabled="0" errors="0" time="0.001" timestamp="2026-10-25T13:55:33">
+    <testcase name="MatchesVendorInitializationExample" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Rtu" />
+    <testcase name="ChecksWriteEcho" status="run" result="completed" time="0.001" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Rtu" />
+    <testcase name="ValidatesReadValue" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Rtu" />
+    <testcase name="RejectsWrongCrc" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Rtu" />
+    <testcase name="RejectsWrongSlaveAndFunction" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Rtu" />
+    <testcase name="RejectsExceptionsAndTruncation" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Rtu" />
+  </testsuite>
+  <testsuite name="Driver" tests="2" failures="0" disabled="0" errors="0" time="0" timestamp="2026-10-25T13:55:33">
+    <testcase name="DoesNotRetryUncertainWrite" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Driver" />
+    <testcase name="InvalidCommandsNeverWrite" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Driver" />
+  </testsuite>
+  <testsuite name="Config" tests="2" failures="0" disabled="0" errors="0" time="0" timestamp="2026-10-25T13:55:33">
+    <testcase name="RejectsInvalidValues" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Config" />
+    <testcase name="RejectsUnsupportedTransportConfig" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Config" />
+  </testsuite>
+  <testsuite name="Completion" tests="7" failures="0" disabled="0" errors="0" time="0" timestamp="2026-10-25T13:55:33">
+    <testcase name="RequiresTwoFreshMatchingPolls" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+    <testcase name="RejectsWrongPositionEvenWhenAtPositionFlagIsSet" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+    <testcase name="EmptyClosureIsNotGraspSuccess" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+    <testcase name="ContactBeforeTargetCountsWhenRequested" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+    <testcase name="DoesNotReuseOldHeldFlag" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+    <testcase name="UnrequestedContactAndDropAreFailures" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+    <testcase name="InitializationAndLossAreExplicit" status="run" result="completed" time="0" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Completion" />
+  </testsuite>
+  <testsuite name="Mock" tests="1" failures="0" disabled="0" errors="0" time="0.34" timestamp="2026-10-25T13:55:33">
+    <testcase name="PersistsInitializationAndConfirmsMeasuredMove" status="run" result="completed" time="0.34" timestamp="2026-10-25T13:55:33" classname="chess_robot_gripper.Mock" />
+  </testsuite>
+</testsuites>

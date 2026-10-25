@@ -56,7 +56,9 @@ Sample Driver::poll() {
   sample.status = read(0x0201);
   sample.position = read(0x0202);
   if (sample.initialization > 2 || sample.status > 3 || sample.position > 1000)
-    throw std::runtime_error("out-of-range AG95 feedback");
+    throw std::runtime_error("out-of-range AG95 feedback: initialization=" +
+      std::to_string(sample.initialization) + " status=" + std::to_string(sample.status) +
+      " position=" + std::to_string(sample.position));
   return sample;
 }
 void Driver::initialize() { write(0x0100, 1); }
