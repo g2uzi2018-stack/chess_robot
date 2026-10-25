@@ -1,155 +1,114 @@
 #!/usr/bin/env python3
-"""Real D405 / ROS smoke test. Owns only its child vision_node process."""
+"""Validate RGB-D transport/calibration metadata without any detection/pose output."""
+import argparse
 import json
-import os
 from pathlib import Path
+import os
 import signal
 import subprocess
-import sys
 import time
-
+import cv2
 import numpy as np
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, CameraInfo, CompressedImage
-from chess_robot_vision.msg import PieceCandidates
+from chess_robot_vision.msg import FrameInfo
 
-output = Path(sys.argv[1]).resolve()
-output.mkdir(parents=True, exist_ok=True)
-rclpy.init()
-node = rclpy.create_node('vision_smoke_observer')
-seen = {k: set() for k in ('color', 'depth', 'info', 'debug', 'candidates')}
-counts = {k: 0 for k in seen}
-errors = []
-valid_depth_pixels = []
-depth_frames = {}
-candidate_frames = {}
-ages = []
-frame_numbers = []
-valid_candidates = 0
-invalid_candidates = 0
-depth_comparisons = 0
-
-def stamp(msg):
-    return msg.header.stamp.sec * 1000000000 + msg.header.stamp.nanosec
-
-def callback(kind, msg):
-    global valid_candidates, invalid_candidates
-    counts[kind] += 1
-    key = stamp(msg)
+parser=argparse.ArgumentParser()
+parser.add_argument('output')
+parser.add_argument('--observe-live',action='store_true')
+parser.add_argument('--frames',type=int,default=180)
+args=parser.parse_args()
+output=Path(args.output).resolve();output.mkdir(parents=True,exist_ok=True)
+rclpy.init();node=rclpy.create_node('camera_io_smoke_observer')
+kinds=('color','depth','info','frame','color_jpeg','depth_jpeg')
+seen={k:set() for k in kinds};counts={k:0 for k in kinds}
+errors=[];ages=[];finite_fractions=[];numbers=[];scales=[];startup_diagnostics=[];first_valid_delay=None
+def callback(kind,msg):
+    global first_valid_delay
+    counts[kind]+=1
+    key=msg.header.stamp.sec*1000000000+msg.header.stamp.nanosec
     seen[kind].add(key)
-    if msg.header.frame_id != 'd405_color_optical_frame':
-        errors.append('wrong frame_id')
-    if kind == 'color':
-        if (msg.width, msg.height, msg.encoding) != (640, 480, 'bgr8'):
-            errors.append('wrong RGB format')
-    elif kind == 'depth':
-        if (msg.width, msg.height, msg.encoding) != (640, 480, '32FC1'):
-            errors.append('wrong depth format')
+    if msg.header.frame_id!='d405_color_optical_frame':errors.append('wrong frame id')
+    if kind=='color':
+        if (msg.width,msg.height,msg.encoding)!=(640,480,'bgr8'):errors.append('bad color image format')
+    elif kind=='depth':
+        if (msg.width,msg.height,msg.encoding)!=(640,480,'32FC1'):errors.append('bad metric depth format')
         else:
-            arr = np.ndarray((msg.height, msg.width), dtype='<f4', buffer=msg.data,
-                             strides=(msg.step, 4)).copy()
-            valid_depth_pixels.append(float(np.isfinite(arr).mean()))
-            depth_frames[key] = arr
-    elif kind == 'info':
-        if not (msg.k[0] > 0 and msg.k[4] > 0 and msg.width == 640 and msg.height == 480):
-            errors.append('bad calibration')
-    elif kind == 'debug':
-        if not bytes(msg.data).startswith(b'\xff\xd8'):
-            errors.append('bad JPEG')
-    else:
+            arr=np.ndarray((msg.height,msg.width),dtype='<f4',buffer=msg.data,strides=(msg.step,4))
+            finite_fractions.append(float(np.isfinite(arr).mean()))
+            if np.any(arr==0) or np.any(arr[np.isfinite(arr)]<0):errors.append('invalid metric depth encoding')
+    elif kind=='info':
+        if msg.k[0]<=0 or msg.k[4]<=0 or any(abs(x)>1e-9 for x in msg.d):errors.append('invalid rectified calibration')
+    elif kind=='frame':
         if not msg.stream_ok:
-            errors.append('unexpected invalid stream: ' + msg.diagnostic)
-        frame_numbers.append(msg.frame_number)
-        ages.append((node.get_clock().now().nanoseconds - key) / 1e9)
-        candidate_frames[key] = msg
-        for p in msg.candidates:
-            if p.label != 'unknown_circle':
-                errors.append('unsupported semantic claim')
-            xyz = np.array([p.surface_point.x, p.surface_point.y, p.surface_point.z])
-            if p.depth_valid:
-                valid_candidates += 1
-                if not np.isfinite(xyz).all() or not 0.07 <= xyz[2] <= 0.5:
-                    errors.append('bad valid 3D point')
-            else:
-                invalid_candidates += 1
-                if not np.isnan(xyz).all():
-                    errors.append('invalid point must be NaN')
+            if not numbers:startup_diagnostics.append(msg.diagnostic)
+            else:errors.append('unexpected camera error after valid frames: '+msg.diagnostic)
+        else:
+            if first_valid_delay is None:first_valid_delay=time.monotonic()-started
+            numbers.append((msg.color_frame_number,msg.depth_frame_number))
+            if not msg.timestamp_domain or not np.isfinite(msg.device_timestamp_ms):errors.append('missing SDK timestamp')
+            if not 0<msg.depth_scale_m<0.01:errors.append('invalid SDK depth scale')
+            scales.append(msg.depth_scale_m)
+            ages.append((node.get_clock().now().nanoseconds-key)/1e9)
+    else:
+        image=cv2.imdecode(np.frombuffer(msg.data,dtype=np.uint8),cv2.IMREAD_COLOR)
+        if image is None or image.shape!=(480,640,3):errors.append('bad preview JPEG')
 
-subscriptions = []
-for kind, cls, topic in [
-    ('color', Image, '/vision/color/image_rect'),
-    ('depth', Image, '/vision/aligned_depth/image_rect'),
-    ('info', CameraInfo, '/vision/color/camera_info'),
-    ('debug', CompressedImage, '/vision/debug/image/compressed'),
-    ('candidates', PieceCandidates, '/vision/candidates')]:
-    subscriptions.append(node.create_subscription(cls, topic,
-        lambda msg, kind=kind: callback(kind, msg), qos_profile_sensor_data))
+subscriptions=[]
+for kind,cls,topic in [
+    ('color',Image,'/vision/color/image_rect'),
+    ('depth',Image,'/vision/aligned_depth/image_rect'),
+    ('info',CameraInfo,'/vision/color/camera_info'),
+    ('frame',FrameInfo,'/vision/frame_info'),
+    ('color_jpeg',CompressedImage,'/vision/color/image_rect/compressed'),
+    ('depth_jpeg',CompressedImage,'/vision/aligned_depth/preview/compressed')]:
+    subscriptions.append(node.create_subscription(cls,topic,lambda m,k=kind:callback(k,m),qos_profile_sensor_data))
 
-log = (output / 'node.log').open('w')
-proc = subprocess.Popen(['ros2', 'run', 'chess_robot_vision', 'vision_node', '--ros-args',
-    '-p', 'max_frames:=180', '-p', f'evidence_dir:={output}'],
-    stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-started = time.monotonic()
+proc=None;log=None;started=time.monotonic()
 try:
-    while time.monotonic()-started < 60 and proc.poll() is None:
-        rclpy.spin_once(node, timeout_sec=0.05)
-    for _ in range(20):
-        rclpy.spin_once(node, timeout_sec=0.02)
-    if proc.poll() is None:
-        errors.append('node exceeded 60 second timeout')
+    if not args.observe_live:
+        log=(output/'node.log').open('w')
+        proc=subprocess.Popen(['ros2','run','chess_robot_vision','vision_node','--ros-args',
+            '-p',f'max_frames:={args.frames}','-p',f'evidence_dir:={output}'],
+            stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+    while time.monotonic()-started<45:
+        rclpy.spin_once(node,timeout_sec=.02)
+        if args.observe_live and len(numbers)>=args.frames:break
+        if proc is not None and proc.poll() is not None:break
+    else:errors.append('camera test timeout')
+    for _ in range(20):rclpy.spin_once(node,timeout_sec=.01)
+    obsolete={topic:len(node.get_publishers_info_by_topic(topic)) for topic in
+              ('/vision/candidates','/vision/debug/image/compressed')}
+    if any(obsolete.values()):errors.append('obsolete algorithm topic still has a publisher')
 finally:
-    if proc.poll() is None:
-        os.killpg(proc.pid, signal.SIGINT)
-        try:
-            proc.wait(timeout=5)
+    if proc is not None:
+        if proc.poll() is None:os.killpg(proc.pid,signal.SIGINT)
+        try:proc.wait(timeout=6)
         except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
-            proc.wait()
-    log.close()
+            os.killpg(proc.pid,signal.SIGKILL);proc.wait()
+        if proc.returncode!=0:errors.append('camera node failed: '+str(proc.returncode))
+        log.close()
+    node.destroy_node();rclpy.shutdown()
 
-for key in depth_frames.keys() & candidate_frames.keys():
-    arr = depth_frames[key]
-    for p in candidate_frames[key].candidates:
-        if not p.depth_valid:
-            continue
-        radius = max(2, min(12, int(p.radius_px*0.25)))
-        # Reconstruct central-disk robust depth independently from published metre image.
-        cx, cy = int(np.rint(p.pixel_u)), int(np.rint(p.pixel_v))
-        values = [arr[y, x] for y in range(max(0, cy-radius), min(arr.shape[0], cy+radius+1))
-                  for x in range(max(0, cx-radius), min(arr.shape[1], cx+radius+1))
-                  if (x-cx)**2+(y-cy)**2 <= radius**2 and np.isfinite(arr[y, x]) and 0.07 <= arr[y, x] <= 0.5]
-        if values:
-            depth_comparisons += 1
-            if abs(float(np.median(values))-p.surface_point.z) > 2e-6:
-                errors.append('candidate Z disagrees with aligned metric depth')
-
-if proc.returncode != 0:
-    errors.append(f'node exit {proc.returncode}')
-for name in ('color.png', 'depth_z16.png', 'candidates.jpg', 'capture.json'):
-    if not (output / name).is_file() or (output / name).stat().st_size == 0:
-        errors.append(f'missing capture artifact: {name}')
-for key, count in counts.items():
-    if count < 20:
-        errors.append(f'too few {key} messages: {count}')
-common = set.intersection(*seen.values())
-if len(common) < 20:
-    errors.append('too few synchronized RGB-D/info/result frames')
-if not valid_depth_pixels or max(valid_depth_pixels) <= 0:
-    errors.append('all depth pixels missing')
-if any(b <= a for a, b in zip(frame_numbers, frame_numbers[1:])):
-    errors.append('nonmonotonic hardware frame number')
-if ages and (min(ages) < -0.01 or float(np.quantile(ages, .99)) > 0.5):
-    errors.append('candidate receipt age outside freshness budget')
-summary = dict(passed=not errors, errors=sorted(set(errors)), message_counts=counts,
-    synchronized_frames=len(common), valid_candidate_observations=valid_candidates,
-    invalid_candidate_observations=invalid_candidates, candidate_z_comparisons=depth_comparisons,
-    median_finite_depth_fraction=float(np.median(valid_depth_pixels)) if valid_depth_pixels else None,
-    candidate_receive_age_s_p50=float(np.median(ages)) if ages else None,
-    candidate_receive_age_s_p99=float(np.quantile(ages, .99)) if ages else None,
-    elapsed_s=time.monotonic()-started, node_exit=proc.returncode)
-(output / 'smoke.json').write_text(json.dumps(summary, ensure_ascii=False, indent=2)+'\n')
-print(json.dumps(summary, ensure_ascii=False, indent=2))
-node.destroy_node()
-rclpy.shutdown()
-sys.exit(0 if summary['passed'] else 1)
+for kind,count in counts.items():
+    if count<30:errors.append('too few '+kind+' messages')
+common=set.intersection(*seen.values())
+if len(common)<30:errors.append('too few complete synchronized RGB-D/calibration/metadata/JPEG groups')
+if any(b[0]<=a[0] or b[1]<=a[1] for a,b in zip(numbers,numbers[1:])):errors.append('nonmonotonic frame numbers')
+if not finite_fractions or max(finite_fractions)==0:errors.append('no finite depth pixels')
+if first_valid_delay is None or first_valid_delay>5:errors.append('first valid frame did not arrive within 5 seconds')
+if ages and (min(ages)<-.01 or np.quantile(ages,.99)>.5):errors.append('frame info outside receipt freshness budget')
+if not args.observe_live:
+    for name in ('color.png','depth_z16.png','capture.json'):
+        if not (output/name).is_file():errors.append('missing capture '+name)
+    if (output/'candidates.jpg').exists():errors.append('obsolete detection artifact generated')
+summary=dict(passed=not errors,errors=sorted(set(errors)),observe_live=args.observe_live,message_counts=counts,
+    synchronized_groups=len(common),obsolete_topic_publishers=obsolete,
+    sdk_depth_scale_m=scales[-1] if scales else None,
+    startup_diagnostics=startup_diagnostics,first_valid_frame_delay_s=first_valid_delay,
+    median_finite_depth_fraction=float(np.median(finite_fractions)) if finite_fractions else None,
+    frame_receive_age_s_p99=float(np.quantile(ages,.99)) if ages else None,elapsed_s=time.monotonic()-started)
+(output/'camera-io-smoke.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2)+'\n')
+print(json.dumps(summary,ensure_ascii=False,indent=2))
+raise SystemExit(0 if summary['passed'] else 1)

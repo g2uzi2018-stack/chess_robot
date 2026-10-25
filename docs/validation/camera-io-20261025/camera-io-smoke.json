@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "errors": [],
+  "observe_live": true,
+  "message_counts": {
+    "color": 181,
+    "depth": 180,
+    "info": 183,
+    "frame": 183,
+    "color_jpeg": 182,
+    "depth_jpeg": 182
+  },
+  "synchronized_groups": 180,
+  "obsolete_topic_publishers": {
+    "/vision/candidates": 0,
+    "/vision/debug/image/compressed": 0
+  },
+  "sdk_depth_scale_m": 9.999999747378752e-05,
+  "startup_diagnostics": [],
+  "first_valid_frame_delay_s": 0.030090885004028678,
+  "median_finite_depth_fraction": 0.8208056640625,
+  "frame_receive_age_s_p99": 0.02092489224,
+  "elapsed_s": 6.105323463008972
+}

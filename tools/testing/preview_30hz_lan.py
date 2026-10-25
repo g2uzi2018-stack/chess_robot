@@ -10,6 +10,7 @@ parser=argparse.ArgumentParser()
 parser.add_argument('--output',required=True)
 parser.add_argument('--seconds',type=float,default=8)
 parser.add_argument('--ssh-config',default=str(Path(__file__).with_name('ssh_preview_config')))
+parser.add_argument('--channels',nargs='+',default=['color','depth'])
 args=parser.parse_args()
 opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
 base='http://192.168.30.26:8088'
@@ -24,7 +25,7 @@ def resource_snapshot():
 results=[]
 try:
     assert metadata()['fps']==30
-    for channel in ('color','depth','detection'):
+    for channel in args.channels:
         sequence='';warm=time.perf_counter()+1.5
         while time.perf_counter()<warm:
             status,data,headers=request('/api/frame/'+channel+'?client='+client+'&after='+sequence)
@@ -57,7 +58,7 @@ try:
         results.append(result)
 finally:
     request('/api/release?client='+client,'POST')
-summary={'passed':all(r['unique_jpeg_fps']>=28.5 for r in results) and len(results)==3,
+summary={'passed':all(r['unique_jpeg_fps']>=28.5 for r in results) and len(results)==len(args.channels),
     'target_fps':30,'method':'real Windows client over LAN, unique JPEG sequence, one request in flight',
     'clock':time.get_clock_info('perf_counter').implementation,
     'clock_resolution_s':time.get_clock_info('perf_counter').resolution,

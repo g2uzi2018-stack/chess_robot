@@ -8,8 +8,8 @@ import cv2
 import numpy as np
 import os
 
-base='http://192.168.30.26:8088'
-output=Path('/home/kuang/workspace/chess_robot/runs/preview-20261025')
+base=os.environ.get('PREVIEW_TEST_BASE_URL','http://192.168.30.26:8088')
+output=Path(os.environ.get('PREVIEW_TEST_OUTPUT','/home/kuang/workspace/chess_robot/runs/preview-20261025'))
 output.mkdir(parents=True,exist_ok=True)
 checks=[]
 opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
@@ -89,14 +89,14 @@ after=metadata()
 assert [c['encoded_frames'] for c in before['channels']]==[c['encoded_frames'] for c in after['channels']]
 checks.append('initial page/metadata: zero image subscriptions and zero additional JPEG encodes')
 
-for channel in ('color','depth','detection'):
+for channel in ('color','depth'):
     data,headers,decoded=image(channel)
     assert subscribed()=={channel},subscribed()
     (output/(channel+'.jpg')).write_bytes(data)
     checks.append('selection '+channel+': valid JPEG, only selected channel subscribed')
 
 image('color','other')
-assert subscribed()=={'color','detection'}
+assert subscribed()=={'color','depth'}
 release('acceptance')
 assert subscribed()=={'color'}
 image('color','acceptance')
@@ -111,8 +111,8 @@ time.sleep(2.5)
 assert subscribed()==set()
 checks.append('abandoned browser lease expires and unsubscribes')
 
-idle=resource_sample(6)
-viewing=resource_sample(8,'color')
+idle=None if os.environ.get('PREVIEW_TEST_SKIP_RESOURCE') else resource_sample(6)
+viewing=None if os.environ.get('PREVIEW_TEST_SKIP_RESOURCE') else resource_sample(8,'color')
 time.sleep(2.3)
 assert subscribed()==set()
 

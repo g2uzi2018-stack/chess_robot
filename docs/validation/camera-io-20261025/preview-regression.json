@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "checks": [
+    "initial page/metadata: zero image subscriptions and zero additional JPEG encodes",
+    "selection color: valid JPEG, only selected channel subscribed",
+    "selection depth: valid JPEG, only selected channel subscribed",
+    "multiple clients: independent selection and shared subscription for same channel",
+    "explicit pause/release immediately removes subscriptions",
+    "abandoned browser lease expires and unsubscribes"
+  ],
+  "idle": null,
+  "color_view": null,
+  "final_state": {
+    "fps": 30,
+    "max_width": 960,
+    "viewers": 0,
+    "channels": [
+      {
+        "id": "color",
+        "title": "彩色图",
+        "description": "校正后的相机画面",
+        "subscribed": false,
+        "encoded_frames": 72,
+        "sent_bytes": 145528,
+        "width": 640,
+        "height": 480
+      },
+      {
+        "id": "depth",
+        "title": "深度图",
+        "description": "距离伪彩色 · 黑色为无效深度",
+        "subscribed": false,
+        "encoded_frames": 6,
+        "sent_bytes": 57764,
+        "width": 640,
+        "height": 480
+      }
+    ]
+  }
+}

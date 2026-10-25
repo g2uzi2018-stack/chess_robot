@@ -25,11 +25,3 @@ channels:
     mode: color
     source_fps: 30.0
     passthrough: true
-  - id: detection
-    title: 检测叠加图
-    description: 圆形候选与深度有效性
-    topic: /vision/debug/image/compressed
-    type: compressed
-    mode: color
-    source_fps: 30.0
-    passthrough: true
