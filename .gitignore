@@ -37,3 +37,8 @@ logs/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Isolated D405 vision builds
+/build_vision/
+/install_vision/
+/log_vision/

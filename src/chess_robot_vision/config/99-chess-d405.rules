@@ -1,0 +1,2 @@
+# Intel RealSense D405, SDK RSUSB access for plugdev group.
+SUBSYSTEM=="usb", ATTR{idVendor}=="8086", ATTR{idProduct}=="0b5b", GROUP="plugdev", MODE="0660"

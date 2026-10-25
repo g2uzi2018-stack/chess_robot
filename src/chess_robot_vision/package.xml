@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>chess_robot_vision</name><version>0.1.0</version>
+  <description>D405 RGB-D acquisition and unclassified circular piece candidates.</description>
+  <maintainer email="maintainer@example.com">chess_robot maintainers</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <build_depend>rosidl_default_generators</build_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <depend>rclcpp</depend><depend>rcl_interfaces</depend><depend>std_msgs</depend><depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend><depend>cv_bridge</depend><depend>libopencv-dev</depend>
+  <depend>librealsense2</depend>
+  <exec_depend>launch_ros</exec_depend><exec_depend>ament_index_python</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

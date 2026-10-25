@@ -1,0 +1,35 @@
+preview:
+  bind_address: 192.168.30.26
+  port: 8088
+  fps: 30.0
+  max_width: 960
+  jpeg_quality: 75
+  idle_timeout_s: 2.0
+  stale_timeout_s: 1.0
+  depth_min_m: 0.07
+  depth_max_m: 0.50
+channels:
+  - id: color
+    title: 彩色图
+    description: 校正后的相机画面
+    topic: /vision/color/image_rect/compressed
+    type: compressed
+    mode: color
+    source_fps: 30.0
+    passthrough: true
+  - id: depth
+    title: 深度图
+    description: 距离伪彩色 · 黑色为无效深度
+    topic: /vision/aligned_depth/preview/compressed
+    type: compressed
+    mode: color
+    source_fps: 30.0
+    passthrough: true
+  - id: detection
+    title: 检测叠加图
+    description: 圆形候选与深度有效性
+    topic: /vision/debug/image/compressed
+    type: compressed
+    mode: color
+    source_fps: 30.0
+    passthrough: true
