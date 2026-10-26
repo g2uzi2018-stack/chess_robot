@@ -215,6 +215,29 @@ def configure_power_cycle_handoff(params,evidence,execute):
     return explicit
 
 
+def load_feedback_window_evidence(path, requested):
+    if requested not in (.1,.2):
+        raise ValueError('feedback window supports default .1 or explicitly authorized .2 seconds')
+    if not path:
+        if requested!=.1:raise ValueError('200ms feedback window needs explicit human window evidence')
+        return None
+    data=json.loads(Path(path).read_text())
+    if (not data.get('human_statement') or data.get('previous_freshness_s')!=.1 or
+        data.get('current_freshness_s')!=.2 or requested!=.2):
+        raise ValueError('feedback window evidence must explicitly bind .1 to .2 seconds and actual human words')
+    for key in ['prior_results','latest_fault_result']:
+        bound=data.get(key,{})
+        if not bound.get('path') or not bound.get('sha256') or sha(bound['path'])!=bound['sha256']:
+            raise ValueError('feedback window evidence result missing/changed: '+key)
+        original=json.loads(Path(bound['path']).read_text())
+        if not original.get('status','').startswith(('EXECUTION_FAULT','PRE_SEND_FEEDBACK_FAULT')):
+            raise ValueError('feedback window evidence must retain original fault results: '+key)
+        old_window=original.get('qualification_context',{}).get('motion_parameters',{}).get('feedback',{}).get('freshness_s')
+        if old_window!=.1:raise ValueError('feedback window evidence original context is not .1 seconds')
+    return {'path':str(Path(path).resolve()),'sha256':sha(path),'data':data,
+            'note':'Explicit human feedback window change; does not erase original gaps/faults or certify controller/network health.'}
+
+
 def continuation_safety(context):
     # Source/binary and explicit recovery controls may change in a diagnosed new
     # batch; physical/model/motion policy invariants may not silently change.
@@ -225,10 +248,11 @@ def continuation_safety(context):
     if missing:raise ValueError('continuation lacks safety context: '+','.join(missing))
     selected=json.loads(json.dumps({key:context[key] for key in keys}))
     selected['motion_parameters'].get('reference',{}).pop('power_cycle_handoff',None)
+    selected['motion_parameters'].get('reference',{}).pop('power_cycle_join_file',None)
     return selected
 
 
-def load_continuation(path,statement_path,context,data,fixture=False):
+def load_continuation(path,statement_path,context,data,fixture=False,window_evidence=None):
     if not statement_path:raise ValueError('explicit continuation needs current human statement JSON')
     statement=json.loads(Path(statement_path).read_text())
     if not statement.get('human_statement'):raise ValueError('continuation statement must retain actual human words')
@@ -238,7 +262,21 @@ def load_continuation(path,statement_path,context,data,fixture=False):
     if previous.get('simulation') is not fixture:
         raise ValueError('continuation real/simulation source differs')
     old=previous.get('qualification_context',{})
-    if continuation_safety(old)!=continuation_safety(context):
+    previous_safety,current_safety=continuation_safety(old),continuation_safety(context)
+    authorized_window_change=None
+    if previous_safety!=current_safety and window_evidence:
+        evidence=window_evidence['data'];bound=evidence['prior_results']
+        if str(Path(bound['path']).resolve())!=str(Path(path).resolve()) or bound['sha256']!=sha(path):
+            raise ValueError('feedback window evidence must bind this continuation source')
+        before=previous_safety['motion_parameters']['feedback'].get('freshness_s')
+        after=current_safety['motion_parameters']['feedback'].get('freshness_s')
+        if before!=evidence['previous_freshness_s'] or after!=evidence['current_freshness_s']:
+            raise ValueError('feedback window evidence does not match old/new effective values')
+        comparison=json.loads(json.dumps(current_safety))
+        comparison['motion_parameters']['feedback']['freshness_s']=before
+        if comparison==previous_safety:
+            authorized_window_change={'previous_s':before,'current_s':after,'evidence':window_evidence}
+    if previous_safety!=current_safety and not authorized_window_change:
         raise ValueError('continuation Home/TCP/URDF/geometry/SDK/profile/limits/firmware/IP/command-policy safety invariant changed')
     if previous['home']['home_yaml_sha256']!=data['home']['home_yaml_sha256']:
         raise ValueError('continuation formal Home differs')
@@ -260,7 +298,8 @@ def load_continuation(path,statement_path,context,data,fixture=False):
                  for key in sorted(old.keys()|context.keys()) if old.get(key)!=context.get(key)}
     return {'source_results_path':str(Path(path).resolve()),'source_results_sha256':sha(path),
        'previous_status_preserved':previous['status'],'previous_qualification_context':old,
-       'current_context_delta':differences,'safety_invariants_equal':True,
+       'current_context_delta':differences,'safety_invariants_equal':previous_safety==current_safety,
+       'authorized_feedback_window_change':authorized_window_change,
        'statement':{'path':str(Path(statement_path).resolve()),'sha256':sha(statement_path),'data':statement},
        'successes':successes,'historical_success_count':len(successes),
        'note':'Only old measured successes retained with their original timestamps/context; no new arrivals claimed.'}
@@ -561,6 +600,15 @@ class RosSession:
         self.command_policy_evidence=None
         self.effective_speed_modes=None
         self.power_cycle_evidence=None
+        self.feedback_window_evidence=load_feedback_window_evidence(
+            getattr(args,'feedback_window_evidence',None),getattr(args,'feedback_freshness_s',.1))
+        if self.feedback_window_evidence:
+            write_json(out/'feedback_window_evidence.json',self.feedback_window_evidence)
+            if not args.fixture:
+                if not args.history_attestation:raise ValueError('new feedback window needs latest interval attestation')
+                interval=json.loads(args.history_attestation.read_text())
+                if interval.get('no_unobserved_motion') is not True or not interval.get('user_statement'):
+                    raise ValueError('latest interval human no-unobserved-motion statement missing')
         self.continuation=None
         self.last_state_observation=None
         evidence_path=getattr(args,'power_cycle_evidence',None)
@@ -576,6 +624,15 @@ class RosSession:
         p['motion'] = {'paused': not args.execute}
         p['hardware']['enable'] = args.execute
         explicit_power_handoff=configure_power_cycle_handoff(p,self.power_cycle_evidence,args.execute)
+        join_path=getattr(args,'power_cycle_join_audit',None)
+        if join_path:
+            bound=(self.power_cycle_evidence or {}).get('data',{}).get('history_epoch_join_audit',{})
+            if (not bound.get('path') or not bound.get('sha256') or
+                str(Path(bound['path']).resolve())!=str(join_path.resolve()) or sha(join_path)!=bound['sha256'] or
+                str(join_path.resolve()) not in self.audit_files):
+                raise ValueError('power-cycle epoch join needs matching evidence SHA and complete audit-chain entry')
+            p['reference']['power_cycle_join_file']=str(join_path.resolve())
+        p['diagnostics']={'feedback_trace':bool(getattr(args,'feedback_trace',False))}
         if args.fixture:
             p['hardware'] = {key: args.execute for key in p['hardware']}
         p['controller'].update(ip=args.controller_ip)
@@ -597,7 +654,7 @@ class RosSession:
                             'roundtrip_low': dict(full), 'roundtrip_high': dict(full)}
         p['safety'] = {'model_file': str(root/'src/chess_robot_arm/config/nova5_ag95_geometry.yaml')}
         p['audit'] = {'directory': str(out/'audit')}
-        p['feedback']['freshness_s'] = .1
+        p['feedback']['freshness_s'] = getattr(args,'feedback_freshness_s',.1)
         p['servo'].update(command_time_s=0.0, max_pending=6)
         if args.fixture:
             p['arrival_timeout_s'] = 1.0
@@ -636,12 +693,13 @@ class RosSession:
             'controller_limit_sha256':self.controller_limit_evidence['sha256'] if self.controller_limit_evidence else None,
             'command_policy_sha256':self.command_policy_evidence['sha256'] if self.command_policy_evidence else None,
             'restore_parameters':{'power_cycle_handoff':explicit_power_handoff,
-                                  'enable_after_history_restore':explicit_power_handoff}}
+                                  'enable_after_history_restore':explicit_power_handoff,
+                                  'power_cycle_join_file':str(join_path.resolve()) if join_path else None}}
         continued=getattr(args,'continue_results',None)
         if continued:
             if getattr(args,'reuse_results',None):raise ValueError('reuse-results and continue-results are mutually exclusive')
             self.continuation=load_continuation(continued,getattr(args,'continuation_statement',None),
-                self.qualification_context,data,args.fixture)
+                self.qualification_context,data,args.fixture,self.feedback_window_evidence)
             if self.power_cycle_evidence and self.power_cycle_evidence['data']['prior_fault_result']['sha256']!=self.continuation['source_results_sha256']:
                 raise ValueError('power-cycle and continuation must bind the same unchanged prior fault result')
             # An explicitly changed binary/epoch must demonstrate its own modes.
@@ -697,6 +755,15 @@ class RosSession:
                     'user_statement':self.power_cycle_evidence['data']['human_statement'],
                     'observed_power_cycle':True,'power_cycle_evidence_sha256':self.power_cycle_evidence['sha256'],
                     'scope':'Known power-cycle handoff; no assertion that controller time or epoch stayed continuous.'}
+                if args.history_attestation:
+                    latest=json.loads(args.history_attestation.read_text())
+                    if latest.get('no_unobserved_motion') is not True or not latest.get('user_statement'):
+                        raise ValueError('latest interval human no-unobserved-motion statement missing')
+                    attestation['latest_interval_attestation']={'path':str(args.history_attestation.resolve()),
+                        'sha256':sha(args.history_attestation),'data':latest}
+                    write_json(out/'latest_interval_attestation.json',attestation['latest_interval_attestation'])
+                elif self.feedback_window_evidence:
+                    raise ValueError('new feedback-window continuation needs latest interval attestation separately from old power statement')
             else:
                 if not args.history_attestation:raise ValueError('explicit human no-motion attestation required')
                 attestation = json.loads(args.history_attestation.read_text())
@@ -1063,12 +1130,19 @@ def main():
         help='Source-backed current-model/current-firmware absolute 6-axis limits; unknown blocks real motion')
     parser.add_argument('--command-policy',type=pathlib.Path,
         help='Explicit user-commanded planning caps; never reported as hardware ratings')
+    parser.add_argument('--feedback-freshness-s',type=float,default=.1,
+        help='Feedback receipt freshness window; default .1, explicit evidenced .2 only')
+    parser.add_argument('--feedback-window-evidence',type=pathlib.Path,
+        help='Actual human .1 to .2 window instruction bound to unchanged old/new fault results')
+    parser.add_argument('--feedback-trace',action='store_true',help='Low-interference in-memory driver feedback timing; flush at exit')
     parser.add_argument('--recover-home',action='store_true',
         help='Explicit one-time low HOME after history restore/limit gates; plan + measure, never reset reference')
     parser.add_argument('--margin-evaluator',type=pathlib.Path)
     parser.add_argument('--reuse-results',type=pathlib.Path)
     parser.add_argument('--power-cycle-evidence',type=pathlib.Path,
         help='Human-confirmed power only/no manual joint or cable motion; binds unchanged prior fault result')
+    parser.add_argument('--power-cycle-join-audit',type=pathlib.Path,
+        help='Exact first audit after original declared power epoch; requires matching evidence SHA')
     parser.add_argument('--continue-results',type=pathlib.Path,
         help='Explicit partial-batch continuation, measured successes only; fresh requalification required')
     parser.add_argument('--continuation-statement',type=pathlib.Path,

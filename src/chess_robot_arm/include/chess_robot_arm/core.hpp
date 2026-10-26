@@ -58,6 +58,8 @@ struct Config {
   Eigen::Vector3d grasp_axis{1, 0, 0};
   double clearance = 0.25, downward_tolerance = 0.15;
   bool power_cycle_handoff = false, enable_after_history_restore = false;
+  std::string power_cycle_join_file; // Explicit recorded first audit of a known power epoch.
+  bool feedback_trace = false; // Bounded in-memory timings; flush only after feedback thread stops.
   bool home_roundtrip_precheck = false; // Opt-in direct-TCP outward + predicted Home return validation.
   double stamp_age = 1.0, stamp_future = 0.05, freshness = 0.25;
   double home_tolerance = 0.03, stationary_speed = 0.01, dwell = 0.3;

@@ -1,0 +1,80 @@
+{
+  "status": "COMPLETE_FINITE_SAMPLED_LIST",
+  "counts": {
+    "reused_success": 14,
+    "planning_rejected": 15,
+    "roundtrip_success": 9
+  },
+  "distinct_successes_including_history": 23,
+  "new_roundtrip_successes": 9,
+  "historical_reused_successes": 14,
+  "new_measured_legs_including_qualification_and_home": 23,
+  "qualification": "PASS_REAL_LOW_HIGH_NEW_CONTEXT",
+  "boundary_refinements_completed": 12,
+  "boundaries": {
+    "left": {
+      "farthest_measured_roundtrip_m": 0.5249999999999999,
+      "nearest_farther_planning_rejection_m": 0.6,
+      "remaining_bracket_width_m": 0.07500000000000007,
+      "configured_workspace_edge_distance_m": 0.8303514018938933,
+      "status": "bracketed_sampled_boundary"
+    },
+    "right": {
+      "farthest_measured_roundtrip_m": 0.44999999999999996,
+      "nearest_farther_planning_rejection_m": 0.5249999999999999,
+      "remaining_bracket_width_m": 0.07499999999999996,
+      "configured_workspace_edge_distance_m": 0.7696485981061068,
+      "status": "bracketed_sampled_boundary"
+    },
+    "front": {
+      "farthest_measured_roundtrip_m": 0.375,
+      "nearest_farther_planning_rejection_m": 0.44999999999999996,
+      "remaining_bracket_width_m": 0.07499999999999996,
+      "configured_workspace_edge_distance_m": 1.3765188178839958,
+      "status": "bracketed_sampled_boundary"
+    },
+    "back": {
+      "farthest_measured_roundtrip_m": 0.1875,
+      "nearest_farther_planning_rejection_m": 0.22499999999999998,
+      "remaining_bracket_width_m": 0.03749999999999998,
+      "configured_workspace_edge_distance_m": 0.22348118211600432,
+      "status": "bracketed_sampled_boundary"
+    },
+    "up": {
+      "farthest_measured_roundtrip_m": 0.22499999999999998,
+      "nearest_farther_planning_rejection_m": 0.26249999999999996,
+      "remaining_bracket_width_m": 0.03749999999999998,
+      "configured_workspace_edge_distance_m": 0.9250124089299998,
+      "status": "bracketed_sampled_boundary"
+    },
+    "down": {
+      "farthest_measured_roundtrip_m": 0.26249999999999996,
+      "nearest_farther_planning_rejection_m": 0.3,
+      "remaining_bracket_width_m": 0.03750000000000003,
+      "configured_workspace_edge_distance_m": 0.27498759107000015,
+      "status": "bracketed_sampled_boundary"
+    }
+  },
+  "freshness_s": 0.2,
+  "other_tolerances_unchanged": true,
+  "at_formal_home": true,
+  "reference_retained": true,
+  "final_stationary_home_tail_s": 0.620084227,
+  "new_leg_tcp_error_mm": {
+    "min": 0.01398106260734468,
+    "max": 0.4093276285489341
+  },
+  "new_leg_orientation_error_rad_max": 0.0001272446083665982,
+  "duration_s": 149.743395384,
+  "tests": {
+    "arm": 61,
+    "twist_previously_unchanged": 20,
+    "tool": 27,
+    "trace_power_loopback": "PASS_SIMULATION_ONLY"
+  },
+  "interfaces_sdk_home_unchanged": true,
+  "raw_results_sha256": "53764085983f8146f7a14106d33c489ea429f92005cd3fe6335d3893bcae6eff",
+  "sources_frozen_matched_actual_run": true,
+  "failed_results_preserved": true,
+  "global_workspace_or_hardware_maximum_certified": false
+}

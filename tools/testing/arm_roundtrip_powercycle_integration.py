@@ -63,6 +63,7 @@ def main():
     parser.add_argument('--project-root',type=pathlib.Path,default=pathlib.Path(__file__).resolve().parents[2])
     parser.add_argument('--out',type=pathlib.Path,required=True)
     parser.add_argument('--command-policy',type=pathlib.Path)
+    parser.add_argument('--feedback-trace',action='store_true')
     args=parser.parse_args()
     assert os.environ.get('ROS_DOMAIN_ID')=='98' and os.environ.get('ROS_LOCALHOST_ONLY')=='1'
     root=args.project_root.resolve();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
@@ -80,7 +81,8 @@ def main():
     common=dict(fixture=True,execute=True,controller_ip='127.0.0.1',
         fixture_endpoints=out/'fixture/endpoints.json',history_audit=[raw],history_attestation=None,
         speed_evidence=None,goal_timeout=45,margin_evaluator=None,recover_home=True,
-        command_policy=args.command_policy,continue_results=None,reuse_results=None,controller_limits=None)
+        command_policy=args.command_policy,continue_results=None,reuse_results=None,controller_limits=None,
+        feedback_trace=args.feedback_trace)
     events=[]
     disabled=RosSession.__new__(RosSession)
     try:

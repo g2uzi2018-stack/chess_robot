@@ -314,6 +314,42 @@ class PowerCycleTests(unittest.TestCase):
             with self.assertRaises(ValueError):load_continuation(prior,statement,current,data,True)
             with self.assertRaises(ValueError):load_continuation(prior,None,self.context(),data,True)
             with self.assertRaises(ValueError):load_continuation(prior,statement,self.context(),data,False)
+    def test_feedback_window_explicit_change_only_preserves_original_context(self):
+        from arm_roundtrip import load_continuation,load_feedback_window_evidence,sha
+        with tempfile.TemporaryDirectory() as directory:
+            previous,data,prior,statement,evidence=self.files(directory)
+            window=pathlib.Path(directory)/'window.json'
+            raw={'human_statement':'fixture human explicitly says expand freshness from 100 to 200ms',
+                 'previous_freshness_s':.1,'current_freshness_s':.2,
+                 'prior_results':{'path':str(prior),'sha256':sha(prior)},
+                 'latest_fault_result':{'path':str(prior),'sha256':sha(prior)}}
+            window.write_text(json.dumps(raw))
+            accepted=load_feedback_window_evidence(window,.2)
+            current=self.context();current['motion_parameters']['feedback']['freshness_s']=.2
+            current['motion_parameters']['reference']['power_cycle_join_file']='fixture-declared-epoch.bin'
+            continued=load_continuation(prior,statement,current,data,True,accepted)
+            self.assertFalse(continued['safety_invariants_equal'])
+            self.assertEqual(continued['authorized_feedback_window_change']['current_s'],.2)
+            self.assertEqual(continued['previous_qualification_context']['motion_parameters']['feedback']['freshness_s'],.1)
+            self.assertEqual(json.loads(prior.read_text()),previous)
+            current['limits']['v'][0]=.9
+            with self.assertRaises(ValueError):load_continuation(prior,statement,current,data,True,accepted)
+    def test_feedback_window_rejects_missing_changed_or_unbound_evidence(self):
+        from arm_roundtrip import load_feedback_window_evidence,load_continuation,sha
+        self.assertIsNone(load_feedback_window_evidence(None,.1))
+        with self.assertRaises(ValueError):load_feedback_window_evidence(None,.2)
+        with self.assertRaises(ValueError):load_feedback_window_evidence(None,.25)
+        with tempfile.TemporaryDirectory() as directory:
+            previous,data,prior,statement,evidence=self.files(directory)
+            path=pathlib.Path(directory)/'window.json'
+            raw={'human_statement':'fixture expand 200ms','previous_freshness_s':.1,'current_freshness_s':.2,
+                'prior_results':{'path':str(prior),'sha256':sha(prior)},
+                'latest_fault_result':{'path':str(prior),'sha256':'changed'}}
+            path.write_text(json.dumps(raw))
+            with self.assertRaises(ValueError):load_feedback_window_evidence(path,.2)
+            raw['latest_fault_result']['sha256']=sha(prior);raw['human_statement']=''
+            path.write_text(json.dumps(raw))
+            with self.assertRaises(ValueError):load_feedback_window_evidence(path,.2)
     def test_historical_success_not_reexecuted_or_overwritten_by_qualification(self):
         from arm_roundtrip import load_continuation
         with tempfile.TemporaryDirectory() as directory:

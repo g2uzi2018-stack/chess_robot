@@ -164,6 +164,8 @@ class ArmNode final : public rclcpp::Node {
 #define PARAM(field, name) c.field = param(name, c.field)
     PARAM(clearance, "approach_clearance_m");
     PARAM(power_cycle_handoff, "reference.power_cycle_handoff");
+    PARAM(power_cycle_join_file, "reference.power_cycle_join_file");
+    PARAM(feedback_trace, "diagnostics.feedback_trace");
     PARAM(enable_after_history_restore, "controller.enable_after_history_restore");
     PARAM(home_roundtrip_precheck, "testing.home_roundtrip_precheck");
     PARAM(downward_tolerance, "tolerances.downward_rad");
@@ -260,7 +262,11 @@ class ArmNode final : public rclcpp::Node {
   void feedbackLoop() {
     while (!feedback_shutdown_) {
       try {
-        state_->update(driver_->readFeedback());
+        const auto f=driver_->readFeedback();
+        const auto begin=Clock::now();
+        try { state_->update(f); }
+        catch (...) {driver_->noteFeedbackDispatch(begin,Clock::now());throw;}
+        driver_->noteFeedbackDispatch(begin,Clock::now());
       } catch (const QueryFailure &e) {
         state_->invalidate(std::string(e.what()) +
                            " partial=" + e.partial_reply);
@@ -269,9 +275,12 @@ class ArmNode final : public rclcpp::Node {
       }
       // Bounded backoff also avoids a reconnect spin on refused localhost
       // sockets.
-      if (!state_->snapshot().fresh)
+      if (!state_->snapshot().fresh) {
+        const auto begin=Clock::now();
         for (int i = 0; i < 10 && !feedback_shutdown_; ++i)
           std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        driver_->noteFeedbackBackoff(begin,Clock::now());
+      }
     }
   }
   void fillFinal(Move::Result &r) {

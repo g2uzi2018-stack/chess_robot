@@ -138,3 +138,27 @@ fresh mode5原 .002 rad/s/.4s静止dwell，存 `enabled_stationary_ready`，该�
 策略SHA等安全不变量，源码/二进制与恢复参数差异留档。旧双段成功保留旧记录及上下文，不重新
 发运动；新epoch两档资格须重做，旧资格不能覆盖新失败。原 `--reuse-results` 不自动resume故障批次。
 每点preflight立即持久化；发送前等待反馈失败与真正发出后失败分开归档，任何执行故障停止整批。
+
+
+## 2026-10-26 explicit 200 ms continuation and diagnostic evidence
+
+The finite Home/TCP/Home list is complete: 38 targets = 14 historical measured successes,
+9 newly measured round trips and 15 planning refusals; all 12 directional refinement slots were used.
+New-context low/high qualification passed and the robot finished at formal Home with its original winding history.
+See `docs/validation/home-roundtrip-200ms-20261026/REPORT.md` and
+`docs/validation/feedback-gap-20261026/REPORT.md`; earlier blocked reports remain historical evidence.
+
+The test tool keeps its 0.1 s default. The operator's explicit 0.2 s run uses
+`--feedback-freshness-s .2 --feedback-window-evidence FILE --feedback-trace`.
+Evidence binds the actual statement, old/new window and unchanged original fault result hashes.
+Only that safety change is authorized; other invariants and all stop/arrival/winding guards remain.
+An explicitly SHA-bound `--power-cycle-join-audit FILE` replays the known original power boundary inside
+the full raw history; it does not alter any recorded bytes/stamps or zero the reference.
+Keep a separate latest interval attestation rather than reusing the old power statement for new gaps.
+
+`diagnostics.feedback_trace` defaults false. When enabled, 262144 timing rows are preallocated and
+flushed after the feedback thread joins into audit/feedback_timing.csv and feedback_timing_meta.txt;
+this is diagnostic only, with explicit drop counts and no per-frame console printing.
+Use `tools/analysis/feedback_gap_diagnostic.py` offline with the same-connection capture for layered analysis.
+This run had no gaps above 100 or 200 ms; the old 146 ms root cause remains undetermined.
+Observed audit-stage wall delays are documented without claiming disk IO or vendor SDK failure.

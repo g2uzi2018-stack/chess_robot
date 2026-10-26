@@ -33,6 +33,8 @@ void Config::validate() const {
           "backend must be read_only, hardware or commissioning");
   require(!urdf.empty(), "urdf_file is required");
   require(!enable_after_history_restore || power_cycle_handoff, "explicit power-cycle handoff required before recovery enable");
+  require(power_cycle_join_file.empty() || power_cycle_handoff,"recorded epoch join requires explicit power-cycle handoff");
+  require(!feedback_trace || !audit_directory.empty(),"feedback timing trace requires an audit directory");
   in_addr address{};
   require(inet_pton(AF_INET, ip.c_str(), &address) == 1,
           "controller.ip must be an IPv4 literal");
@@ -125,7 +127,7 @@ void Config::validate() const {
                 twist_limits.net_limit_rad <= pi / 9 &&
                 twist_limits.total_limit_rad <= pi / 9,
             "commissioning envelope/feedback/twist limits too wide");
-    require(freshness <= .1,
+    require(freshness <= (backend=="exploration" ? .2 : .1),
             "commissioning/exploration feedback caps too wide");
     // Speed comes from the selected manufacturer limits/profile, independently
     // of commissioning geometry and measured stop/arrival tolerances.
@@ -287,7 +289,10 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
   std::optional<int64_t> stationary_hold_since;
   Joints stationary_hold_anchor{};
   int64_t last_host=0, recent_stationary_home=0;
-  bool recorded_fault_tail=false;
+  bool recorded_fault_tail=false, recorded_epoch_joined=false;
+  if (!config_.power_cycle_join_file.empty())
+    require(std::count(files.begin(),files.end(),config_.power_cycle_join_file)==1 &&
+                files.front()!=config_.power_cycle_join_file,"epoch join must name exactly one noninitial audit");
   for (size_t file_index=0;file_index<files.size();++file_index) {
     const auto &path=files[file_index];
     std::ifstream f(path, std::ios::binary);
@@ -307,6 +312,21 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
                   double(host-previous_host)*1e-9 <= config_.freshness)),
               "history feedback gap/regression inside audit");
       previous_host=host;
+      const bool epoch_join=first && path==config_.power_cycle_join_file;
+      if (epoch_join) {
+        const auto joined=decodeFeedbackFrame(bytes,Clock::time_point{},0);
+        require(config_.power_cycle_handoff && !recorded_epoch_joined && have && recorded_fault_tail &&
+                    previous.mode==9 && host>last_host &&
+                    (joined.mode==4 || joined.mode==5) && maxSpeed(joined)<=config_.stationary_speed &&
+                    jointDistance(previous.q,config_.home)<=config_.home_tolerance &&
+                    jointDistance(joined.q,config_.home)<=config_.home_tolerance &&
+                    jointDistance(previous.q,joined.q)<=.001,
+                "recorded power epoch must join terminal Home fault to unchanged disabled/idle encoders");
+        // Only this explicit, attested file boundary changes controller epochs.
+        // No original bytes, host times or ROS stamps are rewritten.
+        sequence=FeedbackSequence{};recorded_fault_tail=false;recorded_epoch_joined=true;
+        stationary_hold_since.reset();recent_stationary_home=0;
+      }
       if (!sequence.accept(bytes)) continue;
       // Recorded host UTC is retained as evidence; never reinterpreted as ROS time.
       auto current=decodeFeedbackFrame(bytes,Clock::time_point{},0);
@@ -315,7 +335,9 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
         // Fault encoders are evidence of the last small joint displacement,
         // never evidence of healthy motion or arrival. Only a terminal fault
         // immediately following stationary formal Home is recoverable here.
-        require(have && file_index+1==files.size() && recent_stationary_home>0 &&
+        const bool terminal_or_known_join=file_index+1==files.size() ||
+            files[file_index+1]==config_.power_cycle_join_file;
+        require(have && terminal_or_known_join && recent_stationary_home>0 &&
                     host-recent_stationary_home <= int64_t(config_.freshness*1e9) &&
                     jointDistance(current.q,config_.home)<=config_.home_tolerance,
                 "power-cycle recovery requires terminal near-Home fault after recorded stationary Home");
@@ -338,7 +360,7 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
         const bool recorded_hold = previous.mode==7 && stationary_hold_since &&
             double(last_host-*stationary_hold_since)*1e-9>=config_.dwell &&
             maxSpeed(previous)<=config_.stationary_speed;
-        if (first) require((previous.mode==5 || recorded_hold) && current.mode==5 &&
+        if (first && !epoch_join) require((previous.mode==5 || recorded_hold) && current.mode==5 &&
                        jointDistance(previous.q,current.q)<=.001 &&
                        maxSpeed(current)<=config_.stationary_speed,
                        "history file handoff moved or was not stopped");
@@ -374,7 +396,8 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
   trial.advance(last_.q);
   require(chess_robot_twist::withinLimits(trial.metrics(),config_.twist_limits),"restored twist limit");
   tracker_=std::move(trial);
-  diagnostic_=power_handoff ? "explicit power-cycle audit handoff; winding retained, controller clock epoch not joined" :
+  diagnostic_=recorded_epoch_joined ? "explicit recorded power epoch replayed; winding retained without zeroing" :
+      power_handoff ? "explicit power-cycle audit handoff; winding retained, controller clock epoch not joined" :
       "explicit audit history restored without zeroing twist";
 }
 bool preferCandidate(const chess_robot_twist::Metrics &a, double duration,

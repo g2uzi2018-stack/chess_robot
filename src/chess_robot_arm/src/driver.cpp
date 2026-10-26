@@ -129,6 +129,7 @@ V4Driver::V4Driver(const Config &c, TransportFactory factory, std::function<int6
     : config_(c), transport_(std::move(factory)), ros_clock_(std::move(ros_clock)) {
   if (!transport_)
     transport_ = [c]() { return std::make_unique<TcpTransport>(c); };
+  if (c.feedback_trace) feedback_timings_.reserve(262144);
   if (!c.audit_directory.empty()) {
     if (!std::filesystem::create_directory(c.audit_directory))
       throw Failure(INVALID_GOAL, "audit directory must be new");
@@ -143,6 +144,33 @@ V4Driver::V4Driver(const Config &c, TransportFactory factory, std::function<int6
 }
 V4Driver::~V4Driver() {
   try { closeStream(true); } catch (...) {}
+  try { flushFeedbackTimings(); } catch (...) {}
+}
+void V4Driver::saveFeedbackTiming(const FeedbackTiming &row) {
+  if (!config_.feedback_trace) return;
+  if (feedback_timings_.size()<262144) feedback_timings_.push_back(row);
+  else ++timing_dropped_; // Never allocate or flush from the receive path.
+}
+void V4Driver::noteFeedbackDispatch(Clock::time_point begin,Clock::time_point end) {
+  if (!config_.feedback_trace || feedback_timings_.empty()) return;
+  auto &r=feedback_timings_.back();
+  r.dispatch_begin=std::chrono::duration_cast<std::chrono::nanoseconds>(begin.time_since_epoch()).count();
+  r.dispatch_end=std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count();
+}
+void V4Driver::noteFeedbackBackoff(Clock::time_point begin,Clock::time_point end) {
+  if (!config_.feedback_trace || feedback_timings_.empty()) return;
+  auto &r=feedback_timings_.back();
+  r.backoff_begin=std::chrono::duration_cast<std::chrono::nanoseconds>(begin.time_since_epoch()).count();
+  r.backoff_end=std::chrono::duration_cast<std::chrono::nanoseconds>(end.time_since_epoch()).count();
+}
+void V4Driver::flushFeedbackTimings() {
+  if (!config_.feedback_trace) return;
+  std::ofstream out(config_.audit_directory+"/feedback_timing.csv");
+  out << "frame,host_utc_ns,read_begin_steady_ns,complete_steady_ns,audit_begin_steady_ns,audit_end_steady_ns,decode_end_steady_ns,dispatch_begin_steady_ns,dispatch_end_steady_ns,backoff_begin_steady_ns,backoff_end_steady_ns,controller_stamp,mode,status\n";
+  for (const auto &r:feedback_timings_)
+    out<<r.frame<<','<<r.host<<','<<r.begin<<','<<r.complete<<','<<r.audit_begin<<','<<r.audit_end<<','<<r.decode_end<<','<<r.dispatch_begin<<','<<r.dispatch_end<<','<<r.backoff_begin<<','<<r.backoff_end<<','<<r.controller<<','<<r.mode<<','<<r.status<<'\n';
+  std::ofstream meta(config_.audit_directory+"/feedback_timing_meta.txt");
+  meta<<"capacity=262144\nrows="<<feedback_timings_.size()<<"\ndropped="<<timing_dropped_<<"\nflush=after_feedback_thread_join\n";
 }
 void V4Driver::audit(const std::string &command, const std::string &value,
                      Clock::time_point start) {
@@ -234,6 +262,7 @@ Joints V4Driver::ik(const Transform &flange, const Joints &seed) {
   return values;
 }
 Feedback V4Driver::readFeedback() {
+  FeedbackTiming timing;
   try {
     if (!feedback_socket_)
       feedback_socket_ = std::make_unique<Socket>(
@@ -244,6 +273,7 @@ Feedback V4Driver::readFeedback() {
         Clock::now() + std::chrono::milliseconds(config_.timeout_ms);
     while (Clock::now() < deadline) {
       FeedbackFrame b{};
+      timing=FeedbackTiming{};if (config_.feedback_trace) timing.begin=steady_ns();
       auto remaining =
           std::chrono::ceil<std::chrono::milliseconds>(deadline - Clock::now())
               .count();
@@ -252,21 +282,31 @@ Feedback V4Driver::readFeedback() {
           static_cast<int>(std::max<int64_t>(1, remaining)));
       const auto received = Clock::now();
       const auto ros_received = ros_clock_ ? ros_clock_() : 0;
+      const auto host_received=utc_ns();
+      if (config_.feedback_trace) {
+        timing.frame=++timing_frames_;timing.host=host_received;
+        timing.complete=std::chrono::duration_cast<std::chrono::nanoseconds>(received.time_since_epoch()).count();
+        timing.controller=feedback_field<uint64_t>(b,32);timing.mode=feedback_field<uint64_t>(b,24);
+        timing.audit_begin=steady_ns();
+      }
       if (feedback_audit_.is_open()) {
-        const int64_t ns =
-            std::chrono::duration_cast<std::chrono::nanoseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count();
+        const int64_t ns=host_received;
         feedback_audit_.write(reinterpret_cast<const char *>(&ns), sizeof(ns));
         feedback_audit_.write(reinterpret_cast<const char *>(b.data()),
                               b.size());
       }
-      if (!sequence_.accept(b))
-        continue;
-      return decodeFeedbackFrame(b, received, ros_received);
+      if (config_.feedback_trace) timing.audit_end=steady_ns();
+      const bool accepted=sequence_.accept(b);
+      auto result=decodeFeedbackFrame(b,received,ros_received);
+      if (config_.feedback_trace) {
+        timing.status=accepted ? 1 : 0;timing.decode_end=steady_ns();saveFeedbackTiming(timing);
+      }
+      if (!accepted) continue;
+      return result;
     }
     throw Failure(FEEDBACK_FAULT, "duplicate feedback deadline exceeded");
   } catch (...) {
+    if (config_.feedback_trace) {timing.status=-1;timing.decode_end=steady_ns();saveFeedbackTiming(timing);}
     feedback_socket_.reset();
     throw;
   }

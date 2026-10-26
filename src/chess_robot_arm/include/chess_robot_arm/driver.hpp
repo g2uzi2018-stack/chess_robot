@@ -45,6 +45,16 @@ class V4Driver final : public Driver {
   std::unique_ptr<Socket> feedback_socket_;
   FeedbackSequence sequence_;
   std::function<int64_t()> ros_clock_;
+  struct FeedbackTiming {
+    int64_t frame=0, host=0, begin=0, complete=0, audit_begin=0, audit_end=0, decode_end=0;
+    int64_t dispatch_begin=0, dispatch_end=0, backoff_begin=0, backoff_end=0;
+    uint64_t controller=0, mode=0;
+    int status=-1;
+  };
+  std::vector<FeedbackTiming> feedback_timings_;
+  uint64_t timing_frames_=0, timing_dropped_=0;
+  void saveFeedbackTiming(const FeedbackTiming &);
+  void flushFeedbackTimings();
   bool session_fault_ = false;
   std::string call(const std::string &);
 
@@ -55,6 +65,8 @@ public:
   Transform fk(const Joints &) override;
   Joints ik(const Transform &, const Joints &) override;
   Feedback readFeedback() override;
+  void noteFeedbackDispatch(Clock::time_point, Clock::time_point);
+  void noteFeedbackBackoff(Clock::time_point, Clock::time_point);
   void servo(const Joints &, double) override;
   void stop() override;
   void enableAfterHistoryRestore(); // Explicit opt-in; never clears errors.

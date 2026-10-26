@@ -1133,6 +1133,9 @@ TEST(Exploration, ConfiguredStageBoundsPreserveGlobalGuards) {
   c.profiles={{"near",.01,.04},{"wide",.02,.04}};c.default_profile="near";
   c.exploration_boundaries={{"near",.08,.3,pi/6},{"wide",.7,3,pi}};
   EXPECT_NO_THROW(c.validate());EXPECT_TRUE(c.hardwareAllowed());
+  c.freshness=.2;EXPECT_NO_THROW(c.validate());
+  c.freshness=.200001;EXPECT_THROW(c.validate(),Failure);
+  c.freshness=.1;
   auto effective=c.forProfile("wide");EXPECT_EQ(effective.commissioning_tcp_radius,.7);
   EXPECT_EQ(effective.twist_limits.total_limit_rad,pi);
   GeometryGuard guard(effective,model(c));EXPECT_NO_THROW(guard.check(c.home));
@@ -1431,4 +1434,51 @@ TEST(PowerCycle, EnableUsesDedicatedOfficialAcknowledgementBudget) {
   c.dashboard_port=ntohs(addr.sin_port);c.timeout_ms=100;c.enable_ack_timeout_ms=1200;
   {V4Driver driver(c);EXPECT_NO_THROW(driver.enableAfterHistoryRestore());}
   server.join();::close(listener);EXPECT_TRUE(server_error.empty())<<server_error;
+}
+
+TEST(PowerCycle, FullOriginalAuditsJoinOneExplicitRecordedEpochAndKeepGap) {
+  auto c=config();c.freshness=.2;c.power_cycle_handoff=true;
+  auto m=model(c);auto expected=trusted(c,m).tracker;
+  const auto prefix="/tmp/chess_recorded_epoch_"+std::to_string(getpid());
+  const std::string oldfile=prefix+"_old.bin",newfile=prefix+"_new.bin";
+  Joints last=c.home;
+  auto write=[&](const std::string &path,bool old,bool moved=false) {
+    std::ofstream out(path,std::ios::binary);
+    for(int i=0;i<5;++i) {
+      auto bytes=frame(old ? 100+i : 1+i);
+      auto q=c.home;
+      if(old) {if(i)q[5]+=.01;if(i>=3)q[1]+=.003;}
+      else {q[5]+=.01;q[1]+=.003;if(i>=2)q[0]+=.05;if(moved)q[0]+=.002;}
+      const uint64_t mode=old ? (i>=3 ? 9 : i==1 ? 7 : 5) : (i==0 ? 4 : i==2 ? 7 : 5);
+      field<uint64_t>(bytes,24,mode);
+      for(size_t j=0;j<6;++j)field<double>(bytes,432+8*j,q[j]*180/pi);
+      const int64_t host=(old ? 1000000000LL : 10000000000LL)+i*8000000LL+
+          (!old && i>=2 ? 138000000LL : 0); // Actual 146 ms gap is retained.
+      out.write(reinterpret_cast<const char*>(&host),sizeof(host));
+      out.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());
+      if(!moved)expected.advance(q);
+      last=q;
+    }
+  };
+  write(oldfile,true);write(newfile,false);
+  auto populate=[&](State &state) {
+    auto f=feedback(c,1000);f.q=last;f.mode=5;state.update(f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    f.controller_stamp++;f.received=Clock::now();state.update(f);
+  };
+  State unmarked(c,m);populate(unmarked);EXPECT_THROW(unmarked.restore({oldfile,newfile},true),Failure);
+  c.power_cycle_join_file=newfile;
+  State recovered(c,m);populate(recovered);
+  EXPECT_NO_THROW(recovered.restore({oldfile,newfile},true));
+  auto snapshot=recovered.snapshot();EXPECT_TRUE(snapshot.reference);
+  EXPECT_GT(jointDistance(snapshot.feedback.q,c.home),c.home_tolerance);
+  EXPECT_NEAR(snapshot.tracker.metrics().total,expected.metrics().total,1e-9);
+  EXPECT_GT(snapshot.tracker.metrics().total,.005);
+  c.freshness=.1;State narrow(c,m);populate(narrow);
+  EXPECT_THROW(narrow.restore({oldfile,newfile},true),Failure);
+  c.freshness=.2;write(newfile,false,true);
+  State moved(c,m);populate(moved);EXPECT_THROW(moved.restore({oldfile,newfile},true),Failure);
+  c.power_cycle_join_file=oldfile;State initial(c,m);populate(initial);
+  EXPECT_THROW(initial.restore({oldfile,newfile},true),Failure);
+  std::remove(oldfile.c_str());std::remove(newfile.c_str());
 }
