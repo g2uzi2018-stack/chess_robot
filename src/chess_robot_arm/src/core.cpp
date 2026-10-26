@@ -32,6 +32,7 @@ void Config::validate() const {
               backend == "commissioning" || backend == "exploration",
           "backend must be read_only, hardware or commissioning");
   require(!urdf.empty(), "urdf_file is required");
+  require(!enable_after_history_restore || power_cycle_handoff, "explicit power-cycle handoff required before recovery enable");
   in_addr address{};
   require(inet_pton(AF_INET, ip.c_str(), &address) == 1,
           "controller.ip must be an IPv4 literal");
@@ -39,7 +40,8 @@ void Config::validate() const {
           "test_fixture requires IPv4 loopback");
   require(dashboard_port > 0 && dashboard_port < 65536 && feedback_port > 0 &&
               feedback_port < 65536 && timeout_ms > 0 && timeout_ms <= 5000 &&
-              stop_ack_timeout_ms > 0 && stop_ack_timeout_ms <= 5000,
+              stop_ack_timeout_ms > 0 && stop_ack_timeout_ms <= 5000 &&
+              enable_ack_timeout_ms>0 && enable_ack_timeout_ms<=10000,
           "invalid network bounds");
   for (size_t i = 0; i < 6; ++i)
     require(std::isfinite(home[i]) && positive(velocity[i]) &&
@@ -209,7 +211,7 @@ void State::update(const Feedback &f) {
   std::lock_guard<std::mutex> lock(mutex_);
   try {
     if (f.mode != 4 && f.mode != 5 && f.mode != 7)
-      throw Failure(FEEDBACK_FAULT, "controller not in supported healthy mode");
+      throw Failure(FEEDBACK_FAULT, "controller mode "+std::to_string(f.mode)+" is not a supported healthy mode");
     if (!model_->withinJointBounds(f.q))
       throw Failure(FEEDBACK_FAULT, "feedback joint bounds");
     for (double v : f.speed)
@@ -284,8 +286,10 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
   size_t count=0;
   std::optional<int64_t> stationary_hold_since;
   Joints stationary_hold_anchor{};
-  int64_t last_host=0;
-  for (const auto &path : files) {
+  int64_t last_host=0, recent_stationary_home=0;
+  bool recorded_fault_tail=false;
+  for (size_t file_index=0;file_index<files.size();++file_index) {
+    const auto &path=files[file_index];
     std::ifstream f(path, std::ios::binary);
     require(bool(f), "cannot read history audit");
     bool first=true;
@@ -306,9 +310,23 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
       if (!sequence.accept(bytes)) continue;
       // Recorded host UTC is retained as evidence; never reinterpreted as ROS time.
       auto current=decodeFeedbackFrame(bytes,Clock::time_point{},0);
-      require(model_->withinJointBounds(current.q) &&
-                  (current.mode==4 || current.mode==5 || current.mode==7),
-              "invalid historical joints/mode");
+      require(model_->withinJointBounds(current.q),"invalid historical joints");
+      if (current.mode==9 && config_.power_cycle_handoff) {
+        // Fault encoders are evidence of the last small joint displacement,
+        // never evidence of healthy motion or arrival. Only a terminal fault
+        // immediately following stationary formal Home is recoverable here.
+        require(have && file_index+1==files.size() && recent_stationary_home>0 &&
+                    host-recent_stationary_home <= int64_t(config_.freshness*1e9) &&
+                    jointDistance(current.q,config_.home)<=config_.home_tolerance,
+                "power-cycle recovery requires terminal near-Home fault after recorded stationary Home");
+        recorded_fault_tail=true;
+      } else {
+        require(!recorded_fault_tail,"fault history must be a terminal suffix");
+        require(current.mode==4 || current.mode==5 || current.mode==7,"invalid historical mode");
+      }
+      if (current.mode==5 && maxSpeed(current)<=config_.stationary_speed &&
+          jointDistance(current.q,config_.home)<=config_.joint_tolerance)
+        recent_stationary_home=host;
       if (!have) {
         require(current.mode==5 && maxSpeed(current)<=config_.stationary_speed,
                 "history must begin at stationary known Home");
@@ -340,18 +358,24 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
   }
   std::lock_guard<std::mutex> lock(mutex_);
   require(have && have_ && !tracker_.valid(), "history restore needs invalid reference and real feedback");
+  const bool power_handoff=config_.power_cycle_handoff &&
+      (last_.mode==4 || last_.mode==5) &&
+      jointDistance(last_.q,config_.home)<=config_.home_tolerance &&
+      jointDistance(previous.q,config_.home)<=config_.home_tolerance;
   require(Clock::now()-last_.received <= std::chrono::duration<double>(config_.freshness) &&
-              last_.mode==5 && maxSpeed(last_)<=config_.stationary_speed &&
+              (last_.mode==5 || power_handoff) && maxSpeed(last_)<=config_.stationary_speed &&
               stationary_since_ && Clock::now()-*stationary_since_>=std::chrono::duration<double>(config_.dwell),
           "history restore needs fresh stationary idle dwell");
-  require(previous.mode==5 && maxSpeed(previous)<=config_.stationary_speed &&
-              last_.controller_stamp>previous.controller_stamp &&
+  require(((previous.mode==5 && maxSpeed(previous)<=config_.stationary_speed) ||
+               (power_handoff && recorded_fault_tail && previous.mode==9)) &&
+              (last_.controller_stamp>previous.controller_stamp || power_handoff) &&
               jointDistance(last_.q,previous.q)<=.001,
-          "current feedback does not join historical stopped endpoint");
+          "current feedback does not join historical stopped/fault endpoint");
   trial.advance(last_.q);
   require(chess_robot_twist::withinLimits(trial.metrics(),config_.twist_limits),"restored twist limit");
   tracker_=std::move(trial);
-  diagnostic_="explicit audit history restored without zeroing twist";
+  diagnostic_=power_handoff ? "explicit power-cycle audit handoff; winding retained, controller clock epoch not joined" :
+      "explicit audit history restored without zeroing twist";
 }
 bool preferCandidate(const chess_robot_twist::Metrics &a, double duration,
                      const chess_robot_twist::Metrics &b, double incumbent_duration,

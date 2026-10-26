@@ -123,6 +123,7 @@ class ArmNode final : public rclcpp::Node {
     c.dashboard_port = param("controller.dashboard_port", c.dashboard_port);
     c.feedback_port = param("controller.feedback_port", c.feedback_port);
     c.timeout_ms = param("controller.timeout_ms", c.timeout_ms);
+    c.enable_ack_timeout_ms = param("controller.enable_ack_timeout_ms", c.enable_ack_timeout_ms);
     c.stop_ack_timeout_ms =
         param("controller.stop_ack_timeout_ms", c.stop_ack_timeout_ms);
     auto h = array("home.joint_positions_rad",
@@ -162,6 +163,8 @@ class ArmNode final : public rclcpp::Node {
     }
 #define PARAM(field, name) c.field = param(name, c.field)
     PARAM(clearance, "approach_clearance_m");
+    PARAM(power_cycle_handoff, "reference.power_cycle_handoff");
+    PARAM(enable_after_history_restore, "controller.enable_after_history_restore");
     PARAM(home_roundtrip_precheck, "testing.home_roundtrip_precheck");
     PARAM(downward_tolerance, "tolerances.downward_rad");
     PARAM(stamp_age, "capture.max_age_s");
@@ -565,6 +568,20 @@ public:
         [this](const std::shared_ptr<chess_robot_interfaces::srv::RestoreReference::Request> req,
                std::shared_ptr<chess_robot_interfaces::srv::RestoreReference::Response> res) {
           res->success=gate_.restore(*state_,req->audit_files,req->no_unobserved_motion,res->detail);
+          if (res->success && config_.enable_after_history_restore) {
+            try {
+              auto s=state_->snapshot();
+              if (!s.fresh || !s.reference) throw Failure(FEEDBACK_FAULT,"recovery lost fresh restored feedback");
+              if (s.feedback.mode==4) {
+                driver_->enableAfterHistoryRestore();
+                res->detail += "; explicit EnableRobot acknowledged, await live enabled feedback";
+              } else if (s.feedback.mode!=5) {
+                throw Failure(FEEDBACK_FAULT,"recovery enable requires disabled/idle state");
+              }
+            } catch (const std::exception &e) {
+              res->success=false;res->detail += "; ";res->detail += e.what();
+            }
+          }
         });
     parameter_lock_ = add_on_set_parameters_callback(
         [](const std::vector<rclcpp::Parameter> &) {

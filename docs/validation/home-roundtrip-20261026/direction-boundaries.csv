@@ -1,0 +1,7 @@
+direction,historical_farthest_measured_m,nearest_coarse_planning_reject_m,boundary_slots_used,boundary_slots_remaining,status
+left,0.3,0.6,0,2,NOT_COMPLETED: historical distance is not a final executable boundary
+right,0.3,0.6,0,2,NOT_COMPLETED: historical distance is not a final executable boundary
+front,0.3,0.6,0,2,NOT_COMPLETED: historical distance is not a final executable boundary
+back,0.15,0.3,0,2,NOT_COMPLETED: historical distance is not a final executable boundary
+up,0.15,0.3,0,2,NOT_COMPLETED: historical distance is not a final executable boundary
+down,0.15,0.3,0,2,NOT_COMPLETED: historical distance is not a final executable boundary

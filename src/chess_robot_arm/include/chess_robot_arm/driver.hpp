@@ -57,6 +57,7 @@ public:
   Feedback readFeedback() override;
   void servo(const Joints &, double) override;
   void stop() override;
+  void enableAfterHistoryRestore(); // Explicit opt-in; never clears errors.
   void beginStream() override;
   void checkStream() override;
   void endStream() override;

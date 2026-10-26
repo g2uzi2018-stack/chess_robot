@@ -1,7 +1,7 @@
 # Arm controller (ROS 2 Humble, C++17)
 
 This package delivers software for a six-axis Nova5 arm. It defaults to passive
-`read_only` and loopback IPv4, sends no enable/reset/configuration commands, and
+`read_only` and loopback IPv4; in this default mode it sends no enable/reset/configuration commands and
 never initializes the cable reference automatically. The integrated source has
 been built and tested on AGX / ROS 2 Humble. See the delivered acceptance report
 for exact evidence. Hardware ServoJ/Stop certification remains outstanding.
@@ -42,10 +42,26 @@ return to formal Home using copied winding history. It never executes that retur
 implicitly. The tool confirms both separately measured legs and keeps a finite
 26-point / at-most-38-target ledger, CSV and 3D status plots.
 
-Current device absolute speed/acceleration limits and real low/high qualification
-remain prerequisites. The tool applies source-backed limits, preserves the stricter
-existing exploration arrival/stop tolerances, and binds reusable qualification to
-all motion parameters. See `docs/validation/home-roundtrip-20261025/REPORT.md`.
+The tool accepts source-backed controller limits or an explicit human command policy.
+The current user policy requests high 1 / low 0.3 rad/s and 1 / 0.3 rad/s² planning
+caps; these are not hardware-limit certification or a claim of measured speed.
+Fresh actual low/high qualification is required per source/binary/controller epoch.
+Existing arrival/stop tolerances and all protections remain active.
+
+Explicit `reference.power_cycle_handoff=true` preserves the complete recorded winding
+history across a declared power-only epoch after the original join/bounds/step/twist
+checks. Both flags default false. Only when `controller.enable_after_history_restore=true`
+is also explicitly set, a successful RestoreReference callback may check official
+GetErrorID for empty alarms and call official EnableRobot for mode4; it never calls
+ClearError. Enable ACK uses its own default 5 s budget. The client then requires
+reference_valid, fresh mode5 and the original stationary dwell before low HOME.
+No automatic reference initialization/reset or fault trajectory replay is introduced.
+
+Latest physical continuation is BLOCKED: low Home passed, but new-epoch low qualification
+failed on a 146.428485 ms feedback receipt gap; Stop ACK and fresh stationary dwell
+were confirmed. No new target roundtrip or boundary refinement passed. The original
+14 successful targets remain historical evidence; they do not qualify the new epoch.
+See `docs/validation/home-roundtrip-20261026/REPORT.md`; the 10/25 report is historical.
 
 ## Build and offline validation on AGX
 

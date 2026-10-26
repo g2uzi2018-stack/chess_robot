@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Finite Home -> exact TCP -> formal Home business-node acceptance.
 
-No motion is sent except MoveArm actions. No enable/reset/initialize-reference
-API is called. Importing this module does not import ROS or open sockets.
+No motion is sent except MoveArm actions. The tool never directly calls enable,
+reset or initialize-reference APIs. Explicit, human-evidenced power-cycle recovery
+may request enable through the business node after history restore. Import opens no sockets.
 """
 import argparse
 import csv
@@ -11,6 +12,7 @@ import hashlib
 import json
 import math
 import pathlib
+from pathlib import Path
 import re
 import signal
 import subprocess
@@ -144,6 +146,34 @@ def apply_controller_limits(params, limits):
     return effective
 
 
+
+def apply_command_policy(params, policy):
+    """Apply an explicit user planning request, without asserting hardware ratings."""
+    if policy.get('schema') != 'chess_robot.command_policy/v1' or not policy.get('user_statement'):
+        raise ValueError('explicit user command policy and statement required')
+    if policy.get('hardware_limits_verified') is not False:
+        raise ValueError('command policy must not masquerade as verified hardware limits')
+    v,a=policy.get('velocity_cap_rad_s'),policy.get('acceleration_cap_rad_s2')
+    if not all(isinstance(x,(int,float)) and not isinstance(x,bool) and math.isfinite(x) and x>0 for x in [v,a]):
+        raise ValueError('invalid commanded planning caps')
+    params['limits']['velocity_rad_s']=[min(x,v) for x in params['limits']['velocity_rad_s']]
+    params['limits']['acceleration_rad_s2']=[min(x,a) for x in params['limits']['acceleration_rad_s2']]
+    effective={}
+    for name in ['low','high']:
+        requested=policy['profiles'][name]
+        speed,acc=requested['speed_rad_s'],requested['acceleration_rad_s2']
+        if not all(isinstance(x,(int,float)) and not isinstance(x,bool) and math.isfinite(x) and x>0 for x in [speed,acc]) or speed>v or acc>a:
+            raise ValueError('profile exceeds explicit command policy')
+        profile=params['profiles']['roundtrip_'+name]
+        profile['speed_rad_s']=min(profile['speed_rad_s'],speed,max(params['limits']['velocity_rad_s']))
+        profile['acceleration_rad_s2']=min(profile['acceleration_rad_s2'],acc,max(params['limits']['acceleration_rad_s2']))
+        effective[name]={'requested':requested,'node_profile':dict(profile),
+            'per_axis_velocity_rad_s':[min(profile['speed_rad_s'],x) for x in params['limits']['velocity_rad_s']],
+            'per_axis_acceleration_rad_s2':[min(profile['acceleration_rad_s2'],x) for x in params['limits']['acceleration_rad_s2']],
+            'basis':'explicit user planning policy; hardware limits remain unverified'}
+    return effective
+
+
 def boundary_bracket(records, ray):
     """Only measured round-trip successes/reused successes bracket physical range."""
     points = [p for p in records if p.get('ray') == ray]
@@ -158,9 +188,87 @@ class ExecutionFault(RuntimeError):
     pass
 
 
+class PreSendFeedbackFault(TimeoutError):
+    def __init__(self,message,observation=None):
+        super().__init__(message)
+        self.observation=observation
+
+
+def load_power_cycle_evidence(path):
+    data=json.loads(Path(path).read_text())
+    if not data.get('human_statement') or data.get('only_power_cycle_no_manual_joint_or_cable_motion') is not True:
+        raise ValueError('power-cycle handoff needs actual human confirmation of power only, no manual joint/cable motion')
+    prior=data.get('prior_fault_result',{})
+    if not prior.get('path') or not prior.get('sha256') or sha(prior['path'])!=prior['sha256']:
+        raise ValueError('power-cycle evidence prior fault result missing/changed')
+    original=json.loads(Path(prior['path']).read_text())
+    if not original.get('status','').startswith(('EXECUTION_FAULT','PRE_SEND_FEEDBACK_FAULT')):
+        raise ValueError('power-cycle evidence must bind the unchanged prior fault result')
+    return {'path':str(Path(path).resolve()),'sha256':sha(path),'data':data,
+            'prior_status':original['status'],'epoch_handoff_explicit':True}
+
+
+def configure_power_cycle_handoff(params,evidence,execute):
+    explicit=bool(execute and evidence)
+    params['reference']['power_cycle_handoff']=explicit
+    params['controller']['enable_after_history_restore']=explicit
+    return explicit
+
+
+def continuation_safety(context):
+    # Source/binary and explicit recovery controls may change in a diagnosed new
+    # batch; physical/model/motion policy invariants may not silently change.
+    keys=['home_sha256','geometry_sha256','urdf_sha256','sdk_manifest_sha256','sdk_patch_sha256',
+          'tcp','profiles','limits','exploration','firmware_version','controller_ip',
+          'controller_limit_sha256','command_policy_sha256','motion_parameters']
+    missing=[key for key in keys if key not in context]
+    if missing:raise ValueError('continuation lacks safety context: '+','.join(missing))
+    selected=json.loads(json.dumps({key:context[key] for key in keys}))
+    selected['motion_parameters'].get('reference',{}).pop('power_cycle_handoff',None)
+    return selected
+
+
+def load_continuation(path,statement_path,context,data,fixture=False):
+    if not statement_path:raise ValueError('explicit continuation needs current human statement JSON')
+    statement=json.loads(Path(statement_path).read_text())
+    if not statement.get('human_statement'):raise ValueError('continuation statement must retain actual human words')
+    previous=json.loads(Path(path).read_text())
+    if previous.get('status') in ['COMPLETE','COMPLETE_WITH_UNBRACKETED_RAYS','PLANNING_ONLY']:
+        raise ValueError('continue-results is for an explicitly authorized partial/faulted batch; use reuse-results for complete batches')
+    if previous.get('simulation') is not fixture:
+        raise ValueError('continuation real/simulation source differs')
+    old=previous.get('qualification_context',{})
+    if continuation_safety(old)!=continuation_safety(context):
+        raise ValueError('continuation Home/TCP/URDF/geometry/SDK/profile/limits/firmware/IP/command-policy safety invariant changed')
+    if previous['home']['home_yaml_sha256']!=data['home']['home_yaml_sha256']:
+        raise ValueError('continuation formal Home differs')
+    expected={p['id']:p for p in data['coarse_points']}
+    successes={}
+    for point in previous.get('targets',[]):
+        if point.get('status') not in ['roundtrip_success','reused_success']:continue
+        if point['id'] not in expected or point['tcp_m']!=expected[point['id']]['tcp_m']:
+            raise ValueError('continuation target identity/coordinates differ')
+        for leg in ['outbound','return_home']:
+            measured=point.get(leg) or {}
+            if measured.get('code')!=1 or measured.get('executed') is not True or not measured.get('final_tcp_valid'):
+                raise ValueError('historical success lacks both measured legs')
+            if (measured.get('after') or {}).get('simulated') is not fixture:
+                raise ValueError('historical measured feedback source differs')
+        successes[point['id']]=point
+    if not successes:raise ValueError('partial continuation has no valid measured successes to retain')
+    differences={key:{'previous':old.get(key),'current':context.get(key)}
+                 for key in sorted(old.keys()|context.keys()) if old.get(key)!=context.get(key)}
+    return {'source_results_path':str(Path(path).resolve()),'source_results_sha256':sha(path),
+       'previous_status_preserved':previous['status'],'previous_qualification_context':old,
+       'current_context_delta':differences,'safety_invariants_equal':True,
+       'statement':{'path':str(Path(statement_path).resolve()),'sha256':sha(statement_path),'data':statement},
+       'successes':successes,'historical_success_count':len(successes),
+       'note':'Only old measured successes retained with their original timestamps/context; no new arrivals claimed.'}
+
+
 class Runner:
     """Orchestration independent of ROS; tested with deterministic session fakes."""
-    def __init__(self, data, session, out, execute=False, reuse=None):
+    def __init__(self, data, session, out, execute=False, reuse=None, continuation=None):
         self.data, self.session, self.out, self.execute = data, session, pathlib.Path(out), execute
         self.report = {'schema': data['schema'], 'status': 'STARTING', 'execute': execute,
                        'home': data['home'], 'fixed_quaternion_xyzw': data['quaternion_xyzw'],
@@ -168,6 +276,12 @@ class Runner:
                        'reference_initializations': 0, 'reference_resets': 0,
                        'gripper_operations': 0, 'started_utc_ns': time.time_ns()}
         self.reuse = {}
+        self.historical_ids=set()
+        if reuse and continuation:raise ValueError('reuse-results and continue-results are mutually exclusive')
+        if continuation:
+            self.reuse=dict(continuation['successes'])
+            self.historical_ids=set(self.reuse)
+            self.report['continuation']={key:value for key,value in continuation.items() if key!='successes'}
         if reuse:
             if reuse.get('status') not in ['COMPLETE', 'COMPLETE_WITH_UNBRACKETED_RAYS']:
                 raise ValueError('a faulted/partial batch cannot be automatically resumed')
@@ -214,7 +328,8 @@ class Runner:
         if old and old['tcp_m'] == point['tcp_m'] and old.get('return_home', {}).get('code') == 1:
             record.update(status='reused_success', reused_record=old,
                           outbound=old['outbound'],return_home=old['return_home'],profile=old.get('profile'),
-                          reuse_note='Prior measured legs retained with original timestamps; no new execution claimed')
+                          reuse_note='Prior measured legs retained with original timestamps; no new execution claimed',
+                          reuse_origin='historical_continuation' if point['id'] in self.historical_ids else 'prior_measured_success')
             self.save()
             return
         self.session.require_home()
@@ -260,7 +375,14 @@ class Runner:
         except Exception as error:
             record.update(status='execution_failed', failure_reason=str(error))
             record['stop_confirmation'] = self.session.confirm_stopped()
-            self.report['status'] = 'EXECUTION_FAULT_STOPPED' if record['stop_confirmation']['confirmed'] else 'EXECUTION_FAULT_STOP_UNCONFIRMED'
+            if isinstance(error,PreSendFeedbackFault):
+                record['status']='pre_send_feedback_failed'
+                record['fault_stage']='before_action_submission'
+                record['feedback_diagnostic']=error.observation
+                self.report['status']='PRE_SEND_FEEDBACK_FAULT_STOPPED' if record['stop_confirmation']['confirmed'] else 'PRE_SEND_FEEDBACK_FAULT_STOP_UNCONFIRMED'
+            else:
+                record['fault_stage']='after_action_submission_or_terminal_check'
+                self.report['status'] = 'EXECUTION_FAULT_STOPPED' if record['stop_confirmation']['confirmed'] else 'EXECUTION_FAULT_STOP_UNCONFIRMED'
             raise ExecutionFault(str(error)) from error
         finally:
             record['pair_elapsed_s'] = time.monotonic() - started
@@ -286,6 +408,7 @@ class Runner:
                 self.session.require_arrival(recovery['execution'],self.data['home']['tcp_m'],self.data['quaternion_xyzw'])
                 self.session.require_home()
                 recovery['status']='MEASURED_HOME_REACHED'
+                self.save()
             except Exception as error:
                 recovery.update(status='EXECUTION_FAILED',failure_reason=str(error),stop_confirmation=self.session.confirm_stopped())
                 self.report['status']='EXECUTION_FAULT_STOPPED' if recovery['stop_confirmation']['confirmed'] else 'EXECUTION_FAULT_STOP_UNCONFIRMED'
@@ -295,17 +418,48 @@ class Runner:
         # Before first actuation, check every coarse outbound + predicted return
         # from the actual formal Home. This also creates a finite timing estimate.
         prepared = {}
+        self.report['coarse_preflight']={}
         for point in self.data['coarse_points']:
-            prepared[point['id']] = self.plan(point)
+            if point['id'] in self.historical_ids:
+                self.report['coarse_preflight'][point['id']]={'status':'historical_measured_reuse',
+                    'point':point,'source_results_sha256':self.report['continuation']['source_results_sha256']}
+                self.save()
+                continue
+            item={'status':'planning','point':point}
+            self.report['coarse_preflight'][point['id']]=item
+            self.save()
+            try:
+                prepared[point['id']] = self.plan(point)
+                selected,plans=prepared[point['id']]
+                item.update(status='planning_passed' if selected['code']==0 else 'planning_rejected',selected=selected,plans=plans)
+            except Exception as error:
+                item.update(status='preflight_fault',error=repr(error),
+                    feedback_diagnostic=getattr(error,'observation',None))
+                self.save()
+                raise
+            self.save()
         self.report['preflight_estimate_s'] = {
             'accepted_pair_motion': sum(x[0].get('pair_planned_duration_s', 0) for x in prepared.values()),
-            'coarse_count': len(prepared), 'maximum_targets': self.data['maximum_targets'],
+            'coarse_count': len(self.data['coarse_points']), 'new_preflight_count':len(prepared),
+            'historical_reused_count':len(self.historical_ids), 'maximum_targets': self.data['maximum_targets'],
             'note': 'motion times exclude repeated SDK planning, feedback dwell and optional bisection'}
         self.save()
         print(json.dumps({'preflight': self.report['preflight_estimate_s']}, ensure_ascii=False), flush=True)
         if getattr(self.session,'needs_qualification',False):
-            candidates=[p for p in self.data['coarse_points'] if prepared[p['id']][0]['code']==0
+            candidates=[p for p in self.data['coarse_points'] if p['id'] in prepared and prepared[p['id']][0]['code']==0
                         and prepared[p['id']][0]['profile']=='roundtrip_high']
+            if self.historical_ids:
+                # Requalify the new binary/epoch at one old safe high-mode point,
+                # not by re-scanning or re-moving all historical successes.
+                for point in self.data['coarse_points']:
+                    old=self.reuse.get(point['id'])
+                    if not old or old.get('profile')!='roundtrip_high':continue
+                    current=self.plan(point)
+                    self.report['coarse_preflight'][point['id']]['qualification_precheck']={'selected':current[0],'plans':current[1]}
+                    self.save()
+                    if current[0]['code']==0 and current[0]['profile']=='roundtrip_high':
+                        candidates=[point]
+                        break
             if not candidates:
                 raise ValueError('no checked ordinary-margin qualification point; high mode remains unqualified')
             point=candidates[0]
@@ -316,21 +470,29 @@ class Runner:
                 plan=self.checked_plan(trial,profile)
                 if plan['code']!=0:
                     raise ValueError('speed qualification precheck rejected: '+plan['detail'])
-                self.target(trial,(plan,{'selected':plan,'qualification':True}))
-                record=self.report['targets'].pop()
-                self.report['qualification_trials'].append(record)
-                self.save()
+                prior_count=len(self.report['targets'])
+                try:
+                    self.target(trial,(plan,{'selected':plan,'qualification':True}))
+                finally:
+                    # Preserve a failed qualification in its own ledger too.
+                    # An exception must not leave it looking like an ordinary
+                    # target while the qualification ledger remains empty.
+                    if len(self.report['targets'])>prior_count:
+                        record=self.report['targets'].pop()
+                        self.report['qualification_trials'].append(record)
+                    self.save()
             evidence=self.session.make_speed_evidence(self.report['qualification_trials'])
             write_json(self.out/'speed_qualification.json',evidence)
             self.report['speed_qualification']='speed_qualification.json'
-            self.reuse[point['id']]=self.report['qualification_trials'][-1]
+            if point['id'] not in self.historical_ids:
+                self.reuse[point['id']]=self.report['qualification_trials'][-1]
             self.session.needs_qualification=False
         self.report['status'] = 'RUNNING'
         self.save()
         for point in self.data['coarse_points']:
             # A preflight plan is evidence, never a replayable motion input. Node
             # always replans from fresh feedback when the execute action is sent.
-            self.target(point, prepared[point['id']])
+            self.target(point, prepared.get(point['id']))
         if self.execute:
             for ray, vector in self.data['rays'].items():
                 for step in range(self.data['max_refinements_per_ray']):
@@ -396,7 +558,15 @@ class RosSession:
         self.restore_count = 0
         self.needs_qualification=False
         self.controller_limit_evidence=None
+        self.command_policy_evidence=None
         self.effective_speed_modes=None
+        self.power_cycle_evidence=None
+        self.continuation=None
+        self.last_state_observation=None
+        evidence_path=getattr(args,'power_cycle_evidence',None)
+        if evidence_path:
+            self.power_cycle_evidence=load_power_cycle_evidence(evidence_path)
+            write_json(out/'power_cycle_evidence.json',self.power_cycle_evidence)
         self.params = yaml.safe_load((root/'src/chess_robot_arm/config/arm.yaml').read_text())
         p = self.params['chess_robot_arm']['ros__parameters']
         p.update(backend='exploration' if not args.fixture else 'hardware',
@@ -405,6 +575,7 @@ class RosSession:
         p['testing'] = {'home_roundtrip_precheck': True}
         p['motion'] = {'paused': not args.execute}
         p['hardware']['enable'] = args.execute
+        explicit_power_handoff=configure_power_cycle_handoff(p,self.power_cycle_evidence,args.execute)
         if args.fixture:
             p['hardware'] = {key: args.execute for key in p['hardware']}
         p['controller'].update(ip=args.controller_ip)
@@ -430,14 +601,20 @@ class RosSession:
         p['servo'].update(command_time_s=0.0, max_pending=6)
         if args.fixture:
             p['arrival_timeout_s'] = 1.0
+        policy_path=getattr(args,'command_policy',None)
         if args.execute and not args.fixture:
-            if not getattr(args,'controller_limits',None):
-                raise ValueError('current controller absolute velocity/acceleration limits unknown; no motion')
-            limits=json.loads(args.controller_limits.read_text())
-            self.effective_speed_modes=apply_controller_limits(p,limits)
-            self.controller_limit_evidence={'path':str(args.controller_limits.resolve()),
-                'sha256':sha(args.controller_limits),'data':limits}
+            if not getattr(args,'controller_limits',None) and not policy_path:
+                raise ValueError('provide controller limit evidence or an explicit user-commanded planning policy; no motion')
+            if getattr(args,'controller_limits',None):
+                limits=json.loads(args.controller_limits.read_text())
+                self.effective_speed_modes=apply_controller_limits(p,limits)
+                self.controller_limit_evidence={'path':str(args.controller_limits.resolve()),
+                    'sha256':sha(args.controller_limits),'data':limits}
             self.needs_qualification=not bool(args.speed_evidence)
+        if policy_path:
+            policy=json.loads(policy_path.read_text())
+            self.effective_speed_modes=apply_command_policy(p,policy)
+            self.command_policy_evidence={'path':str(policy_path.resolve()),'sha256':sha(policy_path),'data':policy}
         sources=list((root/'src/chess_robot_arm/src').glob('*.cpp'))+list((root/'src/chess_robot_arm/include/chess_robot_arm').glob('*.hpp'))
         sources.append(root/'tools/testing/arm_roundtrip.py')
         self.qualification_context={
@@ -456,7 +633,19 @@ class RosSession:
             'tcp':p['tcp'],'profiles':p['profiles'],'limits':p['limits'],
             'exploration':p['exploration'],'firmware_version':p['controller']['firmware_version'],
             'controller_ip':args.controller_ip,
-            'controller_limit_sha256':self.controller_limit_evidence['sha256'] if self.controller_limit_evidence else None}
+            'controller_limit_sha256':self.controller_limit_evidence['sha256'] if self.controller_limit_evidence else None,
+            'command_policy_sha256':self.command_policy_evidence['sha256'] if self.command_policy_evidence else None,
+            'restore_parameters':{'power_cycle_handoff':explicit_power_handoff,
+                                  'enable_after_history_restore':explicit_power_handoff}}
+        continued=getattr(args,'continue_results',None)
+        if continued:
+            if getattr(args,'reuse_results',None):raise ValueError('reuse-results and continue-results are mutually exclusive')
+            self.continuation=load_continuation(continued,getattr(args,'continuation_statement',None),
+                self.qualification_context,data,args.fixture)
+            if self.power_cycle_evidence and self.power_cycle_evidence['data']['prior_fault_result']['sha256']!=self.continuation['source_results_sha256']:
+                raise ValueError('power-cycle and continuation must bind the same unchanged prior fault result')
+            # An explicitly changed binary/epoch must demonstrate its own modes.
+            self.needs_qualification=bool(args.execute)
         if args.execute and not args.fixture and args.speed_evidence:
             evidence = json.loads(args.speed_evidence.read_text())
             if evidence.get('status') != 'PASS' or evidence.get('simulation') is not False:
@@ -469,9 +658,9 @@ class RosSession:
                 raise ValueError('speed evidence parameters differ')
             if evidence.get('qualification_context')!=self.qualification_context:
                 raise ValueError('speed qualification binary/source/Home/TCP/geometry/profile/limit context differs')
-            if not evidence.get('source_results') or not evidence.get('controller_limit_evidence'):
+            if not evidence.get('source_results') or not (evidence.get('controller_limit_evidence') or evidence.get('command_policy_evidence')):
                 raise ValueError('measured results/controller limit evidence missing')
-            if evidence['controller_limit_evidence']['sha256']!=self.controller_limit_evidence['sha256']:
+            if self.controller_limit_evidence and (evidence.get('controller_limit_evidence') or {}).get('sha256')!=self.controller_limit_evidence['sha256']:
                 raise ValueError('speed evidence controller limits changed; requalification required')
             source=evidence['source_results']
             if sha(source['path'])!=source['sha256']:
@@ -502,14 +691,31 @@ class RosSession:
         if snapshot['simulated'] != args.fixture:
             raise ValueError('real/simulation endpoint mismatch')
         if not args.fixture:
-            if not args.history_attestation or not self.audit_files:
-                raise ValueError('explicit history audits and human no-motion attestation required')
-            attestation = json.loads(args.history_attestation.read_text())
-            if attestation.get('no_unobserved_motion') is not True or not attestation.get('user_statement'):
-                raise ValueError('human no-unobserved-motion statement missing')
+            if not self.audit_files:raise ValueError('explicit complete history audits required')
+            if self.power_cycle_evidence:
+                attestation={'no_unobserved_motion':True,
+                    'user_statement':self.power_cycle_evidence['data']['human_statement'],
+                    'observed_power_cycle':True,'power_cycle_evidence_sha256':self.power_cycle_evidence['sha256'],
+                    'scope':'Known power-cycle handoff; no assertion that controller time or epoch stayed continuous.'}
+            else:
+                if not args.history_attestation:raise ValueError('explicit human no-motion attestation required')
+                attestation = json.loads(args.history_attestation.read_text())
+                if attestation.get('no_unobserved_motion') is not True or not attestation.get('user_statement'):
+                    raise ValueError('human no-unobserved-motion statement missing')
             write_json(out/'history_attestation.json', attestation)
         self.wait(lambda: self.restore.service_is_ready(), 10)
         if self.audit_files:
+            if explicit_power_handoff:
+                stationary_since=None
+                def before_restore_dwell():
+                    nonlocal stationary_since
+                    current=self.snapshot(False)
+                    if current and current['mode'] in [4,5] and max(map(abs,current['speed_rad_s']))<=self.p['tolerances']['stationary_rad_s']:
+                        stationary_since=stationary_since or time.monotonic()
+                        return time.monotonic()-stationary_since>=self.p['tolerances']['dwell_s']
+                    stationary_since=None
+                    return False
+                self.wait(before_restore_dwell,max(5,self.p['tolerances']['dwell_s']+3))
             request = RestoreReference.Request()
             request.audit_files = self.audit_files
             request.no_unobserved_motion = True  # explicit copied human attestation checked above
@@ -517,12 +723,36 @@ class RosSession:
             if not response.success:
                 raise ValueError('continuous history restore rejected: '+response.detail)
             self.restore_count += 1
-            self.wait(lambda: self.snapshot(False) and self.snapshot()['reference_valid'], 3)
+            write_json(out/'reference_restore.json',{'success':response.success,'detail':response.detail,
+                'power_cycle_handoff':explicit_power_handoff,'enable_requested_via_node':explicit_power_handoff,
+                'controller_epoch_handoff_explicit':bool(self.power_cycle_evidence),
+                'controller_time_converted_or_rewritten':False})
+            if explicit_power_handoff:
+                # The node performs GetErrorID + EnableRobot only after actual
+                # history restore. This client does not issue either command.
+                self.wait(lambda: self.snapshot(False) and self.snapshot()['reference_valid'] and
+                    self.snapshot()['mode']==5 and max(map(abs,self.snapshot()['speed_rad_s']))<=self.p['tolerances']['stationary_rad_s'],15)
+                ready=self.confirm_stopped() # existing fresh mode5/stationary/dwell observer; sends no Stop
+                live=self.snapshot(False)
+                ready_record={'observation':ready,'reference_valid':bool(live and live['reference_valid']),
+                    'basis':'After node enable, reuse original fresh mode5 + stationary + dwell observation',
+                    'stationary_rad_s':self.p['tolerances']['stationary_rad_s'],'dwell_s':self.p['tolerances']['dwell_s'],
+                    'stop_command_sent_by_this_observation':False}
+                write_json(out/'enabled_stationary_ready.json',ready_record)
+                if not ready['confirmed'] or not ready_record['reference_valid']:
+                    raise ValueError('enabled controller not ready with continuous reference and original stationary dwell')
+            else:
+                self.wait(lambda: self.snapshot(False) and self.snapshot()['reference_valid'], 3)
         elif not args.fixture:
             raise ValueError('never initialize real Home reference automatically')
         # Fixtures initialize explicitly in their harness, through the normal service.
 
     def receive_state(self, message):
+        self.last_state_observation={'receipt_host_ns':time.time_ns(),
+            'stamp_ns':message.header.stamp.sec*10**9+message.header.stamp.nanosec,
+            'controller_mode':message.controller_mode,'feedback_fresh':message.feedback_fresh,
+            'reference_valid':message.reference_valid,'diagnostic':message.diagnostic,
+            'phase':message.phase,'simulated':message.simulated}
         key = (message.header.stamp.sec, message.header.stamp.nanosec)
         self.states[key] = message
         if len(self.states) > 100:
@@ -554,7 +784,7 @@ class RosSession:
                 'quaternion_xyzw':[q.x,q.y,q.z,q.w], 'joints_rad':list(j.position),
                 'speed_rad_s':list(j.velocity), 'mode':s.controller_mode,
                 'reference_valid':s.reference_valid,'simulated':s.simulated,'phase':s.phase,
-                'net_twist_rad':s.signed_twist_rad,'total_twist_rad':s.total_twist_rad}
+                'net_twist_rad':s.signed_twist_rad,'total_twist_rad':s.total_twist_rad,'diagnostic':s.diagnostic}
 
     def wait(self, predicate, timeout):
         end = time.monotonic()+timeout
@@ -599,7 +829,21 @@ class RosSession:
         # budget while this single-threaded ROS client is not spinning. Drain
         # subscriptions and obtain an actual new matched snapshot before send;
         # never restamp an older measurement as current.
-        self.wait(lambda:self.snapshot(False) is not None,3)
+        try:
+            self.wait(lambda:self.snapshot(False) is not None,3)
+        except Exception as error:
+            observation=getattr(self,'last_state_observation',None)
+            event={'action_result_received':False,'code':None,'executed':False,'plan_only':plan_only,
+                'profile':profile,'point_id':point['id'] if point else None,
+                'fault_stage':'before_action_submission','motion_submitted':False,
+                'error':repr(error),'last_state':observation}
+            if not hasattr(self,'frames'):self.frames=[]
+            self.frames.append(event)
+            if getattr(self,'out',None):
+                write_json(self.out/'actions.json',self.frames)
+                write_json(self.out/'pre_send_feedback_fault.json',event)
+            raise PreSendFeedbackFault('fresh feedback unavailable before action submission: '+str(error),observation) from error
+        if point is not None:g.target.header.stamp=self.node.get_clock().now().to_msg()
         before, started = self.snapshot(), time.monotonic()
         command_ns = self.node.get_clock().now().nanoseconds
         offset = (self.out/'node.log').stat().st_size
@@ -638,7 +882,8 @@ class RosSession:
                   'profile':profile,'plan_only':plan_only,'action_status':wrapped.status,
                   'elapsed_s':time.monotonic()-started,'before':before,
                   'command_ros_ns':command_ns,'after':after,'after_feedback_error':after_error,
-                  'final_tcp_valid':result.final_tcp_valid}
+                  'final_tcp_valid':result.final_tcp_valid,
+                  'after_feedback_diagnostic':getattr(self,'last_state_observation',None) if after_error else None}
         if result.final_tcp_valid:
             p,q = result.final_tcp.pose.position,result.final_tcp.pose.orientation
             record['final_tcp_m'],record['final_quaternion_xyzw'] = [p.x,p.y,p.z],[q.x,q.y,q.z,q.w]
@@ -758,6 +1003,8 @@ class RosSession:
             'firmware_version':self.p['controller']['firmware_version'],
             'profiles':{'low':self.p['profiles']['roundtrip_low'],'high':self.p['profiles']['roundtrip_high']},
             'controller_limit_evidence':self.controller_limit_evidence,
+            'command_policy_evidence':self.command_policy_evidence,
+            'hardware_limits_verified':self.controller_limit_evidence is not None,
             'qualification_context':self.qualification_context,
             'effective_speed_modes':self.effective_speed_modes,
             'source_results':{'path':str(frozen),'sha256':sha(frozen)},
@@ -814,10 +1061,18 @@ def main():
     parser.add_argument('--speed-evidence',type=pathlib.Path)
     parser.add_argument('--controller-limits',type=pathlib.Path,
         help='Source-backed current-model/current-firmware absolute 6-axis limits; unknown blocks real motion')
+    parser.add_argument('--command-policy',type=pathlib.Path,
+        help='Explicit user-commanded planning caps; never reported as hardware ratings')
     parser.add_argument('--recover-home',action='store_true',
         help='Explicit one-time low HOME after history restore/limit gates; plan + measure, never reset reference')
     parser.add_argument('--margin-evaluator',type=pathlib.Path)
     parser.add_argument('--reuse-results',type=pathlib.Path)
+    parser.add_argument('--power-cycle-evidence',type=pathlib.Path,
+        help='Human-confirmed power only/no manual joint or cable motion; binds unchanged prior fault result')
+    parser.add_argument('--continue-results',type=pathlib.Path,
+        help='Explicit partial-batch continuation, measured successes only; fresh requalification required')
+    parser.add_argument('--continuation-statement',type=pathlib.Path,
+        help='Current actual human continuation statement JSON')
     parser.add_argument('--goal-timeout',type=float,default=120)
     parser.add_argument('--fixture',action='store_true')
     parser.add_argument('--fixture-endpoints',type=pathlib.Path)
@@ -846,7 +1101,7 @@ def main():
         session = RosSession.__new__(RosSession)
         session.__init__(root,out,data,args)
         reuse = json.loads(args.reuse_results.read_text()) if args.reuse_results else None
-        runner = Runner(data,session,out,args.execute,reuse)
+        runner = Runner(data,session,out,args.execute,reuse,session.continuation)
         runner.report['history_audits'] = [{'path':str(p.resolve()),'sha256':sha(p)} for p in args.history_audit]
         runner.report['reference_restores'] = session.restore_count
         runner.report['parameters_sha256'] = sha(out/'parameters.yaml')
@@ -857,7 +1112,7 @@ def main():
         runner.run()
     except Exception as error:
         if runner:
-            if runner.report['status'] not in ['EXECUTION_FAULT_STOPPED','EXECUTION_FAULT_STOP_UNCONFIRMED']:
+            if not runner.report['status'].startswith(('EXECUTION_FAULT','PRE_SEND_FEEDBACK_FAULT')):
                 runner.report['status'] = 'BLOCKED'
             runner.report['error'] = repr(error)
             runner.save()

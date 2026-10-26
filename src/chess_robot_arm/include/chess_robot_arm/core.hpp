@@ -43,7 +43,7 @@ struct ExplorationBoundary {
 struct Config {
   std::string backend = "read_only", ip = "127.0.0.1", urdf;
   int dashboard_port = 29999, feedback_port = 30004, timeout_ms = 500,
-      stop_ack_timeout_ms = 1500;
+      stop_ack_timeout_ms = 1500, enable_ack_timeout_ms = 5000;
   Joints home{{1.3873624514421463, 0.29600795831732624, 1.4554299194273725,
                -0.18064158423931584, -1.5707963267948966,
                -0.06370430298043014}};
@@ -57,6 +57,7 @@ struct Config {
   Eigen::Vector3d workspace_min{-0.8, -0.8, 0.0}, workspace_max{0.8, 0.8, 1.2};
   Eigen::Vector3d grasp_axis{1, 0, 0};
   double clearance = 0.25, downward_tolerance = 0.15;
+  bool power_cycle_handoff = false, enable_after_history_restore = false;
   bool home_roundtrip_precheck = false; // Opt-in direct-TCP outward + predicted Home return validation.
   double stamp_age = 1.0, stamp_future = 0.05, freshness = 0.25;
   double home_tolerance = 0.03, stationary_speed = 0.01, dwell = 0.3;

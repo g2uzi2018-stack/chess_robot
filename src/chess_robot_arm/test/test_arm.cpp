@@ -1340,3 +1340,95 @@ TEST(Roundtrip, RejectsOffsetAndWrongStartButKeepsFormalHome) {
   g.operation=Operation::Home;EXPECT_NO_THROW(p.plan(g,off));
   g.operation=Operation::Sequence;EXPECT_THROW(p.plan(g,s),Failure);
 }
+
+TEST(PowerCycle, RecordedFaultTailPreservesWindingAcrossDisabledEpoch) {
+  auto c=config();auto m=model(c);auto expected=trusted(c,m).tracker;
+  const auto path="/tmp/chess_power_history_"+std::to_string(getpid())+".bin";
+  Joints last=c.home;
+  {
+    std::ofstream out(path,std::ios::binary);
+    for(int i=0;i<5;++i) {
+      auto bytes=frame(100+i);last=c.home;
+      if(i)last[5]+=.01;
+      if(i>=3)last[1]+=.003;
+      field<uint64_t>(bytes,24,i>=3 ? 9 : i==1 ? 7 : 5);
+      if(i>=3)field<double>(bytes,480+8,.02*180/pi);
+      for(size_t j=0;j<6;++j)field<double>(bytes,432+8*j,last[j]*180/pi);
+      int64_t host=1000000000LL+i*8000000LL;
+      out.write(reinterpret_cast<char*>(&host),sizeof(host));
+      out.write(reinterpret_cast<char*>(bytes.data()),bytes.size());
+      expected.advance(last);
+    }
+  }
+  auto populate=[&](State &state,Joints q) {
+    auto f=feedback(c,1);f.q=q;f.mode=4;state.update(f);
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    f.controller_stamp=2;f.received=Clock::now();state.update(f);
+  };
+  State normal(c,m);populate(normal,last);EXPECT_THROW(normal.restore({path},true),Failure);
+  c.power_cycle_handoff=true;
+  State recovered(c,m);populate(recovered,last);
+  EXPECT_THROW(recovered.restore({path},false),Failure);
+  EXPECT_NO_THROW(recovered.restore({path},true));
+  auto snapshot=recovered.snapshot();EXPECT_TRUE(snapshot.reference);EXPECT_EQ(snapshot.feedback.mode,4u);
+  EXPECT_NEAR(snapshot.tracker.metrics().net,expected.metrics().net,1e-10);
+  EXPECT_GT(snapshot.tracker.metrics().total,.005);
+  State moved(c,m);auto wrong=last;wrong[0]+=.002;populate(moved,wrong);
+  EXPECT_THROW(moved.restore({path},true),Failure);
+  State not_terminal(c,m);populate(not_terminal,last);
+  EXPECT_THROW(not_terminal.restore({path,path},true),Failure);
+  State far(c,m);wrong=last;wrong[5]+=.04;populate(far,wrong);
+  EXPECT_THROW(far.restore({path},true),Failure);
+  std::remove(path.c_str());
+}
+TEST(PowerCycle, OfficialEnableIsExplicitAndNeverClearsAlarms) {
+  for(bool alarm : {false,true}) {
+    auto c=hardwareFixture();c.power_cycle_handoff=c.enable_after_history_restore=true;
+    std::vector<std::string> calls;
+    V4Driver d(c,[&]{return std::make_unique<ReplyTransport>([&](const std::string &cmd){
+      calls.push_back(cmd);
+      if(cmd=="GetErrorID()")return std::string("0,{")+(alarm ? "[123]" : "[]")+"},GetErrorID();";
+      if(cmd=="EnableRobot()")return std::string("0,{},EnableRobot();");
+      throw std::runtime_error("unexpected command including ClearError");
+    });});
+    if(alarm)EXPECT_THROW(d.enableAfterHistoryRestore(),Failure);
+    else EXPECT_NO_THROW(d.enableAfterHistoryRestore());
+    EXPECT_EQ(calls.size(),alarm ? 1u : 2u);
+    EXPECT_EQ(calls.front(),"GetErrorID()");
+  }
+  auto c=config();int connections=0;
+  V4Driver passive(c,[&]()->std::unique_ptr<CommandTransport>{++connections;throw std::runtime_error("must not connect");});
+  EXPECT_THROW(passive.enableAfterHistoryRestore(),Failure);EXPECT_EQ(connections,0);
+}
+
+TEST(PowerCycle, EnableUsesDedicatedOfficialAcknowledgementBudget) {
+  int listener=::socket(AF_INET,SOCK_STREAM,0);ASSERT_GE(listener,0);
+  sockaddr_in addr{};addr.sin_family=AF_INET;addr.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
+  ASSERT_EQ(::bind(listener,reinterpret_cast<sockaddr*>(&addr),sizeof(addr)),0);
+  ASSERT_EQ(::listen(listener,1),0);socklen_t length=sizeof(addr);
+  ASSERT_EQ(::getsockname(listener,reinterpret_cast<sockaddr*>(&addr),&length),0);
+  std::string server_error;
+  std::thread server([&]{
+    pollfd p{listener,POLLIN,0};
+    if(::poll(&p,1,2000)<=0){server_error="no connection";return;}
+    int peer=::accept(listener,nullptr,nullptr);
+    timeval timeout{2,0};::setsockopt(peer,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
+    for(int i=0;i<2;++i) {
+      std::string cmd;char c;
+      while(cmd.empty() || cmd.back()!=')') {
+        if(::recv(peer,&c,1,0)!=1){server_error="incomplete command";::close(peer);return;}
+        cmd+=c;
+      }
+      const auto expected=i ? "EnableRobot()" : "GetErrorID()";
+      if(cmd!=expected){server_error="wrong command";break;}
+      if(i)std::this_thread::sleep_for(std::chrono::milliseconds(600));
+      std::string reply=i ? "0,{},EnableRobot();" : "0,{[]},GetErrorID();";
+      (void)::send(peer,reply.data(),reply.size(),MSG_NOSIGNAL);
+    }
+    ::close(peer);
+  });
+  auto c=hardwareFixture();c.power_cycle_handoff=c.enable_after_history_restore=true;
+  c.dashboard_port=ntohs(addr.sin_port);c.timeout_ms=100;c.enable_ack_timeout_ms=1200;
+  {V4Driver driver(c);EXPECT_NO_THROW(driver.enableAfterHistoryRestore());}
+  server.join();::close(listener);EXPECT_TRUE(server_error.empty())<<server_error;
+}

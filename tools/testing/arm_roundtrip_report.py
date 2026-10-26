@@ -19,7 +19,7 @@ def render(out):
            'plan_code','plan_detail','outbound_code','outbound_position_error_m',
            'outbound_rotation_error_rad','outbound_elapsed_s','return_code',
            'return_position_error_m','return_rotation_error_rad','return_elapsed_s',
-           'pair_elapsed_s','failure_reason'])
+           'pair_elapsed_s','failure_reason','fault_stage','feedback_diagnostic'])
         writer.writeheader()
         for point in targets:
             xyz = point['tcp_m']
@@ -33,9 +33,11 @@ def render(out):
                'outbound_rotation_error_rad':outbound.get('orientation_error_rad'),'outbound_elapsed_s':outbound.get('elapsed_s'),
                'return_code':back.get('code'),'return_position_error_m':back.get('position_error_m'),
                'return_rotation_error_rad':back.get('orientation_error_rad'),'return_elapsed_s':back.get('elapsed_s'),
-               'pair_elapsed_s':point.get('pair_elapsed_s'),'failure_reason':point.get('failure_reason')})
+               'pair_elapsed_s':point.get('pair_elapsed_s'),'failure_reason':point.get('failure_reason'),
+               'fault_stage':point.get('fault_stage'),
+               'feedback_diagnostic':json.dumps(point.get('feedback_diagnostic'),ensure_ascii=False) if point.get('feedback_diagnostic') else None})
     counts = {name:sum(p['status']==name for p in targets) for name in
-              ['planning_passed','roundtrip_success','reused_success','planning_rejected','execution_failed','pending']}
+              ['planning_passed','roundtrip_success','reused_success','planning_rejected','execution_failed','pre_send_feedback_failed','pending']}
     simulation = bool(report.get('simulation'))
     caption = 'SIMULATION ONLY — no physical range claim' if simulation else report.get('status','UNKNOWN')
     figure = plt.figure(figsize=(14,6),layout='constrained')
@@ -44,6 +46,7 @@ def render(out):
                   'reused_success':('seagreen','s','Reused prior measured success'),
                   'planning_rejected':('darkorange','x','Planning rejected'),
                   'execution_failed':('crimson','X','Execution failed'),
+                  'pre_send_feedback_failed':('purple','D','Feedback fault before new motion submission'),
                   'pending':('gray','.','Pending / not executed')}
     home = report.get('home',{}).get('tcp_m')
     for number,(elevation,azimuth) in enumerate([(23,-57),(75,-90)],1):
@@ -96,6 +99,9 @@ def render(out):
         lines += ['', 'Blocking evidence: '+report['error']]
     if report.get('status','').startswith('EXECUTION_FAULT'):
         lines += ['', 'The batch stopped at the first execution fault. No automatic Home return or replay was attempted.']
+    if report.get('status','').startswith('PRE_SEND_FEEDBACK_FAULT'):
+        lines += ['', 'A fresh-feedback precondition failed before the new action was submitted. '
+                  'No new motion was sent; the reported stop confirmation remains explicit. No forced Home or replay.']
     (out/'REPORT.md').write_text('\n'.join(lines)+'\n')
     pixels=base64.b64encode((out/'range.png').read_bytes()).decode('ascii')
     (out/'range.html').write_text('<!doctype html><meta charset="utf-8"><title>Home round-trip 3D status</title>'

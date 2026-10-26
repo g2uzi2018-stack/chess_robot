@@ -15,6 +15,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--project-root',type=pathlib.Path,default=pathlib.Path(__file__).resolve().parents[2])
     parser.add_argument('--out',type=pathlib.Path,required=True)
+    parser.add_argument("--command-policy",type=pathlib.Path)
     args=parser.parse_args()
     assert os.environ.get('ROS_DOMAIN_ID')=='98' and os.environ.get('ROS_LOCALHOST_ONLY')=='1'
     root=args.project_root.resolve();out=args.out.resolve();out.mkdir(parents=True,exist_ok=False)
@@ -29,7 +30,7 @@ def main():
     fixture=ControllerFixture(root,out/'fixture')
     p=SimpleNamespace(fixture=True,execute=True,controller_ip='127.0.0.1',
        fixture_endpoints=out/'fixture/endpoints.json',history_audit=[],history_attestation=None,
-       speed_evidence=None,goal_timeout=45,margin_evaluator=None,recover_home=True)
+       speed_evidence=None,goal_timeout=45,margin_evaluator=None,recover_home=True,command_policy=args.command_policy)
     session=RosSession.__new__(RosSession)
     events=[]
     try:

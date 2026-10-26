@@ -27,14 +27,14 @@ struct ControllerRejected : Failure {
 class TcpTransport final : public CommandTransport {
   Socket socket_;
   int timeout_;
-  int stop_timeout_;
+  int stop_timeout_, enable_timeout_;
 
 public:
   explicit TcpTransport(const Config &c)
       : socket_(c.ip, c.dashboard_port, c.timeout_ms), timeout_(c.timeout_ms),
-        stop_timeout_(c.stop_ack_timeout_ms) {}
+        stop_timeout_(c.stop_ack_timeout_ms), enable_timeout_(c.enable_ack_timeout_ms) {}
   std::string query(const std::string &c) override {
-    return socket_.query(c, c == "Stop()" ? stop_timeout_ : timeout_);
+    return socket_.query(c, c == "Stop()" ? stop_timeout_ : c == "EnableRobot()" ? enable_timeout_ : timeout_);
   }
   bool streaming() const override { return true; }
   void send(const std::string &c) override {
@@ -411,6 +411,16 @@ void V4Driver::closeStream(bool stopping) {
   if (!stopping && !error.empty()) throw Failure(EXECUTION_FAILED, error);
 }
 void V4Driver::endStream() { closeStream(false); }
+void V4Driver::enableAfterHistoryRestore() {
+  if (!config_.hardwareAllowed() || !config_.power_cycle_handoff || !config_.enable_after_history_restore)
+    throw Failure(HARDWARE_DISABLED,"explicit powered recovery is not enabled");
+  OfficialCommand sdk;
+  const auto errors=call(sdk.GetErrorID());
+  if (errors.empty() || errors.find_first_not_of("[], \t\r\n")!=std::string::npos)
+    throw Failure(FEEDBACK_FAULT,"recovery enable refused with active/unknown alarms: "+errors);
+  if (!call(sdk.EnableRobot()).empty())
+    throw Failure(EXECUTION_FAILED,"unexpected recovery EnableRobot payload");
+}
 void V4Driver::stop() {
   if (!config_.hardwareAllowed())
     throw Failure(HARDWARE_DISABLED,

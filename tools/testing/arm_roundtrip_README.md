@@ -11,10 +11,12 @@
 
 ## 当前状态
 
-2026-10-25：SDK/反馈时间戳/两档模式的离线及回环回归已通过；新节点还做过真实只读 FK/IK
-对照。**当前设备绝对再现/缩减速度及加速度上限未知，不能把官方通用 2.36/4.72 当作本机认证。**
-因此本轮物理往返为 0，26 个粗扫目标仍待测，边界加密未执行。当前真实机器人尚未到正式 Home；
-此前 current→Home 只有规划成功，不是实机到位。模拟回环结果单独标记，不能作为实机范围结果。
+2026-10-26：历史14个不同目标实测往返成功；断电后显式恢复历史与使能、low Home通过，
+新epoch低档资格因146.428485 ms反馈接收空窗失败，业务Stop及新鲜停稳确认成功。
+当前BLOCKED、实机暂停，未在Home且参考失效；新增目标成功0、边界0/12，不宣称全部完成。
+设备绝对再现/缩减速度及加速度上限仍未知；本次 `--command-policy` 记录用户请求的高1/低0.3
+rad/s及1/0.3 rad/s²规划上限，不是本机硬件限值认证或实测速率。
+见 `docs/validation/home-roundtrip-20261026/REPORT.md`；10/25报告保持历史，模拟结果单列。
 
 ## 有限清单和时间
 
@@ -91,7 +93,9 @@ ROS_DOMAIN_ID=98 ROS_LOCALHOST_ONLY=1 runs/urdf_tools_env/bin/python \
   --margin-evaluator runs/workspace_final_20261024/workspace_eval
 ```
 
-没有当前来源限值时，execute 在连接控制器/启动节点前 PRECONDITION_BLOCKED，输出待测图和证据。
+没有当前来源限值或明确 `--command-policy` 时，execute 在连接控制器/启动节点前 PRECONDITION_BLOCKED。
+`--command-policy` 仅在用户明确指令时记录原话、单位和请求参数，实际写入本次节点并保留
+hardware_limits_verified=false；不可伪造控制器限值文件，也不将百分比换算成绝对rad/s。
 默认要求当前已在正式 Home。仅用户显式传 `--recover-home`，且限值/真实历史恢复已通过时，
 先计划一次 low HOME、再经业务节点实际执行并反馈确认；该独立恢复阶段不算目标成功。
 恢复失败即结束，不重试，不重置参考。
@@ -107,7 +111,7 @@ ROS_DOMAIN_ID=98 ROS_LOCALHOST_ONLY=1 runs/urdf_tools_env/bin/python \
 每段必须同时满足 business-node COMPLETED、executed、final_tcp_valid、接收时间新鲜、
 mode=5、停稳速度、固定朝向/目标误差和持续参考；另核对同步 joint/state/TCP 的同一时间戳。
 去程和 Home 返程分别记录；任一失败不算目标成功。执行故障后只观察新鲜停稳 dwell，不强发 Home。
-Stop 未确认则明确报告，保留节点 FAULT；不自动 Enable/ClearError。
+Stop 未确认则明确报告，保留节点 FAULT；默认不Enable，任何分支均不ClearError。
 若 action goal handle 响应丢失，接受与否存在歧义，立即请求所拥有业务节点的受控 SIGINT
 关闭/Stop 路径，不重发目标、不等待轨迹自然走完；客户端没有新鲜停稳 dwell 时明确记作
 stop unconfirmed，不能因为节点退出就声称机械臂停稳。
@@ -117,3 +121,20 @@ stop unconfirmed，不能因为节点退出就声称机械臂停稳。
 完整扭转/反馈原始记录；每次 action 的规划轨迹只作审计，永不重放。`range.png`/`range.html`
 分别标出规划通过、实测往返成功、复用历史成功、规划拒绝、执行失败和待测；`REPORT.md` 给
 每方向剩余边界区间。可单独运行 `arm_roundtrip_report.py RUN_DIRECTORY` 离线重绘。
+
+## 显式断电恢复与继续
+
+`--power-cycle-evidence /path/evidence.json` 必须绑定原fault results路径及SHA，保留本次真实
+human_statement，并要求 `only_power_cycle_no_manual_joint_or_cable_motion=true`；不能编造确认。
+仅execute时设置 `reference.power_cycle_handoff=true` 和 `controller.enable_after_history_restore=true`。
+节点仍验证原完整有序audit、尾部故障条件、原joint join/步长/扭转容差，允许明确新controller
+时钟epoch但不改历史时间。RestoreReference成功后若当前mode4，由同一业务节点官方GetErrorID
+空报警检查后EnableRobot（独立ACK预算默认5s），不调用ClearError。工具等待reference_valid及
+fresh mode5原 .002 rad/s/.4s静止dwell，存 `enabled_stationary_ready`，该观察不是Stop命令证明。
+随后仅显式 `--recover-home` 执行low HOME，失败即结束，不重试、不强返。
+
+`--continue-results /path/old/results.json --continuation-statement /path/statement.json` 只在本次
+明确用户继续指令下接受部分/故障批次。比较Home/TCP/URDF/geometry/SDK/profile/limits/IP/固件/
+策略SHA等安全不变量，源码/二进制与恢复参数差异留档。旧双段成功保留旧记录及上下文，不重新
+发运动；新epoch两档资格须重做，旧资格不能覆盖新失败。原 `--reuse-results` 不自动resume故障批次。
+每点preflight立即持久化；发送前等待反馈失败与真正发出后失败分开归档，任何执行故障停止整批。

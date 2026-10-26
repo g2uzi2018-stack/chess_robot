@@ -109,6 +109,24 @@ class Tests(unittest.TestCase):
         self.assertEqual([x['profile'] for x in result['qualification_trials']],['roundtrip_low','roundtrip_high'])
         self.assertEqual(result['targets'][0]['status'],'reused_success')
         self.assertEqual(len([x for x in s.calls if not x[2]]),4)
+    def test_failed_qualification_retains_both_leg_evidence_without_retry(self):
+        for fault in ['outbound','return']:
+            with self.subTest(fault=fault):
+                s=Session(fault=fault);s.needs_qualification=True
+                r=self.runner(s)
+                with self.assertRaises(ExecutionFault):r.run()
+                self.assertEqual(r.report['targets'],[])
+                self.assertEqual(len(r.report['qualification_trials']),1)
+                failed=r.report['qualification_trials'][0]
+                self.assertEqual(failed['status'],'execution_failed')
+                self.assertEqual(failed['id'],'qualification_roundtrip_low')
+                self.assertEqual(failed['outbound']['executed'],True)
+                self.assertEqual(failed['return_home'] is None,fault=='outbound')
+                self.assertEqual(len([x for x in s.calls if not x[2]]),1 if fault=='outbound' else 2)
+                self.assertTrue(r.report['status'].startswith('EXECUTION_FAULT'))
+                saved=json.loads((r.out/'results.json').read_text())
+                self.assertEqual(saved['qualification_trials'],r.report['qualification_trials'])
+                self.assertFalse((r.out/'speed_qualification.json').exists())
     def test_source_backed_limits_are_applied_to_node_not_just_labelled(self):
         p={'controller':{'firmware_version':'4.6.2.4'},'limits':{'velocity_rad_s':[2.36]*6,'acceleration_rad_s2':[4.72]*6},
            'profiles':{'roundtrip_low':{'speed_rad_s':.708,'acceleration_rad_s2':1.416},
@@ -205,5 +223,137 @@ class Tests(unittest.TestCase):
             self.assertIsNone(record['after']);self.assertIn('feedback disappeared',record['after_feedback_error'])
             self.assertEqual(json.loads((s.out/'actions.json').read_text())[0]['code'],13)
 
+
+    def test_user_command_cap_is_applied_without_hardware_certification(self):
+        from arm_roundtrip import apply_command_policy
+        p={'limits':{'velocity_rad_s':[2.36]*6,'acceleration_rad_s2':[4.72]*6},
+           'profiles':{'roundtrip_low':{'speed_rad_s':.708,'acceleration_rad_s2':1.416},
+                       'roundtrip_high':{'speed_rad_s':2.36,'acceleration_rad_s2':4.72}}}
+        policy={'schema':'chess_robot.command_policy/v1','user_statement':'先按照1rad每秒走',
+                'hardware_limits_verified':False,'velocity_cap_rad_s':1.,'acceleration_cap_rad_s2':1.,
+                'profiles':{'low':{'speed_rad_s':.3,'acceleration_rad_s2':.3},
+                            'high':{'speed_rad_s':1.,'acceleration_rad_s2':1.}}}
+        effective=apply_command_policy(p,policy)
+        self.assertEqual(effective['high']['per_axis_velocity_rad_s'],[1.]*6)
+        self.assertEqual(p['profiles']['roundtrip_low']['speed_rad_s'],.3)
+        p['limits']['velocity_rad_s'][0]=.2
+        self.assertEqual(apply_command_policy(p,policy)['high']['per_axis_velocity_rad_s'][0],.2)
+        policy['hardware_limits_verified']=True
+        with self.assertRaises(ValueError):apply_command_policy(p,policy)
+
+
+
+class PowerCycleTests(unittest.TestCase):
+    def context(self):
+        return {'home_sha256':'fixture','geometry_sha256':'g','urdf_sha256':{'urdf':'u'},
+            'sdk_manifest_sha256':'sdk','sdk_patch_sha256':'patch','tcp':{'translation':[0,0,.2]},
+            'profiles':{'low':.3,'high':1.},'limits':{'v':[1.]*6},'exploration':{'radius':1.1},
+            'firmware_version':'4.6.2.4','controller_ip':'127.0.0.1','controller_limit_sha256':None,
+            'command_policy_sha256':'policy','motion_parameters':{'feedback':{'freshness_s':.1},
+                'reference':{'max_joint_step_rad':.1}},'binary_sha256':'old',
+            'source_sha256':{'driver':'old-driver'}}
+    def prior(self):
+        data=manifest(HOME);point=data['coarse_points'][0]
+        leg={'code':1,'executed':True,'final_tcp_valid':True,'after':{'simulated':True},
+             'final_stamp_ns':111,'command_ros_ns':100}
+        record=dict(point,status='roundtrip_success',profile='roundtrip_high',
+                    outbound=dict(leg),return_home=dict(leg))
+        return {'status':'EXECUTION_FAULT_STOP_UNCONFIRMED','simulation':True,'home':data['home'],
+                'manifest':data,'qualification_context':self.context(),'targets':[record]},data
+    def files(self,directory):
+        from arm_roundtrip import sha
+        previous,data=self.prior();base=pathlib.Path(directory)
+        prior=base/'prior.json';prior.write_text(json.dumps(previous))
+        statement=base/'statement.json';statement.write_text(json.dumps({'human_statement':'fixture explicit continue remaining points'}))
+        evidence=base/'power.json';evidence.write_text(json.dumps({'human_statement':'fixture power only no manual motion',
+            'only_power_cycle_no_manual_joint_or_cable_motion':True,
+            'prior_fault_result':{'path':str(prior),'sha256':sha(prior)}}))
+        return previous,data,prior,statement,evidence
+    def test_power_requires_actual_confirmation_and_prior_hash(self):
+        from arm_roundtrip import load_power_cycle_evidence
+        with tempfile.TemporaryDirectory() as directory:
+            previous,data,prior,statement,evidence=self.files(directory)
+            accepted=load_power_cycle_evidence(evidence)
+            self.assertTrue(accepted['epoch_handoff_explicit'])
+            raw=json.loads(evidence.read_text());raw['only_power_cycle_no_manual_joint_or_cable_motion']=False
+            evidence.write_text(json.dumps(raw))
+            with self.assertRaises(ValueError):load_power_cycle_evidence(evidence)
+            raw['only_power_cycle_no_manual_joint_or_cable_motion']=True;raw['prior_fault_result']['sha256']='wrong'
+            evidence.write_text(json.dumps(raw))
+            with self.assertRaises(ValueError):load_power_cycle_evidence(evidence)
+    def test_readonly_or_missing_power_evidence_never_enables_node(self):
+        from arm_roundtrip import configure_power_cycle_handoff
+        p={'reference':{},'controller':{}}
+        self.assertFalse(configure_power_cycle_handoff(p,{'human':'fixture'},False))
+        self.assertFalse(p['controller']['enable_after_history_restore'])
+        self.assertFalse(configure_power_cycle_handoff(p,None,True))
+        self.assertTrue(configure_power_cycle_handoff(p,{'human':'fixture'},True))
+        self.assertTrue(p['reference']['power_cycle_handoff'])
+        self.assertTrue(p['controller']['enable_after_history_restore'])
+    def test_explicit_partial_continuation_preserves_old_context_and_time(self):
+        from arm_roundtrip import load_continuation
+        with tempfile.TemporaryDirectory() as directory:
+            previous,data,prior,statement,evidence=self.files(directory)
+            current=self.context();current['binary_sha256']='new';current['source_sha256']={'driver':'fixed'}
+            current['motion_parameters']['reference']['power_cycle_handoff']=True
+            current['restore_parameters']={'enable_after_history_restore':True}
+            continued=load_continuation(prior,statement,current,data,True)
+            self.assertEqual(continued['historical_success_count'],1)
+            self.assertEqual(continued['previous_qualification_context']['binary_sha256'],'old')
+            point=next(iter(continued['successes'].values()))
+            self.assertEqual(point['outbound']['final_stamp_ns'],111)
+            self.assertIn('binary_sha256',continued['current_context_delta'])
+            self.assertEqual(json.loads(prior.read_text()),previous)
+    def test_continuation_still_rejects_safety_or_feedback_change(self):
+        from arm_roundtrip import load_continuation
+        with tempfile.TemporaryDirectory() as directory:
+            previous,data,prior,statement,evidence=self.files(directory)
+            current=self.context();current['motion_parameters']['feedback']['freshness_s']=.25
+            with self.assertRaises(ValueError):load_continuation(prior,statement,current,data,True)
+            current=self.context();current['command_policy_sha256']='different'
+            with self.assertRaises(ValueError):load_continuation(prior,statement,current,data,True)
+            with self.assertRaises(ValueError):load_continuation(prior,None,self.context(),data,True)
+            with self.assertRaises(ValueError):load_continuation(prior,statement,self.context(),data,False)
+    def test_historical_success_not_reexecuted_or_overwritten_by_qualification(self):
+        from arm_roundtrip import load_continuation
+        with tempfile.TemporaryDirectory() as directory:
+            previous,data,prior,statement,evidence=self.files(directory)
+            data['coarse_points']=data['coarse_points'][:1];data['rays']={};data['max_refinements_per_ray']=0
+            continued=load_continuation(prior,statement,self.context(),data,True)
+            session=Session();session.needs_qualification=True
+            runner=Runner(data,session,pathlib.Path(directory),True,continuation=continued)
+            result=runner.run()
+            self.assertEqual(len([c for c in session.calls if not c[2]]),4)
+            self.assertEqual(result['targets'][0]['reuse_origin'],'historical_continuation')
+            self.assertEqual(result['targets'][0]['outbound']['final_stamp_ns'],111)
+            self.assertEqual(len(result['qualification_trials']),2)
+            self.assertEqual(result['preflight_estimate_s']['new_preflight_count'],0)
+    def test_every_preflight_result_persisted_before_next_point(self):
+        class CheckSaved(Session):
+            def action(self,point,profile,plan_only):
+                if plan_only and point['id']=='second':
+                    saved=json.loads((self.output/'results.json').read_text())
+                    assert saved['coarse_preflight']['first']['status']=='planning_passed'
+                return super().action(point,profile,plan_only)
+        with tempfile.TemporaryDirectory() as directory:
+            data=manifest(HOME);data['coarse_points']=[{'id':'first','kind':'coarse','tcp_m':[.1,-.5,.3]},
+                {'id':'second','kind':'coarse','tcp_m':[.2,-.5,.3]}];data['rays']={};data['max_refinements_per_ray']=0
+            session=CheckSaved();session.output=pathlib.Path(directory)
+            Runner(data,session,directory,False).run()
+    def test_pre_send_failure_classified_without_submitting_motion(self):
+        from arm_roundtrip import PreSendFeedbackFault
+        class MissingFeedback(Session):
+            def action(self,point,profile,plan_only):
+                if not plan_only:raise PreSendFeedbackFault('mode9 before send',{'controller_mode':9,'diagnostic':'controller fault'})
+                return super().action(point,profile,plan_only)
+        with tempfile.TemporaryDirectory() as directory:
+            data=manifest(HOME);data['coarse_points']=data['coarse_points'][:1];data['rays']={};data['max_refinements_per_ray']=0
+            session=MissingFeedback();runner=Runner(data,session,directory,True)
+            with self.assertRaises(ExecutionFault):runner.run()
+            record=runner.report['targets'][0]
+            self.assertEqual(record['status'],'pre_send_feedback_failed')
+            self.assertEqual(record['fault_stage'],'before_action_submission')
+            self.assertEqual(record['feedback_diagnostic']['controller_mode'],9)
+            self.assertFalse(any(not c[2] for c in session.calls))
 
 if __name__=='__main__':unittest.main(verbosity=2)
