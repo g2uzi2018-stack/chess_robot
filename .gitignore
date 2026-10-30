@@ -42,3 +42,9 @@ Thumbs.db
 /build_vision/
 /install_vision/
 /log_vision/
+
+/build_handeye/
+
+/install_handeye/
+
+/log_handeye/

@@ -1,0 +1,253 @@
+{
+  "date": "2026-10-30",
+  "environment": "Ubuntu 22.04 / aarch64 / ROS 2 Humble / OpenCV 4.5.4",
+  "scope": "isolated build and offline/synthetic verification; no live hardware qualification",
+  "unit_tests": {
+    "chess_robot_arm": {
+      "tests": 98,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0
+    },
+    "chess_robot_handeye": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "disabled": 0
+    }
+  },
+  "ctest": {
+    "chess_robot_arm": [
+      {
+        "name": "test_arm",
+        "status": "passed"
+      }
+    ],
+    "chess_robot_handeye": [
+      {
+        "name": "test_handeye",
+        "status": "passed"
+      },
+      {
+        "name": "integration_success",
+        "status": "passed"
+      },
+      {
+        "name": "integration_reject",
+        "status": "passed"
+      },
+      {
+        "name": "integration_no_motion",
+        "status": "passed"
+      },
+      {
+        "name": "integration_stale",
+        "status": "passed"
+      },
+      {
+        "name": "integration_no_vision",
+        "status": "passed"
+      },
+      {
+        "name": "integration_camera_unhealthy",
+        "status": "passed"
+      },
+      {
+        "name": "integration_mismatch",
+        "status": "passed"
+      },
+      {
+        "name": "integration_cancel",
+        "status": "passed"
+      },
+      {
+        "name": "integration_plan",
+        "status": "passed"
+      },
+      {
+        "name": "integration_cancel_moving_zero_velocity",
+        "status": "passed"
+      },
+      {
+        "name": "integration_cancel_duplicate_stamp",
+        "status": "passed"
+      },
+      {
+        "name": "integration_cancel_backward_stamp",
+        "status": "passed"
+      },
+      {
+        "name": "integration_cancel_invalid_feedback",
+        "status": "passed"
+      },
+      {
+        "name": "integration_cancel_unpaired_feedback",
+        "status": "passed"
+      }
+    ]
+  },
+  "integration_cases": [
+    {
+      "case": "camera_unhealthy",
+      "failure": "vision preflight failed before execution goal: vision stream health invalid",
+      "goals": 0,
+      "physical_stop_confirmed": null,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "cancel",
+      "failure": "bounded ROS request timed out",
+      "goals": 1,
+      "physical_stop_confirmed": true,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "cancel_backward_stamp",
+      "failure": "bounded ROS request timed out",
+      "goals": 1,
+      "physical_stop_confirmed": false,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "cancel_duplicate_stamp",
+      "failure": "bounded ROS request timed out",
+      "goals": 1,
+      "physical_stop_confirmed": false,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "cancel_invalid_feedback",
+      "failure": "bounded ROS request timed out",
+      "goals": 1,
+      "physical_stop_confirmed": false,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "cancel_moving_zero_velocity",
+      "failure": "bounded ROS request timed out",
+      "goals": 1,
+      "physical_stop_confirmed": false,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "cancel_unpaired_feedback",
+      "failure": "bounded ROS request timed out",
+      "goals": 1,
+      "physical_stop_confirmed": false,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "mismatch",
+      "failure": "vision preflight failed before execution goal: no fresh exactly matched image/CameraInfo/FrameInfo",
+      "goals": 0,
+      "physical_stop_confirmed": null,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "no_motion",
+      "failure": "action arrival differs from configured actual TCP",
+      "goals": 1,
+      "physical_stop_confirmed": true,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "no_vision",
+      "failure": "vision preflight failed before execution goal: no fresh exactly matched image/CameraInfo/FrameInfo",
+      "goals": 0,
+      "physical_stop_confirmed": null,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "plan",
+      "failure": null,
+      "goals": 12,
+      "physical_stop_confirmed": null,
+      "returncode": 2,
+      "session_status": "individual_plans_only_not_sequence_or_visibility_certification",
+      "status": "PASS"
+    },
+    {
+      "case": "reject",
+      "failure": "arm action rejected goal; no automatic retry",
+      "goals": 1,
+      "physical_stop_confirmed": null,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "stale",
+      "failure": "fresh idle referenced arm/joint feedback unavailable",
+      "goals": 0,
+      "physical_stop_confirmed": null,
+      "returncode": 2,
+      "session_status": "failed",
+      "status": "PASS"
+    },
+    {
+      "case": "success",
+      "failure": null,
+      "goals": 12,
+      "physical_stop_confirmed": null,
+      "returncode": 0,
+      "session_status": "held_out_consistency_passed_physical_accuracy_unverified",
+      "status": "PASS"
+    }
+  ],
+  "installed_consumer_passed": true,
+  "consumer_sha256": "55cb634976778467aed55b937fba9eb2f0ab6576a63f90482ea8de9ee9825f7d",
+  "handeye_node_sha256": "db65cd2213dd96fa25c3b5d3f531784d79be1dc39bfda34f5c8c70fc9e71a0e5",
+  "handeye_source_sha256": {
+    "src/chess_robot_handeye/CMakeLists.txt": "544be558ca0c51ec8134b6a7ee6d638a0a03ac52f269c48cf653087f20383a84",
+    "src/chess_robot_handeye/PORTING.md": "53e6b7cd7df58eb3e5eb74224c990d288c67ce91c7a18dbf946830fff9626782",
+    "src/chess_robot_handeye/README.md": "18f4d061bf8b970d4abb0d6ccd9ff4b29747d5ad64ea5a64d7d16f1f9443ab36",
+    "src/chess_robot_handeye/config/handeye.example.yaml": "fb1bc03a2cf4fd89f521acb3f7fd6deea67d400dc8fded2ce47e2f13d232f1d9",
+    "src/chess_robot_handeye/include/chess_robot_handeye/core.hpp": "bda48255a102ab3f961989fa4b0bc2c5fc640cf4da58ce48eb72bfbfc852b13a",
+    "src/chess_robot_handeye/launch/handeye.launch.py": "2261224947a463b682bcec006c0fba30d008464b40f4817b91baef72ad5b20a7",
+    "src/chess_robot_handeye/package.xml": "b66b51797ee8221b8c709107f01d777a54ed44b10465da8ff7c9255b9a982300",
+    "src/chess_robot_handeye/src/core.cpp": "a9d866b5a5c477e19ad7e5a3a545c7c50c9fbc4e29d285a44bc382538939acb8",
+    "src/chess_robot_handeye/src/node.cpp": "775d54af29e4aad118d9bdb782bde75d4cf0afc691eb28a5516f8d43f437de07",
+    "src/chess_robot_handeye/test/consumer/CMakeLists.txt": "c7172aafa8b9c76f6af605e3b52d93235a8d6fedf8d376e6566578cebe16cf9c",
+    "src/chess_robot_handeye/test/consumer/main.cpp": "4241c9a92b0eec602dce06736255d9708e47a7540892db46c40ee29e593524b6",
+    "src/chess_robot_handeye/test/detector_probe.cpp": "44d2dd62bb580a9aba217b5dc219c7975115e97359263ad3ab8594b035b5508a",
+    "src/chess_robot_handeye/test/fixture.cpp": "d58fc469d77d4f1b9b1621db02c6165da4bf1f7a7d779f5cac32e6842738257d",
+    "src/chess_robot_handeye/test/integration.py": "2ae88ecd4fc72a297fa349d0e92d2cf12cc01c34763624d2fda7cbbb778690d3",
+    "src/chess_robot_handeye/test/refine_regression.py": "e9e60c76dd54e66810a825f7c2a3fe5d9981138f2633a72221eafcc6239bc934",
+    "src/chess_robot_handeye/test/test_core.cpp": "d7459445b29480701739bbf75d1c5b31aac914b9891fc1355f433de86c4ed1ce"
+  },
+  "frozen_history_replay": {
+    "returncode": 0,
+    "elapsed_s": 22.687764080008492,
+    "stdout": "offline_snapshot_only=true; motion_commands=0\nexplicit recorded power epoch replayed; winding retained without zeroing; endpoint_delta_rad=[0,0,2.22044604925e-16,0,-2.22044604925e-16,0]; endpoint_max_delta_rad=2.22044604925e-16; endpoint_tolerance_rad=0.001; power_cycle_handoff=false; expanded_power_cycle_handoff_used=false; accumulated_twist_retained=true; historical_twist_net_rad=-0.05033500278; historical_twist_total_rad=0.295139381102; restored_twist_net_rad=-0.05033500278; restored_twist_total_rad=0.295139381102; recorded_stopped_join_committed=true; recorded_expanded_stopped_join_used=true; recorded_stopped_join_delta_rad=[3.32895136279e-06,0.00270027889777,0.00140401852669,0.00113753597011,-1.01200121421e-05,-2.39684498106e-06]; recorded_stopped_join_max_delta_rad=0.00270027889777; recorded_stopped_join_tolerance_rad=0.005; recorded_stopped_join_stationary_dwell_s=0.620084227; recorded_stopped_join_required_dwell_s=0.4; accepted_host_freshness_s=0.2; fault_restart_committed=true; fault_restart_offset_bytes=970581368; fault_restart_delta_rad=5.17651936884e-05; fault_anchor_max_delta_rad=0.00320268423742; fault_prehealthy_dwell_s=5337.91730252; fault_raw_frames=2; fault_nonstationary_frames=1; healthy_twist_total_rad=0.294923837762; fault_twist_total_rad=0.295132896439; fault_restart_sha256=1a219cb39e9d0eaf2e4d227f66e2f67fd3b36e7e852f20a8185051ac828dc413\nindependent_replay_equal=true; twist_not_zeroed=true\nreference_valid=1; net=-0.0503350027799895; total=0.295139381101961; tcp_xyz_m=[0.0225914500204529,-0.583522788383933,0.191830402061108]\n",
+    "stderr": "",
+    "files": 16,
+    "records": 1817739,
+    "all_source_sha256_unchanged": true,
+    "test_snapshot_only": true,
+    "physical_connections": 0,
+    "binary_sha256": "298f39ef1d02dc7a401b93245ec187a4b19ba525e26c8bcf74d7e40752f802b7"
+  },
+  "historical_candidate_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+  "live_deployment_performed": false,
+  "physical_accuracy_verified": false
+}
