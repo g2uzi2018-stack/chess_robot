@@ -58,7 +58,13 @@ struct Config {
   Eigen::Vector3d grasp_axis{1, 0, 0};
   double clearance = 0.25, downward_tolerance = 0.15;
   bool power_cycle_handoff = false, enable_after_history_restore = false;
-  std::string power_cycle_join_file; // Explicit recorded first audit of a known power epoch.
+  // Only explicit near-Home live or named stopped power-cycle joins use this bound.
+  double power_cycle_endpoint_tolerance = 0.001;
+  std::string power_cycle_join_file; // Explicit recorded first audit of a known fault power epoch.
+  std::string power_cycle_stopped_join_file; // One explicit recorded stopped power-only handoff.
+  // One SHA-bound, final-audit fault suffix -> disabled restart at an exact record boundary.
+  std::string power_cycle_fault_restart_file, power_cycle_fault_restart_sha256;
+  int64_t power_cycle_fault_restart_offset_bytes = -1;
   bool feedback_trace = false; // Bounded in-memory timings; flush only after feedback thread stops.
   bool home_roundtrip_precheck = false; // Opt-in direct-TCP outward + predicted Home return validation.
   double stamp_age = 1.0, stamp_future = 0.05, freshness = 0.25;
@@ -144,7 +150,7 @@ public:
   Snapshot snapshot();
   void
   initialize(); // Caller holds task admission lock; no active task permitted.
-  void restore(const std::vector<std::string> &audit_files, bool no_unobserved_motion);
+  std::string restore(const std::vector<std::string> &audit_files, bool no_unobserved_motion);
 };
 struct Goal {
   Transform target = Transform::Identity();

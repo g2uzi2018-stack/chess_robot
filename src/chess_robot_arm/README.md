@@ -57,6 +57,26 @@ ClearError. Enable ACK uses its own default 5 s budget. The client then requires
 reference_valid, fresh mode5 and the original stationary dwell before low HOME.
 No automatic reference initialization/reset or fault trajectory replay is introduced.
 
+`reference.power_cycle_endpoint_tolerance_rad` defaults to `0.001` rad. After an
+operator attests a power-only interval with no unobserved motion, an explicit
+`reference.power_cycle_handoff=true` may use a separately chosen small endpoint
+bound (for example `0.005` rad) for the final live join. It must be finite,
+positive, and no greater than `min(0.01 rad, reference.home_tolerance_rad,
+reference.max_joint_step_rad)`. The 0.01 rad (0.573 degree) cap keeps this exception
+smaller than the default Home envelope and tracker step; it is not an encoder
+accuracy specification. Both endpoints must still be near configured Home, with
+fresh stationary live mode 4/5 dwell and the existing stopped/fault history checks.
+Ordinary live joins, undeclared recorded file joins and old fault-epoch joins
+remain fixed at 0.001 rad; the named stopped boundary described below also uses
+the configured bounded tolerance.
+This does not alter Home, motion arrival/tracking/collision limits or clear twist:
+original history is replayed, then the tracker advances once to measured live
+joints and checks the original hard twist limits. RestoreReference `detail` and
+state diagnostics report per-joint live-minus-history deltas, the effective bound,
+whether an expanded join was actually used, and historical/restored twist.
+An increased bound only bounds endpoint disagreement; it cannot establish that
+unobserved movement did not occur. The operator attestation remains mandatory.
+
 Latest physical continuation is BLOCKED: low Home passed, but new-epoch low qualification
 failed on a 146.428485 ms feedback receipt gap; Stop ACK and fresh stationary dwell
 were confirmed. No new target roundtrip or boundary refinement passed. The original
@@ -312,3 +332,46 @@ this is diagnostic only, with explicit drop counts and no per-frame console prin
 Use `tools/analysis/feedback_gap_diagnostic.py` offline with the same-connection capture for layered analysis.
 This run had no gaps above 100 or 200 ms; the old 146 ms root cause remains undetermined.
 Observed audit-stage wall delays are documented without claiming disk IO or vendor SDK failure.
+
+
+### Recorded stopped power-cycle boundary
+
+`reference.power_cycle_stopped_join_file` defaults empty. It declares exactly one
+noninitial original audit whose first disabled/idle frame records an attested
+power-only handoff from stationary mode 5 Home. It requires explicit
+`reference.power_cycle_handoff=true`, stationary recorded mode-5 dwell before
+the boundary, mode 4/5 and stationary speed after it, both endpoints within the
+original Home envelope, advancing original host time, valid joints/frames, and
+maximum joint delta within the validated `power_cycle_endpoint_tolerance_rad`.
+Only this declared boundary may reset its controller timestamp sequence, and the
+original first frame advances the existing tracker; all later motion is replayed.
+The separate `reference.power_cycle_join_file` still handles the original mode-9
+fault epoch at fixed 0.001 rad. Both declarations must identify different files.
+All undeclared boundaries retain the original join rules. Restore diagnostics
+report the recorded joint deltas/bound and report committed/expanded usage only
+after the complete history and final live join pass. No raw audit is rewritten.
+
+Recorded mode-5 dwell counts only strictly advancing accepted host observations
+whose adjacent interval is at most `feedback.freshness_s`. Ordinary file fragments
+may share a window when that continuity is present. An ordinary boundary gap or
+duplicate-controller-stamp padding cannot add stationary dwell: the next accepted
+observation after a larger/nonforward host interval starts a new window. The named
+power boundary checks the completed pre-gap window before resetting its epoch.
+
+### SHA-bound final fault suffix recovery
+
+`reference.power_cycle_fault_restart_file`, `_offset_bytes` and `_sha256`
+default to empty/-1/empty. Together with explicit power-cycle handoff they declare
+one exact restart boundary in the unique final original audit. A healthy measured
+stationary dwell must precede a short mode-9 suffix; its joints remain within the
+fixed 0.005 rad healthy anchor bound. The declared fresh disabled restart and its
+remaining suffix must stay within 0.001 rad. Original full-file SHA-256 must match
+before committing the trial tracker. Existing history, budgets and hard twist
+limits are retained; no reference zeroing or generic fault recovery is provided.
+
+The noninstalled `restore_reference_offline` tool replays files and in-memory
+feedback for regression only; it never connects to the controller. See
+[the narrow recovery acceptance](../../docs/validation/power-fault-recovery-20261030.md)
+for record format and historical evidence. A new power interval always needs its
+own factual no-unobserved-motion declaration and valid live state; these documents
+are not reusable permission to recover another run.

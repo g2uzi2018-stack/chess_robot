@@ -164,7 +164,12 @@ class ArmNode final : public rclcpp::Node {
 #define PARAM(field, name) c.field = param(name, c.field)
     PARAM(clearance, "approach_clearance_m");
     PARAM(power_cycle_handoff, "reference.power_cycle_handoff");
+    PARAM(power_cycle_endpoint_tolerance, "reference.power_cycle_endpoint_tolerance_rad");
     PARAM(power_cycle_join_file, "reference.power_cycle_join_file");
+    PARAM(power_cycle_stopped_join_file, "reference.power_cycle_stopped_join_file");
+    PARAM(power_cycle_fault_restart_file, "reference.power_cycle_fault_restart_file");
+    PARAM(power_cycle_fault_restart_offset_bytes, "reference.power_cycle_fault_restart_offset_bytes");
+    PARAM(power_cycle_fault_restart_sha256, "reference.power_cycle_fault_restart_sha256");
     PARAM(feedback_trace, "diagnostics.feedback_trace");
     PARAM(enable_after_history_restore, "controller.enable_after_history_restore");
     PARAM(home_roundtrip_precheck, "testing.home_roundtrip_precheck");

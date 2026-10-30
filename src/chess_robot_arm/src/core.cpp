@@ -3,6 +3,9 @@
 #include <arpa/inet.h>
 #include <cmath>
 #include <limits>
+#include <iomanip>
+#include <sstream>
+#include <openssl/evp.h>
 #include <thread>
 #include <fstream>
 #include "chess_robot_arm/feedback_frame.hpp"
@@ -15,6 +18,40 @@ void require(bool value, const std::string &message) {
     throw Failure(INVALID_GOAL, message);
 }
 bool positive(double x) { return std::isfinite(x) && x > 0; }
+constexpr int64_t audit_record_bytes=sizeof(int64_t)+FeedbackFrame{}.size();
+bool faultRestartConfigured(const Config &c) {
+  if (c.power_cycle_fault_restart_file.empty()) {
+    require(c.power_cycle_fault_restart_offset_bytes==-1 && c.power_cycle_fault_restart_sha256.empty(),
+            "fault restart file, offset and SHA256 must be declared together");
+    return false;
+  }
+  require(c.power_cycle_handoff && c.power_cycle_fault_restart_offset_bytes>0 &&
+              c.power_cycle_fault_restart_offset_bytes%audit_record_bytes==0 &&
+              c.power_cycle_fault_restart_offset_bytes<2000000*audit_record_bytes &&
+              c.power_cycle_fault_restart_sha256.size()==64 &&
+              c.power_cycle_fault_restart_sha256.find_first_not_of("0123456789abcdef")==std::string::npos &&
+              c.power_cycle_fault_restart_file!=c.power_cycle_join_file &&
+              c.power_cycle_fault_restart_file!=c.power_cycle_stopped_join_file,
+          "fault restart requires explicit handoff, distinct audit, aligned positive offset and lowercase full SHA256");
+  return true;
+}
+class AuditDigest {
+  std::unique_ptr<EVP_MD_CTX,decltype(&EVP_MD_CTX_free)> context_{EVP_MD_CTX_new(),EVP_MD_CTX_free};
+public:
+  AuditDigest() {
+    require(context_ && EVP_DigestInit_ex(context_.get(),EVP_sha256(),nullptr)==1,"cannot initialize audit SHA256");
+  }
+  void append(const void *data,size_t size) {
+    require(EVP_DigestUpdate(context_.get(),data,size)==1,"cannot update audit SHA256");
+  }
+  std::string finish() {
+    unsigned char bytes[EVP_MAX_MD_SIZE];unsigned size=0;
+    require(EVP_DigestFinal_ex(context_.get(),bytes,&size)==1 && size==32,"cannot finish audit SHA256");
+    std::ostringstream out;out<<std::hex<<std::setfill('0');
+    for (unsigned i=0;i<size;++i)out<<std::setw(2)<<unsigned(bytes[i]);
+    return out.str();
+  }
+};
 size_t subdivisions(double ratio, size_t maximum) {
   if (!std::isfinite(ratio) || ratio > double(maximum - 1))
     throw Failure(PLANNING_FAILED, "sample budget exceeded");
@@ -32,8 +69,18 @@ void Config::validate() const {
               backend == "commissioning" || backend == "exploration",
           "backend must be read_only, hardware or commissioning");
   require(!urdf.empty(), "urdf_file is required");
+  faultRestartConfigured(*this);
   require(!enable_after_history_restore || power_cycle_handoff, "explicit power-cycle handoff required before recovery enable");
   require(power_cycle_join_file.empty() || power_cycle_handoff,"recorded epoch join requires explicit power-cycle handoff");
+  require(power_cycle_stopped_join_file.empty() || power_cycle_handoff,
+          "recorded stopped join requires explicit power-cycle handoff");
+  require(power_cycle_stopped_join_file.empty() || power_cycle_stopped_join_file!=power_cycle_join_file,
+          "recorded stopped and fault epoch joins must name different audits");
+  require(positive(power_cycle_endpoint_tolerance) &&
+              power_cycle_endpoint_tolerance <= .01 &&
+              power_cycle_endpoint_tolerance <= home_tolerance &&
+              power_cycle_endpoint_tolerance <= tracker_options.max_joint_step_rad,
+          "reference.power_cycle_endpoint_tolerance_rad must be finite, positive and <= min(0.01, home_tolerance_rad, max_joint_step_rad)");
   require(!feedback_trace || !audit_directory.empty(),"feedback timing trace requires an audit directory");
   in_addr address{};
   require(inet_pton(AF_INET, ip.c_str(), &address) == 1,
@@ -278,27 +325,60 @@ void State::initialize() {
   tracker_.initializeAtHome(last_.q, config_.home_tolerance);
   diagnostic_ = "explicit Home reference initialized";
 }
-void State::restore(const std::vector<std::string> &files, bool no_motion) {
+std::string State::restore(const std::vector<std::string> &files, bool no_motion) {
   require(no_motion, "history handoff requires explicit no-unobserved-motion attestation");
   require(!files.empty() && files.size() <= 16, "invalid history file count");
+  const bool cold_configured=faultRestartConfigured(config_);
+  if (cold_configured)
+    require(files.back()==config_.power_cycle_fault_restart_file &&
+                std::count(files.begin(),files.end(),config_.power_cycle_fault_restart_file)==1,
+            "fault restart declaration must name the unique final audit");
   chess_robot_twist::Tracker trial(model_, config_.tracker_options);
   FeedbackSequence sequence;
   Feedback previous;
   bool have=false;
   size_t count=0;
-  std::optional<int64_t> stationary_hold_since;
+  int64_t stationary_hold_since=0; // Recorded host timestamps are strictly positive; zero means no hold.
   Joints stationary_hold_anchor{};
   int64_t last_host=0, recent_stationary_home=0;
-  bool recorded_fault_tail=false, recorded_epoch_joined=false;
+  bool recorded_fault_tail=false, recorded_epoch_joined=false, recorded_stopped_joined=false;
+  int64_t stationary_idle_since=0;
+  Joints stationary_idle_anchor{};
+  std::string stopped_join_detail;
+  bool cold_fault_started=false,cold_restart_consumed=false,cold_sha_verified=false;
+  Joints cold_healthy_anchor{},cold_restart_anchor{};
+  int64_t cold_healthy_host=0;double cold_dwell=0,cold_fault_max_delta=0;
+  size_t cold_fault_frames=0,cold_fault_nonstationary=0;
+  double cold_healthy_twist=0,cold_fault_twist=0;
+  std::string cold_detail;
+  const auto cold_failure_context=[&]() {
+    return !cold_configured ? std::string{} : "; fault_restart_committed=false; "+cold_detail;
+  };
+  bool recorded_stopped_expanded=false;
+  const auto stopped_failure_context=[&]() {
+    return stopped_join_detail.empty() ? std::string{} : "; "+stopped_join_detail+
+        "; recorded_stopped_join_committed=false; recorded_expanded_stopped_join_used=false";
+  };
+  if (!config_.power_cycle_stopped_join_file.empty())
+    require(config_.power_cycle_handoff &&
+                config_.power_cycle_stopped_join_file!=config_.power_cycle_join_file &&
+                std::count(files.begin(),files.end(),config_.power_cycle_stopped_join_file)==1 &&
+                files.front()!=config_.power_cycle_stopped_join_file,
+            "stopped power-cycle join must name exactly one noninitial audit, distinct from the fault epoch join, with explicit handoff");
   if (!config_.power_cycle_join_file.empty())
     require(std::count(files.begin(),files.end(),config_.power_cycle_join_file)==1 &&
                 files.front()!=config_.power_cycle_join_file,"epoch join must name exactly one noninitial audit");
+  try {
   for (size_t file_index=0;file_index<files.size();++file_index) {
     const auto &path=files[file_index];
     std::ifstream f(path, std::ios::binary);
     require(bool(f), "cannot read history audit");
     bool first=true;
-    int64_t previous_host=0;
+    int64_t previous_host=0,record_offset=0;
+    uint64_t previous_raw_mode=0;
+    const bool cold_file=cold_configured && path==config_.power_cycle_fault_restart_file;
+    std::unique_ptr<AuditDigest> digest;
+    if (cold_file)digest=std::make_unique<AuditDigest>();
     for (;;) {
       int64_t host;
       f.read(reinterpret_cast<char *>(&host), sizeof(host));
@@ -308,11 +388,72 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
       f.read(reinterpret_cast<char *>(bytes.data()), bytes.size());
       require(bool(f), "truncated history frame");
       require(++count <= 2000000, "history replay budget exceeded");
+      if (digest) {digest->append(&host,sizeof(host));digest->append(bytes.data(),bytes.size());}
+      const bool cold_restart=cold_file && record_offset==config_.power_cycle_fault_restart_offset_bytes;
+      const auto raw=cold_file ? decodeFeedbackFrame(bytes,Clock::time_point{},0) : Feedback{};
       require(host > 0 && (!previous_host || (host > previous_host &&
-                  double(host-previous_host)*1e-9 <= config_.freshness)),
+                  (cold_restart || double(host-previous_host)*1e-9 <= config_.freshness))),
               "history feedback gap/regression inside audit");
-      previous_host=host;
+      if (cold_restart) {
+        const double delta=jointDistance(previous.q,raw.q);
+        std::ostringstream detail;detail<<std::setprecision(12)
+            <<"fault_restart_offset_bytes="<<record_offset<<"; fault_restart_delta_rad="<<delta
+            <<"; fault_anchor_max_delta_rad="<<cold_fault_max_delta
+            <<"; fault_prehealthy_dwell_s="<<cold_dwell<<"; fault_raw_frames="<<cold_fault_frames
+            <<"; fault_nonstationary_frames="<<cold_fault_nonstationary
+            <<"; healthy_twist_total_rad="<<cold_healthy_twist<<"; fault_twist_total_rad="<<cold_fault_twist;
+        cold_detail=detail.str();
+        require(!cold_restart_consumed && cold_fault_started && previous_raw_mode==9 && previous.mode==9 &&
+                    previous_host>0 && double(host-previous_host)*1e-9>config_.freshness &&
+                    host>last_host && raw.mode==4 && raw.controller_stamp>0 &&
+                    model_->withinJointBounds(raw.q) && maxSpeed(raw)<=config_.stationary_speed && delta<=.001,
+                "declared fault restart must join the final fault to a fresh disabled epoch within 0.001 rad"+cold_failure_context());
+        sequence=FeedbackSequence{};cold_restart_consumed=true;cold_restart_anchor=raw.q;
+        stationary_idle_since=0;stationary_hold_since=0;recent_stationary_home=0;
+      } else if (cold_file && cold_fault_started && !cold_restart_consumed) {
+        require(raw.mode==9,"declared fault suffix must contain only mode9 until the exact restart offset"+cold_failure_context());
+      }
+      if (cold_file && cold_restart_consumed)
+        require(raw.mode==4 && model_->withinJointBounds(raw.q) && maxSpeed(raw)<=config_.stationary_speed &&
+                    jointDistance(raw.q,cold_restart_anchor)<=.001,
+                "post-restart suffix must remain disabled stationary within 0.001 rad"+cold_failure_context());
+      previous_host=host;previous_raw_mode=cold_file ? raw.mode : 0;
+      record_offset+=audit_record_bytes;
       const bool epoch_join=first && path==config_.power_cycle_join_file;
+      const bool stopped_join=first && path==config_.power_cycle_stopped_join_file;
+      if (stopped_join) {
+        const auto joined=decodeFeedbackFrame(bytes,Clock::time_point{},0);
+        const double delta=have ? jointDistance(previous.q,joined.q) : 0;
+        std::ostringstream detail;
+        detail << std::setprecision(12) << "recorded_stopped_join_delta_rad=[";
+        for (size_t j=0;j<6;++j) {
+          if (j) detail << ',';
+          detail << joined.q[j]-previous.q[j];
+        }
+        detail << "]; recorded_stopped_join_max_delta_rad=" << delta
+               << "; recorded_stopped_join_tolerance_rad=" << config_.power_cycle_endpoint_tolerance
+               << "; recorded_stopped_join_stationary_dwell_s="
+               << (stationary_idle_since>0 ? double(last_host-stationary_idle_since)*1e-9 : 0)
+               << "; recorded_stopped_join_required_dwell_s=" << config_.dwell
+               << "; accepted_host_freshness_s=" << config_.freshness;
+        stopped_join_detail=detail.str();
+        require(config_.power_cycle_handoff && !recorded_stopped_joined && have &&
+                    !recorded_fault_tail && previous.mode==5 &&
+                    maxSpeed(previous)<=config_.stationary_speed && stationary_idle_since>0 &&
+                    double(last_host-stationary_idle_since)*1e-9>=config_.dwell &&
+                    host>last_host && (joined.mode==4 || joined.mode==5) &&
+                    maxSpeed(joined)<=config_.stationary_speed && model_->withinJointBounds(joined.q) &&
+                    jointDistance(previous.q,config_.home)<=config_.home_tolerance &&
+                    jointDistance(joined.q,config_.home)<=config_.home_tolerance &&
+                    delta<=config_.power_cycle_endpoint_tolerance,
+                "recorded stopped power-cycle join requires stationary Home dwell to disabled/idle encoders; "+
+                    stopped_join_detail+"; recorded_stopped_join_committed=false; recorded_expanded_stopped_join_used=false");
+        // The named, attested boundary alone may start this recorded controller epoch.
+        // Advance the original first measured q below; never insert or rewrite frames.
+        sequence=FeedbackSequence{};recorded_stopped_joined=true;
+        recorded_stopped_expanded=delta>.001;
+        stationary_hold_since=0;stationary_idle_since=0;recent_stationary_home=0;
+      }
       if (epoch_join) {
         const auto joined=decodeFeedbackFrame(bytes,Clock::time_point{},0);
         require(config_.power_cycle_handoff && !recorded_epoch_joined && have && recorded_fault_tail &&
@@ -325,13 +466,35 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
         // Only this explicit, attested file boundary changes controller epochs.
         // No original bytes, host times or ROS stamps are rewritten.
         sequence=FeedbackSequence{};recorded_fault_tail=false;recorded_epoch_joined=true;
-        stationary_hold_since.reset();recent_stationary_home=0;
+        stationary_hold_since=0;recent_stationary_home=0;
       }
-      if (!sequence.accept(bytes)) continue;
+      if (!sequence.accept(bytes)) {
+        require(!(cold_file && raw.mode==9),"fault suffix requires advancing controller stamps"+cold_failure_context());
+        continue;
+      }
+      // Dwell needs fresh accepted observations, not elapsed time across file
+      // gaps or duplicate-controller-stamp padding. A named power boundary has
+      // already checked the pre-gap dwell above and starts a new window.
+      if (have && (host<=last_host || double(host-last_host)*1e-9>config_.freshness))
+        stationary_idle_since=0;
       // Recorded host UTC is retained as evidence; never reinterpreted as ROS time.
       auto current=decodeFeedbackFrame(bytes,Clock::time_point{},0);
       require(model_->withinJointBounds(current.q),"invalid historical joints");
-      if (current.mode==9 && config_.power_cycle_handoff) {
+      if (current.mode==9 && cold_file && !cold_restart_consumed) {
+        if (!cold_fault_started) {
+          require(have && !recorded_fault_tail && previous.mode==5 &&
+                      maxSpeed(previous)<=config_.stationary_speed && stationary_idle_since>0 &&
+                      double(last_host-stationary_idle_since)*1e-9>=config_.dwell &&
+                      host>last_host && double(host-last_host)*1e-9<=config_.freshness,
+                  "fault suffix requires a preceding continuous fresh healthy stationary dwell"+cold_failure_context());
+          cold_fault_started=true;cold_healthy_anchor=previous.q;cold_healthy_host=last_host;
+          cold_dwell=double(last_host-stationary_idle_since)*1e-9;cold_healthy_twist=trial.metrics().total;
+        }
+        cold_fault_max_delta=std::max(cold_fault_max_delta,jointDistance(current.q,cold_healthy_anchor));
+        require(host-cold_healthy_host<=int64_t(config_.freshness*1e9) && cold_fault_max_delta<=.005,
+                "fault suffix exceeds fresh duration or fixed 0.005 rad healthy-anchor bound"+cold_failure_context());
+        ++cold_fault_frames;if (maxSpeed(current)>config_.stationary_speed)++cold_fault_nonstationary;
+      } else if (current.mode==9 && config_.power_cycle_handoff) {
         // Fault encoders are evidence of the last small joint displacement,
         // never evidence of healthy motion or arrival. Only a terminal fault
         // immediately following stationary formal Home is recoverable here.
@@ -358,9 +521,9 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
         // It is not accepted as the final endpoint: a separate stopped mode-5
         // audit must join it, with a recorded stationary dwell before the gap.
         const bool recorded_hold = previous.mode==7 && stationary_hold_since &&
-            double(last_host-*stationary_hold_since)*1e-9>=config_.dwell &&
+            double(last_host-stationary_hold_since)*1e-9>=config_.dwell &&
             maxSpeed(previous)<=config_.stationary_speed;
-        if (first && !epoch_join) require((previous.mode==5 || recorded_hold) && current.mode==5 &&
+        if (first && !epoch_join && !stopped_join) require((previous.mode==5 || recorded_hold) && current.mode==5 &&
                        jointDistance(previous.q,current.q)<=.001 &&
                        maxSpeed(current)<=config_.stationary_speed,
                        "history file handoff moved or was not stopped");
@@ -368,37 +531,95 @@ void State::restore(const std::vector<std::string> &files, bool no_motion) {
       }
       require(chess_robot_twist::withinLimits(trial.metrics(),config_.twist_limits),
               "historical twist exceeds current hard limits");
+      if (cold_file && current.mode==9)cold_fault_twist=trial.metrics().total;
       if (current.mode==7 && maxSpeed(current)<=config_.stationary_speed) {
         if (first || !stationary_hold_since || jointDistance(current.q,stationary_hold_anchor)>.001) {
           stationary_hold_since=host;stationary_hold_anchor=current.q;
         }
-      } else stationary_hold_since.reset();
+      } else stationary_hold_since=0;
+      if (current.mode==5 && maxSpeed(current)<=config_.stationary_speed) {
+        if (!stationary_idle_since || jointDistance(current.q,stationary_idle_anchor)>.001) {
+          stationary_idle_since=host;stationary_idle_anchor=current.q;
+        }
+      } else stationary_idle_since=0;
       last_host=host;
       first=false; have=true; previous=current;
     }
     require(!first, "empty history audit");
+    if (cold_file) {
+      require(digest->finish()==config_.power_cycle_fault_restart_sha256,"fault restart full audit SHA256 mismatch"+cold_failure_context());
+      require(cold_restart_consumed && cold_fault_frames>0,"fault restart declaration was not consumed"+cold_failure_context());
+      cold_sha_verified=true;
+    }
+  }
+  } catch (const Failure &e) {
+    std::string detail=e.what();
+    if (!stopped_join_detail.empty() && detail.find("recorded_stopped_join_committed=false")==std::string::npos)
+      detail+=stopped_failure_context();
+    if (cold_configured && detail.find("fault_restart_committed=false")==std::string::npos)
+      detail+=cold_failure_context();
+    throw Failure(e.code,detail);
+  } catch (const std::exception &e) {
+    if (stopped_join_detail.empty() && !cold_configured) throw;
+    throw Failure(INVALID_GOAL,std::string(e.what())+stopped_failure_context()+cold_failure_context());
   }
   std::lock_guard<std::mutex> lock(mutex_);
-  require(have && have_ && !tracker_.valid(), "history restore needs invalid reference and real feedback");
-  const bool power_handoff=config_.power_cycle_handoff &&
+  require(have && have_ && !tracker_.valid(), "history restore needs invalid reference and real feedback"+stopped_failure_context()+cold_failure_context());
+  const bool power_handoff=!cold_configured && config_.power_cycle_handoff &&
       (last_.mode==4 || last_.mode==5) &&
       jointDistance(last_.q,config_.home)<=config_.home_tolerance &&
       jointDistance(previous.q,config_.home)<=config_.home_tolerance;
+  // This exception is deliberately local to the final live endpoint. Recorded
+  // Other file/fault-epoch joins retain their fixed .001 rad bound and original bytes.
+  const double endpoint_tolerance=power_handoff ? config_.power_cycle_endpoint_tolerance : .001;
+  const double endpoint_delta=jointDistance(last_.q,previous.q);
+  const bool expanded_used=power_handoff && endpoint_delta>.001 && endpoint_delta<=endpoint_tolerance;
+  std::ostringstream endpoint;
+  endpoint << std::setprecision(12) << "endpoint_delta_rad=[";
+  for (size_t j=0;j<6;++j) {
+    if (j) endpoint << ',';
+    endpoint << last_.q[j]-previous.q[j];
+  }
+  endpoint << "]; endpoint_max_delta_rad=" << endpoint_delta
+           << "; endpoint_tolerance_rad=" << endpoint_tolerance
+           << "; power_cycle_handoff=" << (power_handoff ? "true" : "false");
+  // Failure diagnostics must not claim that an uncommitted recovery was used.
+  const auto endpoint_detail=endpoint.str()+"; expanded_power_cycle_handoff_used=false"+stopped_failure_context()+cold_failure_context();
   require(Clock::now()-last_.received <= std::chrono::duration<double>(config_.freshness) &&
-              (last_.mode==5 || power_handoff) && maxSpeed(last_)<=config_.stationary_speed &&
+              (cold_configured ? last_.mode==4 : (last_.mode==5 || power_handoff)) && maxSpeed(last_)<=config_.stationary_speed &&
               stationary_since_ && Clock::now()-*stationary_since_>=std::chrono::duration<double>(config_.dwell),
-          "history restore needs fresh stationary idle dwell");
-  require(((previous.mode==5 && maxSpeed(previous)<=config_.stationary_speed) ||
-               (power_handoff && recorded_fault_tail && previous.mode==9)) &&
+          "history restore needs fresh stationary idle dwell; "+endpoint_detail);
+  require((cold_configured ?
+              (cold_restart_consumed && cold_sha_verified && previous.mode==4 &&
+               maxSpeed(previous)<=config_.stationary_speed && jointDistance(last_.q,cold_restart_anchor)<=.001) :
+              ((previous.mode==5 && maxSpeed(previous)<=config_.stationary_speed) ||
+               (power_handoff && recorded_fault_tail && previous.mode==9))) &&
               (last_.controller_stamp>previous.controller_stamp || power_handoff) &&
-              jointDistance(last_.q,previous.q)<=.001,
-          "current feedback does not join historical stopped/fault endpoint");
+              endpoint_delta<=endpoint_tolerance,
+          "current feedback does not join historical stopped/fault endpoint; "+endpoint_detail);
+  const auto historical_metrics=trial.metrics();
   trial.advance(last_.q);
-  require(chess_robot_twist::withinLimits(trial.metrics(),config_.twist_limits),"restored twist limit");
+  const auto restored_metrics=trial.metrics();
+  require(chess_robot_twist::withinLimits(restored_metrics,config_.twist_limits),
+          "restored twist limit; "+endpoint_detail);
+  std::ostringstream winding;
+  winding << std::setprecision(12) << "; accumulated_twist_retained=true; historical_twist_net_rad="
+          << historical_metrics.net << "; historical_twist_total_rad=" << historical_metrics.total
+          << "; restored_twist_net_rad=" << restored_metrics.net
+          << "; restored_twist_total_rad=" << restored_metrics.total;
   tracker_=std::move(trial);
   diagnostic_=recorded_epoch_joined ? "explicit recorded power epoch replayed; winding retained without zeroing" :
       power_handoff ? "explicit power-cycle audit handoff; winding retained, controller clock epoch not joined" :
       "explicit audit history restored without zeroing twist";
+  diagnostic_+="; "+endpoint.str()+"; expanded_power_cycle_handoff_used="+
+      (expanded_used ? "true" : "false")+winding.str();
+  diagnostic_+="; recorded_stopped_join_committed="+
+      std::string(recorded_stopped_joined ? "true" : "false")+
+      "; recorded_expanded_stopped_join_used="+(recorded_stopped_expanded ? "true" : "false");
+  if (recorded_stopped_joined) diagnostic_+="; "+stopped_join_detail;
+  diagnostic_+="; fault_restart_committed="+std::string(cold_configured ? "true" : "false");
+  if (cold_configured)diagnostic_+="; "+cold_detail+"; fault_restart_sha256="+config_.power_cycle_fault_restart_sha256;
+  return diagnostic_;
 }
 bool preferCandidate(const chess_robot_twist::Metrics &a, double duration,
                      const chess_robot_twist::Metrics &b, double incumbent_duration,
@@ -585,7 +806,7 @@ Plan Planner::plan(const Goal &g, const Snapshot &state) {
   auto t = state.tracker;
   const auto start = state.feedback.q;
   if (g.operation == Operation::Home)
-    return {{ptp("HOME", start, config_.home, t, p)}, false};
+    return {{ptp("HOME", start, config_.home, t, p)}, false, {}};
   if (config_.home_roundtrip_precheck && g.operation != Operation::Pregrasp)
     throw Failure(INVALID_GOAL,"roundtrip test mode only accepts direct TCP target or formal Home");
   if (config_.home_roundtrip_precheck &&
@@ -779,7 +1000,7 @@ bool TaskGate::restore(State &state, const std::vector<std::string> &files,
                        bool attested, std::string &detail) {
   std::lock_guard<std::mutex> lock(mutex_);
   if (busy_ || fault_latched_) { detail="restore requires idle non-faulted admission"; return false; }
-  try { state.restore(files,attested); detail="audit history restored; twist not zeroed"; return true; }
+  try { detail=state.restore(files,attested); return true; }
   catch (const std::exception &e) { detail=e.what(); return false; }
 }
 

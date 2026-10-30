@@ -7,6 +7,9 @@
 #include <cstring>
 #include <gtest/gtest.h>
 #include <limits>
+#include <openssl/sha.h>
+#include <iomanip>
+#include <sstream>
 #include <thread>
 #include <fstream>
 #include <condition_variable>
@@ -1481,4 +1484,629 @@ TEST(PowerCycle, FullOriginalAuditsJoinOneExplicitRecordedEpochAndKeepGap) {
   c.power_cycle_join_file=oldfile;State initial(c,m);populate(initial);
   EXPECT_THROW(initial.restore({oldfile,newfile},true),Failure);
   std::remove(oldfile.c_str());std::remove(newfile.c_str());
+}
+
+
+namespace {
+// Synthetic binary audits are isolated fixtures, never replacements for real records.
+struct EndpointAudit {
+  std::string path;
+  std::vector<Joints> joints;
+  EndpointAudit(const Config &c, double base_offset=0, bool fault_tail=false) {
+    static unsigned serial=0;
+    path="/tmp/chess_endpoint_"+std::to_string(getpid())+"_"+std::to_string(++serial)+".bin";
+    for (int i=0;i<3;++i) {
+      auto q=c.home;if (i)q[0]+=base_offset;q[5]+=.005*i;joints.push_back(q);
+    }
+    write(c, fault_tail);
+  }
+  void write(const Config &, bool fault_tail=false, uint64_t stamp=100,
+             int64_t host_start=1000000000LL, bool disabled_start=false) const {
+    std::ofstream out(path,std::ios::binary);
+    for (size_t i=0;i<joints.size();++i) {
+      auto bytes=frame(stamp+i);
+      field<uint64_t>(bytes,24,fault_tail && i+1==joints.size() ? 9 :
+          disabled_start && i==0 ? 4 : 5);
+      for (size_t j=0;j<6;++j)field<double>(bytes,432+8*j,joints[i][j]*180/pi);
+      const int64_t host=host_start+int64_t(i)*8000000LL;
+      out.write(reinterpret_cast<const char*>(&host),sizeof(host));
+      out.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());
+    }
+  }
+  ~EndpointAudit() {std::remove(path.c_str());}
+};
+void endpointFeedback(State &s,const Config &c,const Joints &q,uint64_t mode=4,double speed=0) {
+  auto f=feedback(c,1);f.q=q;f.mode=mode;f.speed[0]=speed;s.update(f);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+  f.controller_stamp=2;f.received=Clock::now();s.update(f);
+}
+std::string restoreFailure(State &s,const std::vector<std::string> &files) {
+  try {s.restore(files,true);ADD_FAILURE()<<"restore unexpectedly succeeded";}
+  catch(const Failure &e) {return e.what();}
+  return {};
+}
+}
+TEST(PowerCycleEndpoint, ParameterBoundsAreStrictEvenWhenHandoffIsDisabled) {
+  auto c=config();EXPECT_DOUBLE_EQ(c.power_cycle_endpoint_tolerance,.001);
+  EXPECT_NO_THROW(c.validate());
+  for (double value : {0.,-.001,.010001,std::numeric_limits<double>::infinity(),
+                       std::numeric_limits<double>::quiet_NaN()}) {
+    c.power_cycle_endpoint_tolerance=value;EXPECT_THROW(c.validate(),Failure)<<value;
+  }
+  c.power_cycle_endpoint_tolerance=.01;EXPECT_NO_THROW(c.validate());
+  c.power_cycle_endpoint_tolerance=.005;c.home_tolerance=.004;EXPECT_THROW(c.validate(),Failure);
+  c.home_tolerance=.003;c.tracker_options.max_joint_step_rad=.004;c.joint_step=.002;
+  EXPECT_THROW(c.validate(),Failure);
+  c.power_cycle_endpoint_tolerance=.003;EXPECT_NO_THROW(c.validate());
+}
+TEST(PowerCycleEndpoint, DefaultStillRejectsSmallEncoderShift) {
+  auto c=config();c.power_cycle_handoff=true;auto m=model(c);EndpointAudit audit(c);
+  auto q=audit.joints.back();q[5]+=.003;State s(c,m);endpointFeedback(s,c,q);
+  const auto detail=restoreFailure(s,{audit.path});
+  EXPECT_NE(detail.find("endpoint_tolerance_rad=0.001"),std::string::npos);
+  EXPECT_NE(detail.find("endpoint_max_delta_rad=0.003"),std::string::npos);
+  EXPECT_FALSE(s.snapshot().reference);
+}
+TEST(PowerCycleEndpoint, ExplicitSmallShiftPreservesAndAdvancesNonzeroWinding) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c);auto expected=trusted(c,m).tracker;
+  for (const auto &q:audit.joints)expected.advance(q);
+  const auto before=expected.metrics();auto q=audit.joints.back();q[5]+=.003;
+  expected.advance(q);State s(c,m);endpointFeedback(s,c,q);TaskGate gate;std::string detail;
+  ASSERT_TRUE(gate.restore(s,{audit.path},true,detail))<<detail;
+  const auto after=s.snapshot();ASSERT_TRUE(after.reference);
+  EXPECT_GT(before.total,.009);EXPECT_GT(after.tracker.metrics().total,.012);
+  EXPECT_NEAR(after.tracker.metrics().net,expected.metrics().net,1e-10);
+  EXPECT_NEAR(after.tracker.metrics().total,expected.metrics().total,1e-10);
+  EXPECT_EQ(after.tracker.lastJoints(),q);
+  EXPECT_NE(detail.find("expanded_power_cycle_handoff_used=true"),std::string::npos);
+  EXPECT_NE(detail.find("endpoint_tolerance_rad=0.005"),std::string::npos);
+  EXPECT_NE(detail.find("accumulated_twist_retained=true"),std::string::npos);
+  EXPECT_NE(detail.find("historical_twist_total_rad="),std::string::npos);
+  EXPECT_NE(detail.find("restored_twist_total_rad="),std::string::npos);
+  EXPECT_EQ(detail,after.diagnostic);
+}
+TEST(PowerCycleEndpoint, ExpandedFaultTailRetainsAllOriginalGuards) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c,0,true);auto q=audit.joints.back();q[5]+=.003;
+  State s(c,m);endpointFeedback(s,c,q);
+  EXPECT_THROW(s.restore({audit.path},false),Failure);
+  EXPECT_NO_THROW(s.restore({audit.path},true));
+  EXPECT_GT(s.snapshot().tracker.metrics().total,.012);
+}
+TEST(PowerCycleEndpoint, ConfiguredBoundDoesNotExpandOrdinaryHandoff) {
+  auto c=config();c.power_cycle_endpoint_tolerance=.005;auto m=model(c);EndpointAudit audit(c);
+  auto q=audit.joints.back();q[5]+=.003;State s(c,m);endpointFeedback(s,c,q,5);
+  const auto detail=restoreFailure(s,{audit.path});
+  EXPECT_NE(detail.find("power_cycle_handoff=false"),std::string::npos);
+  EXPECT_NE(detail.find("endpoint_tolerance_rad=0.001"),std::string::npos);
+}
+TEST(PowerCycleEndpoint, ConfiguredBoundDoesNotExpandAwayFromHome) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c,.04);auto q=audit.joints.back();q[5]+=.003;
+  State s(c,m);endpointFeedback(s,c,q,5);
+  const auto detail=restoreFailure(s,{audit.path});
+  EXPECT_NE(detail.find("power_cycle_handoff=false"),std::string::npos);
+  EXPECT_NE(detail.find("endpoint_tolerance_rad=0.001"),std::string::npos);
+}
+TEST(PowerCycleEndpoint, BeyondConfiguredBoundRejected) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c);auto q=audit.joints.back();q[5]+=.006;
+  State s(c,m);endpointFeedback(s,c,q);
+  const auto detail=restoreFailure(s,{audit.path});
+  EXPECT_NE(detail.find("endpoint_tolerance_rad=0.005"),std::string::npos);
+  EXPECT_FALSE(s.snapshot().reference);
+}
+TEST(PowerCycleEndpoint, LiveStationaryFreshnessDwellAndIdleRemainRequired) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c);auto q=audit.joints.back();q[5]+=.003;
+  State moving(c,m);endpointFeedback(moving,c,q,4,.02);
+  const auto moving_detail=restoreFailure(moving,{audit.path});
+  EXPECT_NE(moving_detail.find("fresh stationary idle dwell"),std::string::npos);
+  EXPECT_NE(moving_detail.find("expanded_power_cycle_handoff_used=false"),std::string::npos);
+  State servo(c,m);endpointFeedback(servo,c,q,7);
+  EXPECT_NE(restoreFailure(servo,{audit.path}).find("fresh stationary idle dwell"),std::string::npos);
+  // Explicitly old receive times violate live freshness while the unchanged
+  // recorded audit spacing still passes its separate freshness checks.
+  c.freshness=.05;State old(c,m);auto f=feedback(c,1);f.q=q;f.mode=4;
+  f.received=Clock::now()-std::chrono::milliseconds(100);old.update(f);
+  f.controller_stamp=2;f.received+=std::chrono::milliseconds(2);old.update(f);
+  EXPECT_NE(restoreFailure(old,{audit.path}).find("fresh stationary idle dwell"),std::string::npos);
+  c.dwell=.1;State no_dwell(c,m);endpointFeedback(no_dwell,c,q);
+  EXPECT_NE(restoreFailure(no_dwell,{audit.path}).find("fresh stationary idle dwell"),std::string::npos);
+}
+TEST(PowerCycleEndpoint, RecordedFileBoundaryStillRejectsSmallMismatch) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit first(c),second(c);
+  for (auto &q:second.joints)q=first.joints.back();
+  second.joints.front()[5]+=.003;second.write(c,false,200,2000000000LL);
+  State s(c,m);endpointFeedback(s,c,second.joints.back());
+  EXPECT_NE(restoreFailure(s,{first.path,second.path}).find("history file handoff moved"),std::string::npos);
+}
+TEST(PowerCycleEndpoint, RecordedEpochBoundaryStillRejectsSmallMismatch) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit first(c,0,true),second(c);
+  for (auto &q:second.joints) {q=first.joints.back();q[5]+=.003;}
+  second.write(c,false,1,2000000000LL,true);c.power_cycle_join_file=second.path;
+  State s(c,m);endpointFeedback(s,c,second.joints.back());
+  EXPECT_NE(restoreFailure(s,{first.path,second.path}).find("recorded power epoch must join"),std::string::npos);
+}
+TEST(PowerCycleEndpoint, LiveAdvanceStillChecksTwistHardLimit) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  c.twist_limits={.011,.011};auto m=model(c);EndpointAudit audit(c);
+  auto q=audit.joints.back();q[5]+=.003;State s(c,m);endpointFeedback(s,c,q);
+  EXPECT_NE(restoreFailure(s,{audit.path}).find("restored twist limit"),std::string::npos);
+  EXPECT_FALSE(s.snapshot().reference);
+}
+TEST(PowerCycleEndpoint, HistoryMustStillBeginAtKnownHome) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c,.04);audit.joints.front()[0]+=.01;audit.write(c);
+  State s(c,m);endpointFeedback(s,c,audit.joints.back());
+  EXPECT_THROW(s.restore({audit.path},true),std::exception);
+  EXPECT_FALSE(s.snapshot().reference);
+}
+TEST(PowerCycleEndpoint, ExpandedConfiguredButUnusedIsReportedFalse) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  auto m=model(c);EndpointAudit audit(c);State s(c,m);endpointFeedback(s,c,audit.joints.back());
+  std::string detail;ASSERT_NO_THROW(detail=s.restore({audit.path},true));
+  EXPECT_NE(detail.find("expanded_power_cycle_handoff_used=false"),std::string::npos);
+}
+
+
+namespace {
+void recordedLiveFeedback(State &s,const Config &c,const Joints &q) {
+  endpointFeedback(s,c,q,5);
+  auto f=feedback(c,1000);f.q=q;s.update(f);
+}
+struct RecordedStoppedFixture {
+  Config c=config();
+  EndpointAudit before,after;
+  RecordedStoppedFixture():before(c),after(c) {
+    c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+    before.joints.push_back(before.joints.back());before.write(c);
+    auto q=before.joints.back();q[5]+=.003;
+    after.joints={q,q,q};after.joints[1][0]+=.02;
+    after.joints[2][0]+=.04;after.joints[2][5]+=.05;
+    after.write(c,false,1,2000000000LL,true);
+    c.power_cycle_stopped_join_file=after.path;
+  }
+  std::vector<std::string> files() const {return {before.path,after.path};}
+  void populate(State &s) const {recordedLiveFeedback(s,c,after.joints.back());}
+};
+template<class T> void rewriteAuditField(const std::string &path,size_t record,size_t offset,T value) {
+  std::fstream io(path,std::ios::binary|std::ios::in|std::ios::out);
+  io.seekp(std::streamoff(record*1448+8+offset));
+  io.write(reinterpret_cast<const char*>(&value),sizeof(value));
+}
+}
+TEST(RecordedStoppedJoin, DefaultIsEmptyAndDeclarationsAreStrict) {
+  auto c=config();EXPECT_TRUE(c.power_cycle_stopped_join_file.empty());
+  c.power_cycle_stopped_join_file="stopped";EXPECT_THROW(c.validate(),Failure);
+  c.power_cycle_handoff=true;EXPECT_NO_THROW(c.validate());
+  c.power_cycle_join_file="stopped";EXPECT_THROW(c.validate(),Failure);
+  for (int scenario=0;scenario<5;++scenario) {
+    RecordedStoppedFixture fixture;
+    auto files=fixture.files();
+    if (scenario==0)fixture.c.power_cycle_stopped_join_file=fixture.before.path;
+    if (scenario==1)fixture.c.power_cycle_stopped_join_file="missing";
+    if (scenario==2)files.push_back(fixture.after.path);
+    if (scenario==3)fixture.c.power_cycle_join_file=fixture.after.path;
+    if (scenario==4)fixture.c.power_cycle_handoff=false;
+    auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);
+    EXPECT_THROW(s.restore(files,true),Failure)<<scenario;
+    EXPECT_FALSE(s.snapshot().reference);
+  }
+}
+TEST(RecordedStoppedJoin, RequiresDeclarationAndStrictDefaultBound) {
+  for (bool declared : {false,true}) {
+    RecordedStoppedFixture fixture;
+    if (!declared)fixture.c.power_cycle_stopped_join_file.clear();
+    else fixture.c.power_cycle_endpoint_tolerance=.001;
+    auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);
+    EXPECT_THROW(s.restore(fixture.files(),true),std::exception);
+    EXPECT_FALSE(s.snapshot().reference);
+  }
+}
+TEST(RecordedStoppedJoin, ReplaysOriginalFirstFrameAndSubsequentMotionWithoutZeroing) {
+  RecordedStoppedFixture fixture;auto m=model(fixture.c);
+  auto expected=trusted(fixture.c,m).tracker;
+  for (const auto &q:fixture.before.joints)expected.advance(q);
+  const auto prior=expected.metrics();EXPECT_GT(prior.total,.009);
+  for (const auto &q:fixture.after.joints)expected.advance(q);
+  State s(fixture.c,m);fixture.populate(s);std::string detail;
+  TaskGate gate;ASSERT_TRUE(gate.restore(s,fixture.files(),true,detail))<<detail;
+  const auto result=s.snapshot();ASSERT_TRUE(result.reference);
+  EXPECT_GT(jointDistance(result.feedback.q,fixture.c.home),fixture.c.home_tolerance);
+  EXPECT_GT(result.tracker.metrics().total,.05);
+  EXPECT_NEAR(result.tracker.metrics().net,expected.metrics().net,1e-10);
+  EXPECT_NEAR(result.tracker.metrics().total,expected.metrics().total,1e-10);
+  EXPECT_EQ(result.tracker.lastJoints(),fixture.after.joints.back());
+  EXPECT_NE(detail.find("recorded_stopped_join_committed=true"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_expanded_stopped_join_used=true"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_max_delta_rad=0.003"),std::string::npos);
+  EXPECT_NE(detail.find("accumulated_twist_retained=true"),std::string::npos);
+}
+TEST(RecordedStoppedJoin, OtherUndeclaredFileBoundaryIsNotExpanded) {
+  RecordedStoppedFixture fixture;EndpointAudit other(fixture.c);
+  for (auto &q:other.joints) {q=fixture.after.joints.back();q[5]+=.003;}
+  other.write(fixture.c,false,2000,3000000000LL);
+  auto files=fixture.files();files.push_back(other.path);
+  auto m=model(fixture.c);State s(fixture.c,m);
+  recordedLiveFeedback(s,fixture.c,other.joints.back());
+  const auto detail=restoreFailure(s,files);
+  EXPECT_NE(detail.find("history file handoff moved"),std::string::npos);
+  EXPECT_EQ(detail.find("recorded_stopped_join_committed=true"),std::string::npos);
+}
+TEST(RecordedStoppedJoin, RequiresStationaryMode5DwellOnOriginalSide) {
+  for (int scenario=0;scenario<3;++scenario) {
+    RecordedStoppedFixture fixture;
+    if (scenario==0)rewriteAuditField<uint64_t>(fixture.before.path,3,24,7);
+    if (scenario==1)rewriteAuditField<double>(fixture.before.path,3,480,.02*180/pi);
+    if (scenario==2)fixture.c.dwell=.1;
+    auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);
+    const auto detail=restoreFailure(s,fixture.files());
+    EXPECT_NE(detail.find("recorded stopped power-cycle join requires stationary Home dwell"),std::string::npos)<<scenario;
+    EXPECT_NE(detail.find("recorded_stopped_join_committed=false"),std::string::npos);
+    EXPECT_NE(detail.find("recorded_expanded_stopped_join_used=false"),std::string::npos);
+  }
+}
+TEST(RecordedStoppedJoin, RejectsInvalidNewModeSpeedJointsHostAndGap) {
+  for (int scenario=0;scenario<9;++scenario) {
+    RecordedStoppedFixture fixture;
+    if (scenario==0)rewriteAuditField<uint64_t>(fixture.after.path,0,24,7);
+    if (scenario==1)rewriteAuditField<double>(fixture.after.path,0,480,.02*180/pi);
+    if (scenario==2)rewriteAuditField<double>(fixture.after.path,0,432,10000.);
+    if (scenario==3)rewriteAuditField<double>(fixture.after.path,0,432,std::numeric_limits<double>::quiet_NaN());
+    if (scenario==4)fixture.after.write(fixture.c,false,1,1000000000LL,true);
+    if (scenario==5) {fixture.after.joints[0][5]+=.003;fixture.after.write(fixture.c,false,1,2000000000LL,true);}
+    if (scenario==6)rewriteAuditField<uint64_t>(fixture.after.path,1,32,0);
+    if (scenario==7) {
+      std::fstream io(fixture.after.path,std::ios::binary|std::ios::in|std::ios::out);
+      const int64_t regressed=2000000000LL;io.seekp(1448);
+      io.write(reinterpret_cast<const char*>(&regressed),sizeof(regressed));
+    }
+    if (scenario==8) {fixture.after.joints[1][0]+=.2;fixture.after.write(fixture.c,false,1,2000000000LL,true);}
+    auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);
+    EXPECT_THROW(s.restore(fixture.files(),true),std::exception)<<scenario;
+    EXPECT_FALSE(s.snapshot().reference);
+  }
+}
+TEST(RecordedStoppedJoin, BothRecordedEndpointsMustRemainNearHome) {
+  RecordedStoppedFixture fixture;
+  for (size_t i=1;i<fixture.before.joints.size();++i)fixture.before.joints[i][0]+=.04;
+  fixture.before.write(fixture.c);
+  for (auto &q:fixture.after.joints)q[0]+=.04;
+  fixture.after.write(fixture.c,false,1,2000000000LL,true);
+  auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);
+  const auto detail=restoreFailure(s,fixture.files());
+  EXPECT_NE(detail.find("recorded stopped power-cycle join requires stationary Home dwell"),std::string::npos);
+}
+TEST(RecordedStoppedJoin, LaterFailureLeavesExistingReferenceAndWindingUntouched) {
+  RecordedStoppedFixture fixture;fixture.c.twist_limits={.02,.02};
+  auto m=model(fixture.c);State s(fixture.c,m);endpointFeedback(s,fixture.c,fixture.c.home,5);
+  ASSERT_NO_THROW(s.initialize());
+  auto f=feedback(fixture.c,3);f.q[5]+=.007;s.update(f);
+  const auto before=s.snapshot();ASSERT_TRUE(before.reference);EXPECT_GT(before.tracker.metrics().total,.006);
+  const auto detail=restoreFailure(s,fixture.files());
+  EXPECT_NE(detail.find("historical twist exceeds current hard limits"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_committed=false"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_expanded_stopped_join_used=false"),std::string::npos);
+  const auto after=s.snapshot();ASSERT_TRUE(after.reference);
+  EXPECT_EQ(after.tracker.lastJoints(),before.tracker.lastJoints());
+  EXPECT_DOUBLE_EQ(after.tracker.metrics().net,before.tracker.metrics().net);
+  EXPECT_DOUBLE_EQ(after.tracker.metrics().total,before.tracker.metrics().total);
+  EXPECT_EQ(detail.find("recorded_stopped_join_committed=true"),std::string::npos);
+}
+TEST(RecordedStoppedJoin, OldFaultEpochAndNewStoppedEpochComposeWithoutWeakeningEither) {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  EndpointAudit fault(c,0,true),epoch(c),stopped(c);
+  for (auto &q:epoch.joints)q=fault.joints.back();
+  epoch.write(c,false,1,2000000000LL,true);
+  for (auto &q:stopped.joints) {q=epoch.joints.back();q[5]+=.003;}
+  stopped.joints.back()[0]+=.04;stopped.joints.back()[5]+=.05;
+  stopped.write(c,false,1,3000000000LL,true);
+  c.power_cycle_join_file=epoch.path;c.power_cycle_stopped_join_file=stopped.path;
+  auto m=model(c);State s(c,m);recordedLiveFeedback(s,c,stopped.joints.back());
+  auto expected=trusted(c,m).tracker;
+  for (const auto &q:fault.joints)expected.advance(q);
+  for (const auto &q:epoch.joints)expected.advance(q);
+  for (const auto &q:stopped.joints)expected.advance(q);
+  std::string detail;TaskGate gate;
+  ASSERT_TRUE(gate.restore(s,{fault.path,epoch.path,stopped.path},true,detail))<<detail;
+  EXPECT_NEAR(s.snapshot().tracker.metrics().total,expected.metrics().total,1e-10);
+  EXPECT_NE(detail.find("explicit recorded power epoch replayed"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_committed=true"),std::string::npos);
+  epoch.joints.front()[5]+=.003;epoch.write(c,false,1,2000000000LL,true);
+  State invalid(c,m);recordedLiveFeedback(invalid,c,stopped.joints.back());
+  const auto error=restoreFailure(invalid,{fault.path,epoch.path,stopped.path});
+  EXPECT_NE(error.find("recorded power epoch must join terminal Home fault"),std::string::npos);
+}
+TEST(RecordedStoppedJoin, AttestationAndPostHistoryFinalJoinRemainMandatory) {
+  RecordedStoppedFixture fixture;auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);
+  EXPECT_THROW(s.restore(fixture.files(),false),Failure);
+  auto wrong=fixture.after.joints.back();wrong[5]+=.003;
+  State moved(fixture.c,m);recordedLiveFeedback(moved,fixture.c,wrong);
+  EXPECT_NE(restoreFailure(moved,fixture.files()).find("does not join historical stopped/fault endpoint"),std::string::npos);
+  EXPECT_FALSE(moved.snapshot().reference);
+}
+TEST(RecordedStoppedJoin, NonExpandedRecordedJoinIsReportedAccurately) {
+  RecordedStoppedFixture fixture;
+  fixture.after.joints.front()=fixture.before.joints.back();
+  fixture.after.write(fixture.c,false,1,2000000000LL,true);
+  auto m=model(fixture.c);State s(fixture.c,m);fixture.populate(s);std::string detail;
+  TaskGate gate;ASSERT_TRUE(gate.restore(s,fixture.files(),true,detail))<<detail;
+  EXPECT_NE(detail.find("recorded_stopped_join_committed=true"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_expanded_stopped_join_used=false"),std::string::npos);
+}
+
+
+namespace {
+struct AcceptedDwellRecord {
+  int64_t host;
+  uint64_t stamp, mode;
+  Joints q;
+};
+void writeAcceptedDwellAudit(const std::string &path,const std::vector<AcceptedDwellRecord> &records) {
+  std::ofstream out(path,std::ios::binary);
+  for (const auto &record:records) {
+    auto bytes=frame(record.stamp);field<uint64_t>(bytes,24,record.mode);
+    for (size_t j=0;j<6;++j)field<double>(bytes,432+8*j,record.q[j]*180/pi);
+    out.write(reinterpret_cast<const char*>(&record.host),sizeof(record.host));
+    out.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());
+  }
+}
+Config acceptedDwellConfig() {
+  auto c=config();c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+  c.freshness=.2;c.dwell=.4;c.stationary_speed=.002;return c;
+}
+void populateAcceptedDwellLive(State &s,const Config &c,const Joints &q) {
+  auto f=feedback(c,10000);f.q=q;
+  const auto start=Clock::now();
+  do {
+    f.received=Clock::now();s.update(f);++f.controller_stamp;
+    std::this_thread::sleep_for(std::chrono::milliseconds(8));
+  } while (Clock::now()-start<std::chrono::duration<double>(c.dwell+.01));
+}
+std::vector<AcceptedDwellRecord> continuousAcceptedDwell(const Config &c) {
+  std::vector<AcceptedDwellRecord> records;
+  for (int i=0;i<62;++i)records.push_back({1000000000LL+i*8000000LL,100+uint64_t(i),5,c.home});
+  return records;
+}
+void writeAcceptedDwellAfter(EndpointAudit &after,const Config &c) {
+  auto q=c.home;q[5]+=.003;after.joints={q};
+  writeAcceptedDwellAudit(after.path,{{3000000000LL,1,4,q},{3008000000LL,2,5,q}});
+}
+}
+TEST(RecordedStoppedDwell, OrdinaryFileGapCannotSupplyMissingStationaryTime) {
+  auto c=acceptedDwellConfig();EndpointAudit before(c),bridge(c),after(c);
+  auto records=continuousAcceptedDwell(c);records.resize(2);
+  writeAcceptedDwellAudit(before.path,records);
+  writeAcceptedDwellAudit(bridge.path,{{2000000000LL,102,5,c.home}});
+  writeAcceptedDwellAfter(after,c);c.power_cycle_stopped_join_file=after.path;
+  auto m=model(c);State s(c,m);populateAcceptedDwellLive(s,c,after.joints.back());
+  const auto detail=restoreFailure(s,{before.path,bridge.path,after.path});
+  EXPECT_NE(detail.find("recorded stopped power-cycle join requires stationary Home dwell"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_stationary_dwell_s=0"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_committed=false"),std::string::npos);
+  EXPECT_FALSE(s.snapshot().reference);
+}
+TEST(RecordedStoppedDwell, DuplicateControllerStampPaddingCannotSupplyStationaryTime) {
+  auto c=acceptedDwellConfig();EndpointAudit before(c),after(c);
+  auto records=continuousAcceptedDwell(c);
+  for (auto &record:records)record.stamp=100;
+  records.back().stamp=101;
+  writeAcceptedDwellAudit(before.path,records);
+  writeAcceptedDwellAfter(after,c);c.power_cycle_stopped_join_file=after.path;
+  auto m=model(c);State s(c,m);populateAcceptedDwellLive(s,c,after.joints.back());
+  const auto detail=restoreFailure(s,{before.path,after.path});
+  EXPECT_NE(detail.find("recorded stopped power-cycle join requires stationary Home dwell"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_stationary_dwell_s=0"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_stopped_join_committed=false"),std::string::npos);
+  EXPECT_FALSE(s.snapshot().reference);
+}
+TEST(RecordedStoppedDwell, ContiguousAcceptedDwellCanSpanOrdinaryFileFragments) {
+  auto c=acceptedDwellConfig();EndpointAudit before(c),fragment(c),after(c);
+  const auto records=continuousAcceptedDwell(c);
+  writeAcceptedDwellAudit(before.path,{records.begin(),records.begin()+21});
+  writeAcceptedDwellAudit(fragment.path,{records.begin()+21,records.end()});
+  writeAcceptedDwellAfter(after,c);c.power_cycle_stopped_join_file=after.path;
+  auto m=model(c);State s(c,m);populateAcceptedDwellLive(s,c,after.joints.back());
+  TaskGate gate;std::string detail;
+  ASSERT_TRUE(gate.restore(s,{before.path,fragment.path,after.path},true,detail))<<detail;
+  EXPECT_NE(detail.find("recorded_stopped_join_stationary_dwell_s=0.488"),std::string::npos);
+  EXPECT_NE(detail.find("recorded_expanded_stopped_join_used=true"),std::string::npos);
+  EXPECT_TRUE(s.snapshot().reference);
+}
+TEST(RecordedStoppedDwell, AcceptedGapsAtFreshnessBoundRemainContiguous) {
+  auto c=acceptedDwellConfig();EndpointAudit before(c),after(c);
+  writeAcceptedDwellAudit(before.path,{{1000000000LL,100,5,c.home},
+      {1200000000LL,101,5,c.home},{1400000000LL,102,5,c.home}});
+  writeAcceptedDwellAfter(after,c);c.power_cycle_stopped_join_file=after.path;
+  auto m=model(c);State s(c,m);populateAcceptedDwellLive(s,c,after.joints.back());
+  TaskGate gate;std::string detail;
+  ASSERT_TRUE(gate.restore(s,{before.path,after.path},true,detail))<<detail;
+  EXPECT_NE(detail.find("recorded_stopped_join_stationary_dwell_s=0.4"),std::string::npos);
+  EXPECT_TRUE(s.snapshot().reference);
+}
+
+
+namespace {
+std::string coldAuditSha(const std::string &path) {
+  std::ifstream in(path,std::ios::binary);
+  const std::string data((std::istreambuf_iterator<char>(in)),{});
+  unsigned char digest[SHA256_DIGEST_LENGTH];
+  SHA256(reinterpret_cast<const unsigned char*>(data.data()),data.size(),digest);
+  std::ostringstream out;out<<std::hex<<std::setfill('0');
+  for (unsigned char c:digest)out<<std::setw(2)<<unsigned(c);
+  return out.str();
+}
+struct ColdRecord {int64_t host;uint64_t stamp,mode;Joints q,speed{};};
+struct ColdFixture {
+  Config c=config();EndpointAudit audit;
+  std::vector<ColdRecord> records;
+  size_t first_fault=0,restart=0;
+  ColdFixture():audit(c) {
+    c.freshness=.2;c.power_cycle_handoff=true;c.power_cycle_endpoint_tolerance=.005;
+    for (int i=0;i<8;++i) {
+      auto q=c.home;if (i) {q[0]+=.04*std::min(i,2);q[5]+=.01*std::min(i,2);}
+      records.push_back({1000000000LL+i*8000000LL,100+uint64_t(i),i==1 ? 7u : 5u,q,{}});
+    }
+    first_fault=records.size();auto q=records.back().q;
+    records.push_back({1064000000LL,108,9,q,{}});
+    q[1]+=.0032;q[2]+=.00117;q[3]+=.00135;
+    Joints speed{};speed[1]=-.0109;
+    records.push_back({1072000000LL,109,9,q,speed});
+    restart=records.size();q[1]+=.00005;
+    records.push_back({100000000000LL,1,4,q,{}});
+    records.push_back({100008000000LL,2,4,q,{}});
+    c.power_cycle_fault_restart_file=audit.path;
+    c.power_cycle_fault_restart_offset_bytes=int64_t(restart*1448);write();
+  }
+  void write() {
+    {std::ofstream out(audit.path,std::ios::binary);
+      for (const auto &r:records) {
+        auto bytes=frame(r.stamp);field<uint64_t>(bytes,24,r.mode);
+        for (size_t j=0;j<6;++j) {
+          field<double>(bytes,432+8*j,r.q[j]*180/pi);
+          field<double>(bytes,480+8*j,r.speed[j]*180/pi);
+        }
+        out.write(reinterpret_cast<const char*>(&r.host),sizeof(r.host));
+        out.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());
+      }
+    }
+    c.power_cycle_fault_restart_sha256=coldAuditSha(audit.path);
+  }
+  void live(State &state,uint64_t mode=4,uint64_t stamp=1000,double speed=0,Joints *override_q=nullptr) const {
+    auto f=feedback(c,stamp);f.q=override_q ? *override_q : records.back().q;f.mode=mode;f.speed[0]=speed;
+    state.update(f);std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    ++f.controller_stamp;f.received=Clock::now();state.update(f);
+  }
+};
+}
+TEST(FaultRestart, DeclarationTripleIsStrictAndDefaultOff) {
+  auto c=config();EXPECT_TRUE(c.power_cycle_fault_restart_file.empty());
+  EXPECT_EQ(c.power_cycle_fault_restart_offset_bytes,-1);EXPECT_TRUE(c.power_cycle_fault_restart_sha256.empty());
+  EXPECT_NO_THROW(c.validate());
+  for (int scenario=0;scenario<7;++scenario) {
+    ColdFixture f;
+    if (scenario==0)f.c.power_cycle_handoff=false;
+    if (scenario==1)f.c.power_cycle_fault_restart_offset_bytes=1;
+    if (scenario==2)f.c.power_cycle_fault_restart_offset_bytes=0;
+    if (scenario==3)f.c.power_cycle_fault_restart_sha256="bad";
+    if (scenario==4)f.c.power_cycle_fault_restart_file.clear();
+    if (scenario==5)f.c.power_cycle_join_file=f.audit.path;
+    if (scenario==6)f.c.power_cycle_fault_restart_offset_bytes=2000000LL*1448;
+    EXPECT_THROW(f.c.validate(),Failure)<<scenario;
+  }
+}
+TEST(FaultRestart, NonHomeNonstationaryFaultEncodersAdvanceOriginalWinding) {
+  ColdFixture f;auto m=model(f.c);auto expected=trusted(f.c,m).tracker;
+  for (const auto &r:f.records)expected.advance(r.q);
+  State state(f.c,m);f.live(state);TaskGate gate;std::string detail;
+  ASSERT_TRUE(gate.restore(state,{f.audit.path},true,detail))<<detail;
+  const auto result=state.snapshot();ASSERT_TRUE(result.reference);
+  EXPECT_GT(jointDistance(result.feedback.q,f.c.home),f.c.home_tolerance);
+  EXPECT_GT(result.tracker.metrics().total,.015);
+  EXPECT_NEAR(result.tracker.metrics().net,expected.metrics().net,1e-10);
+  EXPECT_NEAR(result.tracker.metrics().total,expected.metrics().total,1e-10);
+  EXPECT_EQ(result.tracker.lastJoints(),f.records.back().q);
+  EXPECT_NE(detail.find("fault_restart_committed=true"),std::string::npos);
+  EXPECT_NE(detail.find("fault_nonstationary_frames=1"),std::string::npos);
+  EXPECT_NE(detail.find("fault_raw_frames=2"),std::string::npos);
+  EXPECT_NE(detail.find("endpoint_tolerance_rad=0.001"),std::string::npos);
+}
+TEST(FaultRestart, MissingDeclarationWrongOffsetAndWrongShaReject) {
+  for (int scenario=0;scenario<5;++scenario) {
+    ColdFixture f;
+    if (scenario==0) {f.c.power_cycle_fault_restart_file.clear();f.c.power_cycle_fault_restart_offset_bytes=-1;f.c.power_cycle_fault_restart_sha256.clear();}
+    if (scenario==1)f.c.power_cycle_fault_restart_offset_bytes-=1448;
+    if (scenario==2)f.c.power_cycle_fault_restart_offset_bytes+=1448;
+    if (scenario==3)f.c.power_cycle_fault_restart_offset_bytes=int64_t(f.records.size()*1448);
+    if (scenario==4)f.c.power_cycle_fault_restart_sha256=std::string(64,'0');
+    auto m=model(f.c);State state(f.c,m);f.live(state);
+    const auto detail=restoreFailure(state,{f.audit.path});
+    EXPECT_EQ(detail.find("fault_restart_committed=true"),std::string::npos)<<scenario;
+    EXPECT_FALSE(state.snapshot().reference);
+  }
+}
+TEST(FaultRestart, FirstPostAndLiveMustStayDisabledStationary) {
+  for (int scenario=0;scenario<6;++scenario) {
+    ColdFixture f;
+    if (scenario==0)f.records[f.restart].mode=5;
+    if (scenario==1)f.records.back().mode=5;
+    if (scenario==2)f.records[f.restart].speed[1]=.02;
+    if (scenario==3)f.records.back().speed[1]=.02;
+    f.write();auto m=model(f.c);State state(f.c,m);
+    f.live(state,scenario==4 ? 5 : 4,1000,scenario==5 ? .02 : 0);
+    EXPECT_THROW(state.restore({f.audit.path},true),Failure)<<scenario;
+    EXPECT_FALSE(state.snapshot().reference);
+  }
+}
+TEST(FaultRestart, HealthyDwellAndBoundedShortFaultSuffixAreMandatory) {
+  for (int scenario=0;scenario<5;++scenario) {
+    ColdFixture f;
+    if (scenario==0)f.c.dwell=.1;
+    if (scenario==1)f.records[f.first_fault-1].speed[1]=.02;
+    if (scenario==2) {f.records[f.first_fault+1].q[1]+=.002;f.c.power_cycle_endpoint_tolerance=.01;}
+    if (scenario==3)f.records[f.first_fault+1].mode=5;
+    if (scenario==4) {
+      auto fault=f.records[f.first_fault];f.records.resize(f.first_fault);
+      for (int i=0;i<30;++i) {fault.host=1064000000LL+i*8000000LL;fault.stamp=108+i;f.records.push_back(fault);}
+      f.restart=f.records.size();auto q=f.records.back().q;
+      f.records.push_back({100000000000LL,1,4,q,{}});f.records.push_back({100008000000LL,2,4,q,{}});
+      f.c.power_cycle_fault_restart_offset_bytes=int64_t(f.restart*1448);
+    }
+    f.write();auto m=model(f.c);State state(f.c,m);f.live(state);
+    EXPECT_THROW(state.restore({f.audit.path},true),Failure)<<scenario;
+  }
+}
+TEST(FaultRestart, RestartPostSuffixAndFinalEndpointBoundsRemainStrict) {
+  for (int scenario=0;scenario<3;++scenario) {
+    ColdFixture f;
+    if (scenario==0)f.records[f.restart].q[5]+=.0011;
+    if (scenario==1)f.records.back().q[5]+=.0011;
+    f.write();auto m=model(f.c);State state(f.c,m);auto q=f.records.back().q;
+    if (scenario==2)q[5]+=.0011;
+    f.live(state,4,1000,0,&q);
+    EXPECT_THROW(state.restore({f.audit.path},true),Failure)<<scenario;
+  }
+}
+TEST(FaultRestart, NoOtherGapRegressionOrNearHomeClockBypass) {
+  for (int scenario=0;scenario<5;++scenario) {
+    ColdFixture f;
+    if (scenario==0)f.records.back().host+=1000000000LL;
+    if (scenario==1)f.records.back().stamp=0;
+    if (scenario==2)f.records[f.restart].stamp=0;
+    if (scenario==3)f.records[3].host+=1000000000LL;
+    if (scenario==4)for (auto &r:f.records) {r.q[0]=f.c.home[0];r.q[5]=f.c.home[5];}
+    f.write();auto m=model(f.c);State state(f.c,m);f.live(state,4,scenario==4 ? 0 : 1000);
+    EXPECT_THROW(state.restore({f.audit.path},true),std::exception)<<scenario;
+  }
+}
+TEST(FaultRestart, AttestationUniqueFinalFileAndConsumedOffsetAreRequired) {
+  ColdFixture f;auto m=model(f.c);State state(f.c,m);f.live(state);
+  EXPECT_THROW(state.restore({f.audit.path},false),Failure);
+  EXPECT_THROW(state.restore({f.audit.path,f.audit.path},true),Failure);
+  EndpointAudit extra(f.c);EXPECT_THROW(state.restore({f.audit.path,extra.path},true),Failure);
+  f.c.power_cycle_fault_restart_offset_bytes=1448*100;
+  f.records.resize(f.first_fault);f.write();State unconsumed(f.c,m);f.live(unconsumed);
+  EXPECT_THROW(unconsumed.restore({f.audit.path},true),Failure);
+  EXPECT_FALSE(unconsumed.snapshot().reference);
+}
+TEST(FaultRestart, FailedShaOrFaultTwistLimitDoesNotCommitExistingReference) {
+  for (bool wrong_sha : {true,false}) {
+    ColdFixture f;
+    if (wrong_sha)f.c.power_cycle_fault_restart_sha256=std::string(64,'0');
+    else {
+      f.c.twist_limits={.0205,.0205};f.records[f.first_fault+1].q[5]+=.0032;f.write();
+    }
+    auto m=model(f.c);State state(f.c,m);endpointFeedback(state,f.c,f.c.home,5);ASSERT_NO_THROW(state.initialize());
+    auto measured=feedback(f.c,3);measured.q[5]+=.007;state.update(measured);
+    const auto before=state.snapshot();
+    EXPECT_THROW(state.restore({f.audit.path},true),Failure);
+    const auto after=state.snapshot();ASSERT_TRUE(after.reference);
+    EXPECT_EQ(after.tracker.lastJoints(),before.tracker.lastJoints());
+    EXPECT_DOUBLE_EQ(after.tracker.metrics().total,before.tracker.metrics().total);
+    EXPECT_DOUBLE_EQ(after.tracker.metrics().net,before.tracker.metrics().net);
+  }
 }
