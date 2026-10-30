@@ -1,8 +1,8 @@
 vision_node:
   ros__parameters:
     serial: ""
-    width: 640
-    height: 480
+    width: 1280
+    height: 720
     fps: 30
     opencv_threads: 2
     frame_id: d405_color_optical_frame

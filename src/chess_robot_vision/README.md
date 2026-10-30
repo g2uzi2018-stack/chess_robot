@@ -35,7 +35,7 @@ ros2 launch chess_robot_vision vision.launch.py
 | `/vision/color/camera_info` | `sensor_msgs/CameraInfo` | 校正图平面的 K/P 内参与零畸变系数 |
 | `/vision/frame_info` | `chess_robot_vision/FrameInfo` | 帧号、SDK 时间戳/时间域、深度单位与采集有效状态 |
 
-图像仅在有订阅者时生成对应发布数据；内参与帧信息随相机处理频率发布，默认 640×480、30 Hz。
+图像仅在有订阅者时生成对应发布数据；内参与帧信息随相机处理频率发布，默认 1280×720、请求 30 Hz。
 `publish_raw=true` 允许发布上述未压缩的校正 Image，不表示未经校正的原始镜头图。
 
 本机彩色标定为 Inverse Brown Conrady。节点先用 SDK 对齐深度到彩色图，再校正到共同针孔图平面；彩色双线性、深度最近邻重采样，保留空洞并避免混合物体边缘深度。
@@ -74,3 +74,13 @@ ros2 run chess_robot_vision vision_node --ros-args \
 当前保留两项标定映射测试；旧圆检测/深度估计及其测试随功能一起移除，历史 8 项结果不代表当前存在这些算法。
 有限帧采样保存 `color.png`、`depth_z16.png` 和 `capture.json`，均对应对齐并校正后的图平面，Z16 PNG 保留 SDK 原生单位。
 不再生成候选数组或 `candidates.jpg`。
+
+## 5 当前分辨率与重新插拔复测（2026-10-30）
+
+当前组合配置为 **1280×720、请求30 fps**，源和installed YAML同步；网页最大宽度设为1280，彩色、深度、检测叠加均已验证实际1280×720且序号持续增长。请求帧率不代表已认证无丢帧30 Hz。
+
+用户保留约2m延长线重新插拔后，现有vision_node两次独立启动各完成60帧，独立SDK另完成40对。正式运行旁路观察得到129组同stamp图像/深度/K/FrameInfo，无stream invalid，源帧号严格增长；43次ChArUco检测74–88角点。预览持续运行，机械臂未被控制。详细证据见 [重新插拔复测](../../docs/validation/d405-replug-20261030.md)。
+
+2026-10-29曾出现1280彩色UVC probe/commit STALL，见 [历史验证](../../docs/validation/d405-1280-20261029.md)。本次恢复不能区分接触改善与相机重新上电清除异常，也不能证明延长线长期可靠。历史Python对比统计的K/D传参更正保存在runs/camera_1280_20261029/errata.md，旧多帧RMS不应作为产品或分辨率优势证据。
+
+切换时先stop组合服务、等待2秒、start，并检查真实图像更新；service active本身不能证明相机正常。848回退备份位于runs/camera_replug_20261030_01/camera-{source,installed}-before-deploy.yaml。独占USB探针必须先停止正式相机。

@@ -2,7 +2,7 @@ preview:
   bind_address: 192.168.30.26
   port: 8088
   fps: 30.0
-  max_width: 960
+  max_width: 1280
   jpeg_quality: 75
   idle_timeout_s: 2.0
   stale_timeout_s: 1.0
