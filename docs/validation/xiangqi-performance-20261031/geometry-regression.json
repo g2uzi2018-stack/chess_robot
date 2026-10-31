@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "saved_frames": 3,
+  "frame_roi_cases": 9,
+  "compared_detections": 34,
+  "synthetic_cases": 36,
+  "center_delta_px": 1.1718571004216928e-13,
+  "position_delta_m": 1.1102230246251565e-16,
+  "normal_delta": 0.0,
+  "benchmark": {
+    "before": {
+      "n": 216,
+      "median_ms": 29.63710699987132,
+      "p95_ms": 59.14935476175742
+    },
+    "after": {
+      "n": 216,
+      "median_ms": 12.232198991114274,
+      "p95_ms": 17.111806504544802
+    }
+  },
+  "identical_fields": "All non-timing output fields; numeric tolerance: pixel 1e-6, metres/normals 1e-9",
+  "method": "Cached identical detector outputs, alternating order, full/ROI saved frames; existing live service left running",
+  "weights_precision_thresholds_unchanged": true,
+  "image_edge_masks_use_original_path": true,
+  "robot_commands": 0
+}

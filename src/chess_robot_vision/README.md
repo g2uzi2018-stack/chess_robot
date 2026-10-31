@@ -84,3 +84,17 @@ ros2 run chess_robot_vision vision_node --ros-args \
 2026-10-29曾出现1280彩色UVC probe/commit STALL，见 [历史验证](../../docs/validation/d405-1280-20261029.md)。本次恢复不能区分接触改善与相机重新上电清除异常，也不能证明延长线长期可靠。历史Python对比统计的K/D传参更正保存在runs/camera_1280_20261029/errata.md，旧多帧RMS不应作为产品或分辨率优势证据。
 
 切换时先stop组合服务、等待2秒、start，并检查真实图像更新；service active本身不能证明相机正常。848回退备份位于runs/camera_replug_20261030_01/camera-{source,installed}-before-deploy.yaml。独占USB探针必须先停止正式相机。
+
+## 6 现场曝光控制（2026-10-31）
+
+1280×720、请求30Hz保持不变。黑色桌垫下自动曝光导致浅色棋子过曝及明显噪声；本次对比自动与2/5/10/16/25ms、固定增益16后，采用启动参数 exposure_mode: manual、exposure_us: 25000.0（微秒）、gain: 16.0。D405彩色来自立体模块，曝光同时影响彩色和深度；光照变化后需重新观察。25ms档整帧非零深度约85.36%，10ms档约71.77%；这不是棋子定位精度。
+
+exposure_mode 支持 keep（代码默认，保留SDK现状）、auto、manual。所有参数仍仅启动时读取，现场YAML默认显式manual；SDK范围检查后写入，原始曝光/增益元数据附在FrameInfo.diagnostic。启动日志打印实际彩色流尺寸/帧率与曝光读回。不改变内参、校正、彩深对齐或手眼外参。更换光照时可改回auto并重启组合相机预览服务。
+
+源码、构建、曝光对比、部署前二进制及YAML备份、同步采样和只读识别试验见 runs/xiangqi_recognition_20261031_02/。实验Python预览不属于正式C++位姿节点，不发布生产TF、不发动作。详细复现见 docs/validation/xiangqi-recognition-20261031.md。
+
+## 7 720p30 发布与传输优化（2026-10-31）
+
+保持1280×720、30fps、曝光25000us、增益16。预转换独立的彩色线性/深度最近邻remap表，OpenCV线程2→4；视觉启动脚本在未显式覆盖时使用`config/large_images_fastdds.xml`（Fast DDS共享内存段64MiB、最大消息8MiB、loopback UDP发现）。只作用于相机/预览和只读叠加渲染，不改变全局DDS或机械臂配置。
+
+当前暗场/关臂环境，独立C++观察30秒获得900组同stamp RGB/深度/K/FrameInfo，四路30Hz、无无效或源帧跳跃，局域网叠加实收29.7Hz。4组720p输入校正前后彩色/Z16像素完全一致。开灯并恢复机械臂反馈后的实时三维识别满负载仍待验证；此结果不作长期无丢帧认证。详情、回退与原始证据见[本轮验证](../../docs/validation/xiangqi-camera-30hz-20261031.md)。

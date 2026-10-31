@@ -1,12 +1,15 @@
 vision_node:
   ros__parameters:
-    serial: ""
+    serial: ''
     width: 1280
     height: 720
     fps: 30
-    opencv_threads: 2
+    opencv_threads: 4
     frame_id: d405_color_optical_frame
     stale_timeout_s: 0.5
     publish_raw: true
     max_frames: 0
-    evidence_dir: ""
+    evidence_dir: ''
+    exposure_mode: manual
+    exposure_us: 25000.0
+    gain: 16.0

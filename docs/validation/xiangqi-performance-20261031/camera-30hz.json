@@ -1,0 +1,288 @@
+{
+  "task": "D405 720p 30Hz capture/publication/preview optimization",
+  "date": "2026-10-31",
+  "scope": "Read-only visual services; arm feedback unavailable, current image dark; not a lit-scene detection accuracy or live 3D FPS evaluation",
+  "preserved": {
+    "width": 1280,
+    "height": 720,
+    "requested_fps": 30,
+    "exposure_us": 25000,
+    "gain": 16,
+    "model": "unchanged",
+    "calibration": "unchanged",
+    "depth_interpolation": "nearest"
+  },
+  "supported_rgbd_fps_at_1280x720": [
+    5,
+    15,
+    30
+  ],
+  "usb_link": "USB 3.x, 5 Gbit/s",
+  "changes": [
+    "OpenCV threads 2 to 4",
+    "Preconvert separate linear-color and nearest-depth remap tables once",
+    "Visual launchers use Fast DDS SHM 64MiB segment / 8MiB max message; loopback UDP discovery"
+  ],
+  "direct_sdk_probes": [
+    {
+      "mode": "raw_no_ROS",
+      "width": 1280,
+      "height": 720,
+      "requested_fps": 30,
+      "exposure_us": 25000,
+      "frames": 300,
+      "wall_seconds": 10.0018,
+      "delivered_hz": 29.9946,
+      "source_hz": 29.9962,
+      "source_gaps": 0,
+      "alignment_median_ms": 0,
+      "alignment_p95_ms": 0,
+      "rectify_convert_median_ms": 0,
+      "wait_median_ms": 33.3346,
+      "intrinsics_equal": false,
+      "depth_to_color_translation": [
+        -7.3637e-05,
+        2.66126e-05,
+        0.000304859
+      ],
+      "depth_to_color_rotation": [
+        0.999962,
+        0.0010197,
+        -0.00861096,
+        -0.00101007,
+        0.999999,
+        0.00112248,
+        0.00861209,
+        -0.00111374,
+        0.999962
+      ]
+    },
+    {
+      "mode": "align_rectify_no_ROS",
+      "width": 1280,
+      "height": 720,
+      "requested_fps": 30,
+      "exposure_us": 25000,
+      "frames": 289,
+      "wall_seconds": 10.0322,
+      "delivered_hz": 28.8072,
+      "source_hz": 30.0219,
+      "source_gaps": 11,
+      "alignment_median_ms": 6.79809,
+      "alignment_p95_ms": 7.723,
+      "rectify_convert_median_ms": 26.4948,
+      "wait_median_ms": 0.008704,
+      "intrinsics_equal": false,
+      "depth_to_color_translation": [
+        -7.3637e-05,
+        2.66126e-05,
+        0.000304859
+      ],
+      "depth_to_color_rotation": [
+        0.999962,
+        0.0010197,
+        -0.00861096,
+        -0.00101007,
+        0.999999,
+        0.00112248,
+        0.00861209,
+        -0.00111374,
+        0.999962
+      ]
+    }
+  ],
+  "remap_regression": {
+    "passed": true,
+    "full_resolution_cases": 4,
+    "max_color_delta": 0,
+    "max_z16_delta": 0,
+    "benchmarks": [
+      {
+        "opencv_threads": 1,
+        "n_each": 60,
+        "float_map_median_ms": 45.1925,
+        "fixed_map_median_ms": 43.0008
+      },
+      {
+        "opencv_threads": 2,
+        "n_each": 60,
+        "float_map_median_ms": 24.3492,
+        "fixed_map_median_ms": 23.047
+      },
+      {
+        "opencv_threads": 4,
+        "n_each": 60,
+        "float_map_median_ms": 14.9839,
+        "fixed_map_median_ms": 14.1938
+      }
+    ],
+    "method": "Alternating old/new, 6 warmup rounds, same 1280x720 inputs; ROS camera remains running"
+  },
+  "ros_before": {
+    "seconds": 12,
+    "observer": "C++ metadata callbacks; no pixel processing",
+    "rates_hz": [
+      23.1667,
+      23,
+      24.3333,
+      24.3333
+    ],
+    "rate_order": [
+      "color",
+      "depth",
+      "CameraInfo",
+      "FrameInfo"
+    ],
+    "matched_stamps": 265,
+    "invalid": 0,
+    "source_device_hz": 29.9925,
+    "source_gaps": 67,
+    "K": [
+      654.554321289,
+      0,
+      645.098754883,
+      0,
+      654.255126953,
+      371.553039551,
+      0,
+      0,
+      1
+    ],
+    "robot_commands": 0
+  },
+  "ros_after_maps_threads": {
+    "seconds": 20,
+    "observer": "C++ metadata callbacks; no pixel processing",
+    "rates_hz": [
+      28.6,
+      28.75,
+      29.85,
+      29.85
+    ],
+    "rate_order": [
+      "color",
+      "depth",
+      "CameraInfo",
+      "FrameInfo"
+    ],
+    "matched_stamps": 556,
+    "invalid": 0,
+    "source_device_hz": 29.9945,
+    "source_gaps": 2,
+    "K": [
+      654.554321289,
+      0,
+      645.098754883,
+      0,
+      654.255126953,
+      371.553039551,
+      0,
+      0,
+      1
+    ],
+    "robot_commands": 0
+  },
+  "ros_final": {
+    "seconds": 30,
+    "observer": "C++ metadata callbacks; no pixel processing",
+    "rates_hz": [
+      30,
+      30,
+      30,
+      30
+    ],
+    "rate_order": [
+      "color",
+      "depth",
+      "CameraInfo",
+      "FrameInfo"
+    ],
+    "matched_stamps": 900,
+    "invalid": 0,
+    "source_device_hz": 30.0025,
+    "source_gaps": 0,
+    "K": [
+      654.554321289,
+      0,
+      645.098754883,
+      0,
+      654.255126953,
+      371.553039551,
+      0,
+      0,
+      1
+    ],
+    "robot_commands": 0
+  },
+  "lan_before": {
+    "channel": "detection",
+    "seconds": 6.028615599963814,
+    "frames": 129,
+    "unique_display_hz": 21.364348313945726,
+    "encoded_hz": 21.39794748246584,
+    "received_hz": 21.39794748246584,
+    "mean_http_ms": 38.84119224462066,
+    "MiB_per_s": 0.5222412461746126,
+    "configured_limit_hz": 30,
+    "method": "Windows client directly over LAN; unique JPEG sequences; one request in flight"
+  },
+  "lan_final": {
+    "channel": "detection",
+    "seconds": 10.027554300031625,
+    "frames": 298,
+    "unique_display_hz": 29.719506695349498,
+    "encoded_hz": 30.117014674161133,
+    "received_hz": 30.017289460008282,
+    "mean_http_ms": 20.774959399241443,
+    "MiB_per_s": 0.7255685148417788,
+    "configured_limit_hz": 30,
+    "method": "Windows client directly over LAN; unique JPEG sequences; one request in flight"
+  },
+  "recognition_replay_during_intermediate_camera_and_lan_test": {
+    "kind": "saved_input_replay_not_live",
+    "frames": 108,
+    "wall_s": 5.804247750987997,
+    "throughput_hz": 18.607062384891528,
+    "geometry_median_ms": 15.231534489430487,
+    "detector_median_ms": 49.07768400153145,
+    "same_fixed_sequence": true,
+    "precision": "FP32",
+    "imgsz": 640,
+    "source_stamps_are_historical": true,
+    "robot_commands": 0
+  },
+  "deployment": {
+    "status": "verified_30s_900_matched_frames_and_29.7Hz_LAN",
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "exposure_us": 25000,
+    "gain": 16,
+    "opencv_threads": 4,
+    "changes": [
+      "OpenCV preconverted linear and separate nearest-neighbour rectification maps",
+      "OpenCV thread count 2 to 4"
+    ],
+    "binary_sha256": "6dbe1c879048d8cc2b0325e8d54fe1884fca648c7614fd93d0d52e786d1e09e6",
+    "backup_dir": "/home/kuang/workspace/chess_robot/runs/xiangqi_camera_rate_20261031_01",
+    "arm_commands": 0,
+    "gripper_commands": 0,
+    "fastdds_segment_bytes": 67108864,
+    "fastdds_max_message_bytes": 8388608,
+    "transport_config": "/home/kuang/workspace/chess_robot/src/chess_robot_vision/config/large_images_fastdds.xml",
+    "transport_launchers": [
+      "/home/kuang/workspace/chess_robot/src/chess_robot_preview/scripts/preview_service.sh",
+      "/home/kuang/workspace/chess_robot/tools/testing/xiangqi_tracking/start_tracking_renderer.sh"
+    ],
+    "transport_scope": "camera/preview and tracking renderer only; loopback UDP discovery plus SHM",
+    "camera_runtime_dropin_removed": true,
+    "auto_start_enabled": false
+  },
+  "limitations": [
+    "Different sample window lengths; not a long-duration reliability certification",
+    "Final 30 s test was in current dark/arm-feedback-unavailable scene",
+    "Current 3D recognition remains gated on fresh stopped arm feedback"
+  ],
+  "robot_commands": 0,
+  "gripper_commands": 0
+}

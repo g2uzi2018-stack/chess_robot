@@ -1,0 +1,33 @@
+{
+  "wall_seconds": 10.0,
+  "all_messages": 74,
+  "valid_observations": 74,
+  "valid_observation_hz": 7.4,
+  "processing_median_ms": 92.0001839986071,
+  "latency_median_ms": 206.91576750000002,
+  "inference_median_ms": 48.300578506314196,
+  "compute": {
+    "predictor_device": "cuda:0",
+    "model_parameter_device": "cuda:0",
+    "boxes_device": "cuda:0",
+    "masks_device": "cuda:0",
+    "fp16": false
+  },
+  "track_ids": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "latest_stages": {
+    "image_decode": 2.0493660122156143,
+    "image_age_at_processing_start": 119.91006499999999,
+    "analysis": 90.25197199662216,
+    "worker_roundtrip": 114.18191299890168,
+    "tracking": 2.6386700046714395,
+    "iteration_before_publish": 119.2778890253976,
+    "debug_image_generated": false
+  },
+  "source_stamp_preserved": true,
+  "robot_commands": 0
+}

@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "saved_captures": 3,
+  "frame_roi_cases": 9,
+  "compared_detections": 34,
+  "same_classes_counts_validity_masks": true,
+  "max_center_delta_px": 0.0,
+  "max_position_delta_m": 0.0,
+  "same_weights_imgsz_fp32_thresholds": true,
+  "cpu_gpu_overlaps": 8,
+  "pair_and_slot_mismatch_rejected": [
+    "pair",
+    "slot"
+  ],
+  "shared_memory_released": true,
+  "original_input_bytes_unchanged": true,
+  "replay_wall_s": 0.9994512720149942,
+  "scope": "Saved-input regression only, not a new labelled accuracy evaluation; production services left running",
+  "robot_commands": 0
+}

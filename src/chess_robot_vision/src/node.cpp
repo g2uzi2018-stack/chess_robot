@@ -27,6 +27,12 @@ class VisionNode final : public rclcpp::Node {
     const int opencv_threads=declare_parameter<int>("opencv_threads",2);
     publish_raw_ = declare_parameter<bool>("publish_raw",true);
     stale_s_ = declare_parameter<double>("stale_timeout_s",0.5);
+    exposure_mode_ = declare_parameter<std::string>("exposure_mode", "keep");
+    exposure_us_ = declare_parameter<double>("exposure_us", 10000.0);
+    gain_ = declare_parameter<double>("gain", 16.0);
+    if ((exposure_mode_!="keep" && exposure_mode_!="auto" && exposure_mode_!="manual") ||
+        !std::isfinite(exposure_us_) || exposure_us_<=0 || !std::isfinite(gain_) || gain_<0)
+      throw std::invalid_argument("invalid exposure_mode/exposure_us/gain");
     if (width_<=0 || height_<=0 || fps_<=0 || max_frames_<0 || opencv_threads<1 || frame_id_.empty() ||
         !std::isfinite(stale_s_) || stale_s_ < 0.1) throw std::invalid_argument("invalid stream parameters");
     cv::setNumThreads(opencv_threads);
@@ -64,9 +70,36 @@ class VisionNode final : public rclcpp::Node {
     config.enable_stream(RS2_STREAM_DEPTH,width_,height_,RS2_FORMAT_Z16,fps_);
     config.enable_stream(RS2_STREAM_COLOR,width_,height_,RS2_FORMAT_BGR8,fps_);
     profile_=pipeline_.start(config); running_=true;
+    // D405 derives color from the stereo module: exposure affects BOTH RGB and depth.
+    auto sensor=profile_.get_device().first<rs2::depth_sensor>();
+    auto checked_set=[&sensor](rs2_option option, double value) {
+      if (!sensor.supports(option)) throw std::runtime_error("unsupported camera exposure option");
+      auto range=sensor.get_option_range(option);
+      if(value<range.min || value>range.max) throw std::invalid_argument("camera exposure option outside SDK range");
+      sensor.set_option(option,static_cast<float>(value));
+    };
+    // keep preserves prior SDK behavior; manual settings are explicit startup parameters.
+    if(exposure_mode_=="auto") checked_set(RS2_OPTION_ENABLE_AUTO_EXPOSURE,1);
+    if(exposure_mode_=="manual") {
+      checked_set(RS2_OPTION_ENABLE_AUTO_EXPOSURE,0);
+      checked_set(RS2_OPTION_GAIN,gain_);
+      checked_set(RS2_OPTION_EXPOSURE,exposure_us_);
+    }
+    RCLCPP_INFO(get_logger(),"D405 exposure_mode=%s auto=%.0f exposure_us=%.0f gain=%.0f actual_color_profile=%dx%d@%d",
+      exposure_mode_.c_str(),sensor.get_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE),
+      sensor.get_option(RS2_OPTION_EXPOSURE),sensor.get_option(RS2_OPTION_GAIN),
+      profile_.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>().width(),
+      profile_.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>().height(),
+      profile_.get_stream(RS2_STREAM_COLOR).fps());
     scale_=profile_.get_device().first<rs2::depth_sensor>().get_depth_scale();
     source_intrinsics_=profile_.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>().get_intrinsics();
     vision::rectification_maps(source_intrinsics_,rectify_x_,rectify_y_);
+    // Preconvert once using OpenCV's own interpolation tables. Depth needs its
+    // separate nearest-neighbour map; sharing the linear map would change holes.
+    cv::convertMaps(rectify_x_,rectify_y_,linear_map_,linear_weights_,CV_16SC2,false);
+    cv::Mat unused;
+    cv::convertMaps(rectify_x_,rectify_y_,nearest_map_,unused,CV_16SC2,true);
+    rectify_x_.release(); rectify_y_.release();
     RCLCPP_INFO(get_logger(),"rectifying SDK color model %s to pinhole output",rs2_distortion_to_string(source_intrinsics_.model));
     RCLCPP_INFO(get_logger(),"D405 serial=%s firmware=%s USB=%s depth_scale=%.9f m/unit",
       serial_.c_str(),profile_.get_device().get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION),
@@ -106,9 +139,9 @@ class VisionNode final : public rclcpp::Node {
       cv::Mat source_bgr(height_,width_,CV_8UC3,const_cast<void *>(color.get_data()),color.get_stride_in_bytes());
       cv::Mat source_z16(height_,width_,CV_16UC1,const_cast<void *>(depth.get_data()),depth.get_stride_in_bytes());
       cv::Mat bgr,z16;
-      cv::remap(source_bgr,bgr,rectify_x_,rectify_y_,cv::INTER_LINEAR,cv::BORDER_CONSTANT);
+      cv::remap(source_bgr,bgr,linear_map_,linear_weights_,cv::INTER_LINEAR,cv::BORDER_CONSTANT);
       // Nearest-neighbour preserves Z16 units/holes, avoiding depth blending across object edges.
-      cv::remap(source_z16,z16,rectify_x_,rectify_y_,cv::INTER_NEAREST,cv::BORDER_CONSTANT);
+      cv::remap(source_z16,z16,nearest_map_,cv::Mat(),cv::INTER_NEAREST,cv::BORDER_CONSTANT);
       std_msgs::msg::Header header; header.stamp=received; header.frame_id=frame_id_;
       vision::msg::FrameInfo result;
       result.header=header; result.color_frame_number=color.get_frame_number();
@@ -118,6 +151,10 @@ class VisionNode final : public rclcpp::Node {
       result.depth_scale_m=scale_;
       result.stream_ok=true;
       result.diagnostic="synchronized rectified RGB-D; no detection or pose estimation";
+      if(color.supports_frame_metadata(RS2_FRAME_METADATA_ACTUAL_EXPOSURE))
+        result.diagnostic += "; exposure_us="+std::to_string(color.get_frame_metadata(RS2_FRAME_METADATA_ACTUAL_EXPOSURE));
+      if(color.supports_frame_metadata(RS2_FRAME_METADATA_GAIN_LEVEL))
+        result.diagnostic += "; gain="+std::to_string(color.get_frame_metadata(RS2_FRAME_METADATA_GAIN_LEVEL));
       if (std::chrono::duration<double>(std::chrono::steady_clock::now()-steady_now).count()>stale_s_) {
         invalid("processing exceeded stale_timeout_s; frame discarded"); return;
       }
@@ -183,7 +220,9 @@ class VisionNode final : public rclcpp::Node {
   int width_,height_,fps_,max_frames_,count_{0};
   bool have_frame_{false}; uint64_t last_color_number_{0},last_depth_number_{0};
   std::string serial_,frame_id_,evidence_dir_;
+  std::string exposure_mode_; double exposure_us_{10000.0},gain_{16.0};
   rs2_intrinsics source_intrinsics_{}; cv::Mat rectify_x_,rectify_y_;
+  cv::Mat linear_map_,linear_weights_,nearest_map_;
   std::chrono::steady_clock::time_point last_frame_,last_warning_{};
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_;
