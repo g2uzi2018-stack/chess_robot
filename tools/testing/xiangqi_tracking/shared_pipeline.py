@@ -73,23 +73,33 @@ class Pipeline:
     def submit(self,color,depth,metadata,roi=None,draw=False,context=None):
         assert self.can_submit(),'Pipeline full; never overwrite an in-flight frame'
         slot=self.free.pop(0);job=dict(slot=slot,job_id=self.next_id,metadata=metadata,roi=roi,draw=draw,context=context,started=time.monotonic());self.next_id+=1
-        self.slots.write(slot,job['job_id'],metadata['stamp_ns'],color,depth)
-        future=self.gpu.submit(detect_slot,job);self.gpu_job=(job,future)
+        try:
+            self.slots.write(slot,job['job_id'],metadata['stamp_ns'],color,depth)
+            future=self.gpu.submit(detect_slot,job);self.gpu_job=(job,future)
+        except BaseException:
+            self.free.append(slot);raise
         return job['job_id']
     def poll(self):
         if self.gpu_job is not None:
             job,future=self.gpu_job
             if future.done():
-                detection=future.result();self.geometry_jobs.append((job,self.geometry.submit(geometry_slot,job,detection)));self.gpu_job=None
+                self.gpu_job=None
+                try:
+                    detection=future.result();self.geometry_jobs.append((job,self.geometry.submit(geometry_slot,job,detection)))
+                except BaseException:
+                    self.free.append(job['slot']);raise
         ready=[]
         while self.geometry_jobs and self.geometry_jobs[0][1].done():
-            job,future=self.geometry_jobs.pop(0);record,overlay=future.result()
-            assert job['job_id']>self.last_returned and record['pipeline_job_id']==job['job_id']
-            self.last_returned=job['job_id'];self.free.append(job['slot']);ready.append((job,record,overlay))
+            job,future=self.geometry_jobs.pop(0)
+            try:
+                record,overlay=future.result()
+                assert job['job_id']>self.last_returned and record['pipeline_job_id']==job['job_id']
+                self.last_returned=job['job_id'];ready.append((job,record,overlay))
+            finally:self.free.append(job['slot'])
         return ready
     def busy(self):return self.gpu_job is not None or bool(self.geometry_jobs)
     def close(self):
         try:
-            self.gpu.shutdown(wait=True,cancel_futures=True)
-            self.geometry.shutdown(wait=True,cancel_futures=True)
+            try:self.gpu.shutdown(wait=True,cancel_futures=True)
+            finally:self.geometry.shutdown(wait=True,cancel_futures=True)
         finally:self.slots.close()

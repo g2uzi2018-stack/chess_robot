@@ -64,12 +64,42 @@ class Experiment:
         if self.model is not None:assert self.model.task=='segment'
         self.imgsz=imgsz
         self.half=half
-        calibration=yaml.safe_load(CALIB.read_text()); self.X=np.array(calibration['flange_T_camera'])
-        assert calibration['parent_frame']=='Link6' and calibration['child_frame']=='d405_color_optical_frame'
-        self.robot=ET.parse(URDF).getroot()
-        sys.path.insert(0,str(ROOT/'tools/description'));from rigid_geometry import fk
-        self.fk=fk
-        self.identity=dict(weights=str(WEIGHTS),weights_sha256=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest(),calibration=str(CALIB),calibration_sha256=hashlib.sha256(CALIB.read_bytes()).hexdigest(),urdf_sha256=hashlib.sha256(URDF.read_bytes()).hexdigest(),ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz)
+        self.X=self.robot=self.fk=None;self.base_model_reason='base model unavailable'
+        calibration_hash=urdf_hash=None
+        try:
+            calibration=yaml.safe_load(CALIB.read_text());X=np.array(calibration['flange_T_camera'],dtype=float)
+            assert calibration['parent_frame']=='Link6' and calibration['child_frame']=='d405_color_optical_frame'
+            assert X.shape==(4,4) and np.isfinite(X).all() and np.allclose(X[3],[0,0,0,1])
+            assert np.allclose(X[:3,:3].T@X[:3,:3],np.eye(3),atol=1e-6) and abs(np.linalg.det(X[:3,:3])-1)<1e-6
+            robot=ET.parse(URDF).getroot()
+            sys.path.insert(0,str(ROOT/'tools/description'));from rigid_geometry import fk
+            self.X,self.robot,self.fk=X,robot,fk;self.base_model_reason='model loaded; live qualification required'
+            calibration_hash=hashlib.sha256(CALIB.read_bytes()).hexdigest();urdf_hash=hashlib.sha256(URDF.read_bytes()).hexdigest()
+        except Exception as e:
+            self.base_model_reason='base model unavailable: '+type(e).__name__
+        self.identity=dict(weights=str(WEIGHTS),weights_sha256=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest(),calibration=str(CALIB),calibration_sha256=calibration_hash,urdf_sha256=urdf_hash,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz)
+
+    def base_transform(self,metadata):
+        # Eligibility is independent of reference_valid/motion readiness. Legacy
+        # offline captures still require the same measured-feedback checks.
+        from qualification import measured_stopped
+        arm,joint=metadata.get('arm',{}),metadata.get('joint',{})
+        if not metadata.get('base_eligible',False):
+            return None,None,metadata.get('base_reason','synchronized stopped feedback unavailable')
+        if not measured_stopped(arm,joint,metadata.get('joint_age_s',0)):
+            return None,None,'measured feedback rejected'
+        if self.X is None or self.fk is None:return None,None,self.base_model_reason
+        try:
+            poses=self.fk(self.robot,dict(zip(joint['name'],joint['position'])))
+            transform=np.array(poses['Link6'])@self.X
+            position=arm['tcp']['pose']['position'];actual=np.array([position[k] for k in ('x','y','z')])
+            error=float(np.linalg.norm(np.array(poses['grasp_link'])[:3,3]-actual))
+            assert np.isfinite(transform).all() and np.isfinite(error) and error<.0001
+            assert np.allclose(transform[:3,:3].T@transform[:3,:3],np.eye(3),atol=1e-6) and abs(np.linalg.det(transform[:3,:3])-1)<1e-6
+            assert arm['tcp']['header']['frame_id']=='base_link'
+            return transform,error,'read-only measured FK; motion qualification independent'
+        except Exception:
+            return None,None,'arm model FK mismatch or invalid transform'
 
     def detect(self,color,roi=None):
         assert self.model is not None
@@ -85,13 +115,8 @@ class Experiment:
         if detection is None:detection=self.detect(color,roi)
         start=time.monotonic(); K=np.array(metadata['K']).reshape(3,3)
         assert color.shape[:2]==depth.shape and depth.dtype==np.float32
-        joint=metadata['joint']; assert all('joint'+str(i) in joint['name'] for i in range(1,7))
-        poses=self.fk(self.robot,dict(zip(joint['name'],joint['position'])))
-        transform=np.array(poses['Link6'])@self.X
-        # Verify the offline FK matches the running arm's model TCP before claiming base coordinates.
-        position=metadata['arm']['tcp']['pose']['position']; actual=np.array([position[k] for k in ('x','y','z')])
-        fk_error=float(np.linalg.norm(np.array(poses['grasp_link'])[:3,3]-actual))
-        base_valid=fk_error<.0001 and metadata['arm']['tcp']['header']['frame_id']=='base_link'
+        transform,fk_error,base_reason=self.base_transform(metadata);base_valid=transform is not None
+        joint=metadata.get('joint',{})
         x1,y1,x2,y2=roi if roi is not None else (0,0,color.shape[1],color.shape[0])
         assert detection['roi_xyxy']==[x1,y1,x2,y2] and detection['image_size']==[color.shape[1],color.shape[0]]
         predictions=detection['predictions'];names=detection['names']
@@ -118,26 +143,32 @@ class Experiment:
                     outline=max(contours,key=cv2.contourArea);outline=cv2.approxPolyDP(outline,1.5,True)
                     record['mask_outline_xy']=(outline.reshape(-1,2)+[x1,y1]).tolist()
                 if draw:cv2.drawContours(overlay,contours,-1,(0,230,0),2,offset=(x1,y1))
-            if record.get('valid') and base_valid:
+            record['detection_valid']=True
+            record['camera_geometry_valid']=bool(record.get('valid'))
+            record['base_geometry_valid']=bool(record['camera_geometry_valid'] and base_valid)
+            record['valid']=record['base_geometry_valid']
+            if record['base_geometry_valid']:
                 record['base_surface_center_m']=(transform@np.r_[record['camera_surface_center_m'],1])[:3].tolist()
                 record['base_surface_normal']=(transform[:3,:3]@record['camera_surface_normal']).tolist()
-            elif record.get('valid'):record.update(valid=False,reason='arm model FK mismatch')
-            record['grasp_ready']=False
+            elif record['camera_geometry_valid']:record.update(valid=False,reason=base_reason)
+            record['motion_ready']=record['grasp_ready']=False
+            record['camera_frame_id']='d405_color_optical_frame';record['base_frame_id']='base_link'
             record['touches_processing_edge']=bool(box[0]<x1+2 or box[1]<y1+2 or box[2]>x2-2 or box[3]>y2-2)
+            record['camera_complete_center_target']=bool(record['camera_geometry_valid'] and not record['touches_image_edge'] and not record['touches_processing_edge'])
             record['complete_center_target']=bool(record.get('valid') and not record['touches_image_edge'] and not record['touches_processing_edge'])
             x,y=map(int,box[:2])
             if draw:cv2.putText(overlay,f"#{number} {name} {conf[i]:.2f}",(max(2,x),max(65,y-8)),cv2.FONT_HERSHEY_SIMPLEX,.6,(0,230,0),2)
-            if draw and record.get('valid'):
+            if draw and record.get('camera_geometry_valid'):
                 u,v=map(lambda x:int(round(x)),record['center_pixel']);cv2.drawMarker(overlay,(u,v),(0,255,255),cv2.MARKER_CROSS,22,2)
-                xyz=np.array(record['base_surface_center_m'])*1000
-                cv2.putText(overlay,f"base mm {xyz[0]:.1f},{xyz[1]:.1f},{xyz[2]:.1f}",(max(2,x),min(color.shape[0]-12,int(box[3])+20)),cv2.FONT_HERSHEY_SIMPLEX,.43,(0,255,255),1)
+                xyz=np.array(record['camera_surface_center_m'])*1000
+                cv2.putText(overlay,f"camera mm {xyz[0]:.1f},{xyz[1]:.1f},{xyz[2]:.1f}",(max(2,x),min(color.shape[0]-12,int(box[3])+20)),cv2.FONT_HERSHEY_SIMPLEX,.43,(0,255,255),1)
             detections.append(record)
         elapsed=time.monotonic()-start
         if draw:
             cv2.rectangle(overlay,(0,0),(color.shape[1],48),(0,0,0),-1)
             cv2.putText(overlay,f'EXPERIMENT / {color.shape[1]}x{color.shape[0]} / YOLO imgsz={self.imgsz} / {len(groups)} objects / {elapsed*1000:.0f}ms',(8,20),cv2.FONT_HERSHEY_SIMPLEX,.5,(0,255,255),1)
             cv2.putText(overlay,'Classes unverified | surface XYZ only | no grasp commands',(8,40),cv2.FONT_HERSHEY_SIMPLEX,.48,(0,255,255),1)
-        record=dict(stamp_ns=metadata['stamp_ns'],source_joint_position_rad=joint['position'],frame_id='base_link',identity=detection['identity'],compute=detection['compute'],image_size=[color.shape[1],color.shape[0]],inference_roi_xyxy=[x1,y1,x2,y2],detections=detections,raw_detection_count=len(boxes),deduplicated_count=len(groups),fk_tcp_error_m=fk_error,base_transform_valid=base_valid,inference_speed_ms=detection['inference_speed_ms'],geometry_ms=elapsed*1000,detector_ms=detection['detector_s']*1000,processing_s=elapsed+detection['detector_s'],full_6d_pose_estimated=False,robot_commands=0)
+        record=dict(stamp_ns=metadata['stamp_ns'],source_joint_position_rad=joint.get('position',[]),source_joint_names=joint.get('name',[]),frame_id='base_link',camera_frame_id='d405_color_optical_frame',base_frame_id='base_link',schema='xiangqi_measurements/v2',detection_valid=True,camera_geometry_valid=any(d['camera_geometry_valid'] for d in detections),motion_ready=False,grasp_ready=False,base_transform_reason=base_reason,identity=detection['identity'],compute=detection['compute'],image_size=[color.shape[1],color.shape[0]],inference_roi_xyxy=[x1,y1,x2,y2],detections=detections,raw_detection_count=len(boxes),deduplicated_count=len(groups),fk_tcp_error_m=fk_error,base_transform_valid=base_valid,inference_speed_ms=detection['inference_speed_ms'],geometry_ms=elapsed*1000,detector_ms=detection['detector_s']*1000,processing_s=elapsed+detection['detector_s'],full_6d_pose_estimated=False,robot_commands=0)
         return record,overlay
 
 def main():

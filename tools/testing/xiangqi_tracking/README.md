@@ -4,7 +4,7 @@
 
 ## 行为
 
-- Python实验识别与C++画面绘制分开：识别输入按同stamp配对彩色/深度/内参/帧信息，再匹配25ms内的实测关节；连续停稳0.6秒后计算表面位置。stamp为主机从SDK取帧时间，早于对齐/校正，不是曝光时刻；25ms条件不代表硬件曝光同步精度。
+- Python 实时检测独立运行；可信停稳区间内允许相邻图像复用同一实测关节状态。停稳后采样两秒，锁定不可变快照并供单一操作消费。接口、去重、质量门限、失效与历史语义见 [稳定观测说明](STABLE_OBSERVATION.md)。stamp 为主机 SDK 取帧时间，不是曝光时刻。
 - 指定best.pt仍以imgsz=640推理；Home视角使用自适应局部裁剪，每18次识别执行一次整图侦察。裁剪/缩放坐标返回原始1280×720图平面；裁剪边缘不建立完整中心目标。类别是模型预测，Home视角下存在明显错分/波动。
 - `piece_tracker.py`以基座下位置、有限速度预测与阵营不一致惩罚做全局关联；类别另经置信度加权投票稳定显示。新目标累计命中3次后确认，短时漏检不清零。编号单调递增、不复用，状态原子写入运行目录`track-state.json`。
 - 一般关联窗口为60秒；启动时前三个含有效完整目标的更新帧，允许对超时旧轨迹按原位置5mm门限尝试恢复。近似同价关联标为不明确，不分配确定编号。相同外观棋子快速交叉或长时间遮挡仍可能失去身份，不能保证物理实例的永久身份。
@@ -78,3 +78,10 @@ chess-robot-xiangqi-render-20261031.service
 仓库内摘要证据见[`docs/validation/xiangqi-performance-20261031/`](../../../docs/validation/xiangqi-performance-20261031/)。完整原始采样、模型、运行状态和构建仍保存在现场`runs/`及训练工程，不随Git分发。各历史段落的“当前/未提交”指其记录阶段，实际版本状态以Git为准。
 
 CPU跟踪自检（无ROS发布）：使用上述Python运行器执行`piece_tracker.py`。叠加隔离测试见`src/chess_robot_tracking_preview/test/test_tracking_overlay.py`，其ROS domain固定119，不接触现场domain90。
+
+
+## 2026-11-01 独立图像路径 / v2 资格字段
+
+检测及相机表面几何不再要求 arm/reference/mode5；base 资格仍要求同步可信停稳反馈和模型/FK 校验。旧 detection.valid 仍表示基座几何合格，camera-only 使用 camera_geometry_valid；顶层 frame_id 仍为 base_link，camera 字段明确属于 d405_color_optical_frame。motion_ready/grasp_ready 始终 false。无 base 不提供稳定 base ID；原 track-state.json 不读取、不改写，v2 会话 ID 不跨中断继承。渲染支持预测/相机坐标及缺源恢复。详见 docs/validation/history-vision-decouple-20261101.md。
+
+启动脚本支持 ROS_DOMAIN_ID、ROS_LOCALHOST_ONLY 及 ROS remap 参数。识别另可设 XIANGQI_SOURCE_DIR / XIANGQI_RUN_DIR；渲染可设 XIANGQI_RENDER_PREFIX。脚本不会启动 arm、夹爪、相机或手眼驱动。生产常驻识别用 XIANGQI_BENCHMARK_LOCK 指向 runs/perf_ceiling_20261031/benchmark.lock，持锁覆盖在途 GPU/CPU 槽并周期让出；外层已持锁的隔离测试不设置该可选变量。
