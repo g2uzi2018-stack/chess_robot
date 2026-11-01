@@ -1,0 +1,47 @@
+{
+  "reviewers": [
+    {
+      "role": "new-context independent Codex review",
+      "status": "initial findings reproduced; incremental no remaining targeted blocker",
+      "coverage": "broad initial frozen input; targeted final verification"
+    },
+    {
+      "role": "Cursor peer",
+      "model": "Claude Sonnet 5.5 High",
+      "status": "review report accepted; code fixed afterwards",
+      "scope_clean": true
+    },
+    {
+      "role": "agy peer",
+      "model": "Gemini 3.8 Flash Medium",
+      "status": "late draft manually read and six-field validated; NOT formal peer acceptance",
+      "scope_clean": true
+    }
+  ],
+  "fixed": [
+    "current FK/base eligibility",
+    "all-frame JSON finite/type/depth/size",
+    "request/hint callback recovery and spin failure",
+    "invalid NaN K recovery",
+    "image-time plus feedback-time settle dwell",
+    "ROI actual source provenance TTL",
+    "zero/huge confidence guard",
+    "internal TorchVersion and NumPy producer scalar normalization after first real deployment rollback"
+  ],
+  "not_adopted": [
+    {
+      "item": "old controller epoch resurrection",
+      "reason": "not production reachable through current local AuditEpoch token and filtered input"
+    },
+    {
+      "item": "oversize wire bypass",
+      "reason": "actual wire decoder already caps bytes; early finite/type bypass was fixed"
+    },
+    {
+      "item": "ignore duplicate/rejected packet qualification suspension",
+      "reason": "intentional conservative current qualification policy retained"
+    }
+  ],
+  "peer_attempts_note": "Earlier AGY High and Cursor Grok attempts timed out or returned progress-only; not counted as passed. All owned peer sessions closed.",
+  "physical_commands": 0
+}

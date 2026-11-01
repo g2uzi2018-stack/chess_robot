@@ -1,0 +1,97 @@
+{
+  "accepted": true,
+  "time_ns": 1793538116053663035,
+  "scope": "fixed vision source and targeted tests, not hardware/grasp/FPS acceptance",
+  "code_sha256": {
+    "tools/testing/xiangqi_tracking/base_geometry.py": "6827b9fb594819993e836ce7a7350603c63b87bc2c5cff148ac37e1a11b3850d",
+    "tools/testing/xiangqi_tracking/measurement_contract.py": "92ebd725fc5aaea77ab32f8cab23c0b25f7833f4eeb08e6c04aec872d3cbe908",
+    "tools/testing/xiangqi_tracking/perception_node.py": "2ccf29b437be9eb3eb7fe7a9d6724c14cbddd479799a06710bb5ca86b67c1e5b",
+    "tools/testing/xiangqi_tracking/scene_node.py": "9cd02c24b9d9378401c0c52fe16eb5f53930a9f92fe41100240f027a5a3da939",
+    "tools/testing/xiangqi_tracking/scene_state.py": "067665189726f3e358b35c435527b87f0c94feb3ae52c0bacabfe69c30d126e7",
+    "tools/testing/xiangqi_tracking/split_supervisor.py": "cbc92a74f332523b64caa8b2da56ddf710c082a3160bf53b953e43701605dfe5",
+    "tools/testing/xiangqi_tracking/live_tracked.py": "fcb63edbbc1061528f7f5c6d1b5417c509061a462b2b38cca5c15b803e79d416",
+    "tools/testing/xiangqi_tracking/start_perception.sh": "244f36ecfcccf8b0ef961cf32e24cda85fa05ccf0db77deb2c1aa2ebe89bd786",
+    "tools/testing/xiangqi_tracking/start_scene.sh": "2388ef48aaba260b10aa8790f99e3222cf81c8a651e29243c30cd1d9b93f3188",
+    "tools/testing/xiangqi_tracking/recognize_tracked.py": "326437628da1912cafb5049a9ed28ab71b9ef52045890df4d08b7091a4850c82",
+    "tools/testing/xiangqi_tracking/shared_pipeline.py": "82f427ef17192bea1b7b68636cb5d00ed65ac563197571ba54d507e0fb514043",
+    "tools/testing/xiangqi_tracking/qualification.py": "104bcc1f0ba4abc9077951d56f03c1600336a41b5b2c8d7732755cda73100afb",
+    "tools/testing/xiangqi_tracking/test_node_split.py": "ae7f696ba9bd413d0f6c3ef9ad3e7733fdbcbbe8b2d2bb3560db439d1bf81322",
+    "tools/testing/xiangqi_tracking/test_split_supervisor.py": "38b8053d8425e29985c4038955d487a83e8b97da6fdef1abe9f5bbe624555e46",
+    "tools/testing/xiangqi_tracking/test_scene_lifecycle_ros.py": "6db65c96952e68567fb48d212fb13d078dfac77492aef4d8911cacbe51aaaaa3",
+    "tools/testing/xiangqi_tracking/test_image_admission.py": "2b4a452cc72dd1daeb32ad79a6218787c296129b1b502c1ac3967628067545a5",
+    "tools/testing/xiangqi_tracking/test_observation_ros.py": "7ce1c0c96fe7176a8b647c938f5a79c04024eec5fb20b2e91468ef65ae6ae13c",
+    "tools/testing/xiangqi_tracking/compare_split_saved_inputs.py": "70f79ebf74b57133edca33d0fea436f49351fb40eebaf8237ded952817e3ad88",
+    "tools/testing/xiangqi_tracking/stable_observation.py": "e1c9887a5a3a45adad55dce996a4a561ab93f55999661adb5af06ed619f52203",
+    "tools/testing/xiangqi_tracking/spin_guard.py": "7e36d0a8efc5f8c8ea1a94f1b4defd30d2bb956cb741b3d41bcf36dd9cd7c868",
+    "tools/testing/xiangqi_tracking/test_review_fixes.py": "82d8a864dbf9c2434bffd6a95767933884e3c0a53d045106f9f84e69c6a40427",
+    "tools/testing/xiangqi_tracking/test_producer_scalars.py": "56541d00f11409f37999e59bdc154fa4a23576e07b7b9bd4265b6118eda1ff1e"
+  },
+  "independent_review": {
+    "status": "incremental_review_complete",
+    "conclusion": "no_remaining_blocker_in_requested_targeted_checks",
+    "hashes": {
+      "final-manifest.json": "f3406882501cd813e64d743e239992d9d98700b18e3912ba7bf13ed4e27503eb",
+      "deployment_helper.py": "d60f2a4baf8834f92eab31988498312e44b4161ac33b587aae6f79b0348243f0",
+      "observe_deployment.py": "10fff04c649e0de2146b54a263266fd8506705a5ca8eddb53be4667b45df4fe8",
+      "zz-vision-acceleration.conf": "d826930a44035a441b24a12b8f931307fc310654c1860fb4f7332195f754b93e"
+    },
+    "tests": {
+      "tests_run": 15,
+      "passed": true,
+      "guard_failure_passed": true,
+      "history_and_idempotence_passed": true,
+      "manifest_entries": 21
+    },
+    "findings": [],
+    "deployment_static": {
+      "real_newline_launcher": true,
+      "clock_release_persistent_dropin": true,
+      "start_checks_dropin": true,
+      "backup_original_TOP": true
+    },
+    "limits": [
+      "No ROS rerun or hardware operation",
+      "Pure CPU 15 targeted tests plus direct SpinGuard/history/idempotence proofs",
+      "Implementation isolated ROS evidence read, not independently rerun"
+    ]
+  },
+  "producer_incremental_review": {
+    "status": "complete",
+    "conclusion": "no_blocker_in_requested_producer_increment",
+    "manifest_files": 22,
+    "hashes": {
+      "manifest-02.json": "1091170810438c72c4237bf1fbb83368c4d23a77ac7d7b6851f2d545fdf18d15",
+      "deployment_helper.py": "4109cf9ee697e8a4d2bd02976afd2b2062a846be89850f97d990cd95bb1b6c43",
+      "producer-scalars.json": "f995aa6b8ca0eba8813cf9c5f5fce9bb229fb92a0f4f602b7fde7a1ba2f11e7b",
+      "producer-scalars-trt.json": "e606407359e269bd336fc94a153c90e4411a2899caa711fcdf80720848237f7b"
+    },
+    "tests": {
+      "native_scalar_conversion": true,
+      "unsupported_nonfinite_rejected": 6,
+      "external_ast_unchanged": true,
+      "external_non_native_rejected": true,
+      "TOP_matches_original_backup": true
+    },
+    "findings": [],
+    "limitations": [
+      "Synthetic scalar CPU test only; no model or raw captures read by independent reviewer",
+      "Read real-constructor cached-record evidence and test source; did not rerun constructor or inference",
+      "Static helper review only; no deployment/ROS/device commands"
+    ],
+    "accepted": true,
+    "acceptance_scope": "Specified producer normalization and static helper increment only; not inference or deployment acceptance",
+    "source_modified": false
+  },
+  "physical_commands": 0,
+  "preserved": {
+    "model": true,
+    "imgsz640": true,
+    "strict_fp32": true,
+    "quality_thresholds": true
+  },
+  "limits": [
+    "isolated ROS tests use deterministic pipeline fixture",
+    "saved input comparison uses cached detections",
+    "prior29.31fps belongs old topology"
+  ]
+}

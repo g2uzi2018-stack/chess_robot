@@ -1,7 +1,7 @@
 """Offline segmentation + visible surface position experiment; no robot commands."""
-import argparse, hashlib, json, os, sys, time, xml.etree.ElementTree as ET
+import argparse, hashlib, json, os, sys, time
 from pathlib import Path
-import cv2, numpy as np, yaml
+import cv2, numpy as np
 
 ROOT=Path('/home/kuang/workspace/chess_robot')
 TRAIN=Path('/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1')
@@ -57,7 +57,7 @@ def surface_position(mask,depth,K):
     return dict(out,valid=True,camera_surface_center_m=(center_ray*zcenter).tolist(),camera_surface_normal=normal.tolist(),plane_rms_m=residual,depth_median_m=median,point_semantics='visible top surface center; not cylinder center or grasp TCP')
 
 class Experiment:
-    def __init__(self,imgsz=640,half=False,geometry_only=False):
+    def __init__(self,imgsz=640,half=False,geometry_only=False,camera_only=False):
         import torch,ultralytics
         from ultralytics import YOLO
         torch.set_num_threads(2); cv2.setNumThreads(1)
@@ -79,42 +79,20 @@ class Experiment:
         if self.model is not None:assert self.model.task=='segment'
         self.imgsz=imgsz
         self.half=half
-        self.X=self.robot=self.fk=None;self.base_model_reason='base model unavailable'
-        calibration_hash=urdf_hash=None
-        try:
-            calibration=yaml.safe_load(CALIB.read_text());X=np.array(calibration['flange_T_camera'],dtype=float)
-            assert calibration['parent_frame']=='Link6' and calibration['child_frame']=='d405_color_optical_frame'
-            assert X.shape==(4,4) and np.isfinite(X).all() and np.allclose(X[3],[0,0,0,1])
-            assert np.allclose(X[:3,:3].T@X[:3,:3],np.eye(3),atol=1e-6) and abs(np.linalg.det(X[:3,:3])-1)<1e-6
-            robot=ET.parse(URDF).getroot()
-            sys.path.insert(0,str(ROOT/'tools/description'));from rigid_geometry import fk
-            self.X,self.robot,self.fk=X,robot,fk;self.base_model_reason='model loaded; live qualification required'
-            calibration_hash=hashlib.sha256(CALIB.read_bytes()).hexdigest();urdf_hash=hashlib.sha256(URDF.read_bytes()).hexdigest()
-        except Exception as e:
-            self.base_model_reason='base model unavailable: '+type(e).__name__
-        self.identity=dict(weights=str(WEIGHTS),weights_sha256=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest(),calibration=str(CALIB),calibration_sha256=calibration_hash,urdf_sha256=urdf_hash,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
+        self.camera_only=bool(camera_only)
+        self.X=self.robot=self.fk=None;self.base_model_reason='base transform belongs to scene node'
+        base_identity={}
+        if not self.camera_only:
+            from base_geometry import BaseGeometry
+            base=BaseGeometry()
+            self.X,self.robot,self.fk=base.X,base.robot,base.fk
+            self.base_model_reason=base.base_model_reason;base_identity=base.identity
+        self.identity=dict(weights=str(WEIGHTS),weights_sha256=source_sha,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
+        self.identity.update(base_identity)
 
     def base_transform(self,metadata):
-        # Eligibility is independent of reference_valid/motion readiness. Legacy
-        # offline captures still require the same measured-feedback checks.
-        from qualification import measured_stopped
-        arm,joint=metadata.get('arm',{}),metadata.get('joint',{})
-        if not metadata.get('base_eligible',False):
-            return None,None,metadata.get('base_reason','synchronized stopped feedback unavailable')
-        if not measured_stopped(arm,joint,metadata.get('joint_age_s',0)):
-            return None,None,'measured feedback rejected'
-        if self.X is None or self.fk is None:return None,None,self.base_model_reason
-        try:
-            poses=self.fk(self.robot,dict(zip(joint['name'],joint['position'])))
-            transform=np.array(poses['Link6'])@self.X
-            position=arm['tcp']['pose']['position'];actual=np.array([position[k] for k in ('x','y','z')])
-            error=float(np.linalg.norm(np.array(poses['grasp_link'])[:3,3]-actual))
-            assert np.isfinite(transform).all() and np.isfinite(error) and error<.0001
-            assert np.allclose(transform[:3,:3].T@transform[:3,:3],np.eye(3),atol=1e-6) and abs(np.linalg.det(transform[:3,:3])-1)<1e-6
-            assert arm['tcp']['header']['frame_id']=='base_link'
-            return transform,error,'read-only measured FK; motion qualification independent'
-        except Exception:
-            return None,None,'arm model FK mismatch or invalid transform'
+        from base_geometry import base_transform
+        return base_transform(self,metadata)
 
     def detect(self,color,roi=None):
         assert self.model is not None
@@ -138,7 +116,7 @@ class Experiment:
         if detection is None:detection=self.detect(color,roi)
         start=time.monotonic(); K=np.array(metadata['K']).reshape(3,3)
         assert color.shape[:2]==depth.shape and depth.dtype==np.float32
-        transform,fk_error,base_reason=self.base_transform(metadata);base_valid=transform is not None
+        transform,fk_error,base_reason=(None,None,'base transform belongs to scene node') if getattr(self,'camera_only',False) else self.base_transform(metadata);base_valid=transform is not None
         joint=metadata.get('joint',{})
         x1,y1,x2,y2=roi if roi is not None else (0,0,color.shape[1],color.shape[0])
         assert detection['roi_xyxy']==[x1,y1,x2,y2] and detection['image_size']==[color.shape[1],color.shape[0]]

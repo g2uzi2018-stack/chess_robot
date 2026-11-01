@@ -1,0 +1,2690 @@
+{
+  "passed": true,
+  "domain": 116,
+  "bad_requests_rejected_then_query_recovered": true,
+  "snapshot": {
+    "schema": "xiangqi_stable_snapshot/v1",
+    "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+    "sample_start_ns": 1793537298789754689,
+    "sample_end_ns": 1793537300798006953,
+    "locked_ns": 1793537300812922503,
+    "unique_frames": 56,
+    "unique_feedback_states": 40,
+    "max_observation_gap_s": 0.068511416,
+    "controller_epoch": "fixture-epoch",
+    "stationary_generation": 0,
+    "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+    "identity": {
+      "fixture": "four-independent-targets",
+      "calibration": "fixture",
+      "calibration_sha256": "fixture-calibration",
+      "urdf_sha256": "fixture-urdf"
+    },
+    "policy": {
+      "state_age_s": 0.2,
+      "settle_s": 0.6,
+      "pose_drift_rad": 0.001,
+      "retire_gap_s": 2.0,
+      "sample_s": 2.0,
+      "min_frames": 20,
+      "max_gap_s": 0.3,
+      "min_valid_fraction": 0.8,
+      "position_p95_m": 0.003,
+      "normal_rms_deg": 1.5,
+      "scene_distance_m": 0.006,
+      "scene_age_s": 0.5,
+      "lock_lifetime_s": 60.0
+    },
+    "joint_position_rad_median": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "frame_id": "base_link",
+    "camera_frame_id": "d405_color_optical_frame",
+    "targets": [
+      {
+        "track_id": 1,
+        "samples": 56,
+        "valid_fraction": 1.0,
+        "camera_surface_center_m": [
+          0.1,
+          0.1,
+          0.2
+        ],
+        "camera_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "camera_surface_center_m_radial_p95_m": 0.0,
+        "base_surface_center_m": [
+          0.1,
+          0.1,
+          0.2
+        ],
+        "base_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base_surface_center_m_radial_p95_m": 0.0,
+        "camera_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "camera_surface_normal_rms_deg": 0.0,
+        "camera_surface_normal_temporally_stable": true,
+        "base_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "base_surface_normal_rms_deg": 0.0,
+        "base_surface_normal_temporally_stable": true,
+        "class_name": "red_pawn",
+        "class_vote_fraction": 1.0,
+        "plane_rms_m_max": 0.0005,
+        "class_verified": false,
+        "yaw_observed": false,
+        "orientation_valid_for_motion": false,
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      {
+        "track_id": 2,
+        "samples": 56,
+        "valid_fraction": 1.0,
+        "camera_surface_center_m": [
+          0.18,
+          0.1,
+          0.2
+        ],
+        "camera_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "camera_surface_center_m_radial_p95_m": 0.0,
+        "base_surface_center_m": [
+          0.18,
+          0.1,
+          0.2
+        ],
+        "base_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base_surface_center_m_radial_p95_m": 0.0,
+        "camera_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "camera_surface_normal_rms_deg": 0.0,
+        "camera_surface_normal_temporally_stable": true,
+        "base_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "base_surface_normal_rms_deg": 0.0,
+        "base_surface_normal_temporally_stable": true,
+        "class_name": "red_pawn",
+        "class_vote_fraction": 1.0,
+        "plane_rms_m_max": 0.0005,
+        "class_verified": false,
+        "yaw_observed": false,
+        "orientation_valid_for_motion": false,
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      {
+        "track_id": 3,
+        "samples": 56,
+        "valid_fraction": 1.0,
+        "camera_surface_center_m": [
+          0.26,
+          0.1,
+          0.2
+        ],
+        "camera_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "camera_surface_center_m_radial_p95_m": 0.0,
+        "base_surface_center_m": [
+          0.26,
+          0.1,
+          0.2
+        ],
+        "base_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base_surface_center_m_radial_p95_m": 0.0,
+        "camera_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "camera_surface_normal_rms_deg": 0.0,
+        "camera_surface_normal_temporally_stable": true,
+        "base_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "base_surface_normal_rms_deg": 0.0,
+        "base_surface_normal_temporally_stable": true,
+        "class_name": "red_pawn",
+        "class_vote_fraction": 1.0,
+        "plane_rms_m_max": 0.0005,
+        "class_verified": false,
+        "yaw_observed": false,
+        "orientation_valid_for_motion": false,
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      {
+        "track_id": 4,
+        "samples": 56,
+        "valid_fraction": 1.0,
+        "camera_surface_center_m": [
+          0.33999999999999997,
+          0.1,
+          0.2
+        ],
+        "camera_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "camera_surface_center_m_radial_p95_m": 0.0,
+        "base_surface_center_m": [
+          0.33999999999999997,
+          0.1,
+          0.2
+        ],
+        "base_surface_center_m_mad_m": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base_surface_center_m_radial_p95_m": 0.0,
+        "camera_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "camera_surface_normal_rms_deg": 0.0,
+        "camera_surface_normal_temporally_stable": true,
+        "base_surface_normal": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "base_surface_normal_rms_deg": 0.0,
+        "base_surface_normal_temporally_stable": true,
+        "class_name": "red_pawn",
+        "class_vote_fraction": 1.0,
+        "plane_rms_m_max": 0.0005,
+        "class_verified": false,
+        "yaw_observed": false,
+        "orientation_valid_for_motion": false,
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    ],
+    "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+    "point_semantics": "visible top surface center; not grasp TCP",
+    "motion_ready": false,
+    "grasp_ready": false
+  },
+  "responses": [
+    {
+      "request_id": "0",
+      "action": "query",
+      "ok": true,
+      "snapshot": {
+        "schema": "xiangqi_stable_snapshot/v1",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "sample_start_ns": 1793537298789754689,
+        "sample_end_ns": 1793537300798006953,
+        "locked_ns": 1793537300812922503,
+        "unique_frames": 56,
+        "unique_feedback_states": 40,
+        "max_observation_gap_s": 0.068511416,
+        "controller_epoch": "fixture-epoch",
+        "stationary_generation": 0,
+        "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+        "identity": {
+          "fixture": "four-independent-targets",
+          "calibration": "fixture",
+          "calibration_sha256": "fixture-calibration",
+          "urdf_sha256": "fixture-urdf"
+        },
+        "policy": {
+          "state_age_s": 0.2,
+          "settle_s": 0.6,
+          "pose_drift_rad": 0.001,
+          "retire_gap_s": 2.0,
+          "sample_s": 2.0,
+          "min_frames": 20,
+          "max_gap_s": 0.3,
+          "min_valid_fraction": 0.8,
+          "position_p95_m": 0.003,
+          "normal_rms_deg": 1.5,
+          "scene_distance_m": 0.006,
+          "scene_age_s": 0.5,
+          "lock_lifetime_s": 60.0
+        },
+        "joint_position_rad_median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_id": "base_link",
+        "camera_frame_id": "d405_color_optical_frame",
+        "targets": [
+          {
+            "track_id": 1,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 2,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 3,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 4,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          }
+        ],
+        "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+        "point_semantics": "visible top surface center; not grasp TCP",
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      "status": {
+        "state": "locked",
+        "reason": "immutable snapshot; one operation only",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": true,
+        "scene_confirmation_fresh": true,
+        "consumed_by": null,
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "1",
+      "action": "query",
+      "ok": true,
+      "snapshot": {
+        "schema": "xiangqi_stable_snapshot/v1",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "sample_start_ns": 1793537298789754689,
+        "sample_end_ns": 1793537300798006953,
+        "locked_ns": 1793537300812922503,
+        "unique_frames": 56,
+        "unique_feedback_states": 40,
+        "max_observation_gap_s": 0.068511416,
+        "controller_epoch": "fixture-epoch",
+        "stationary_generation": 0,
+        "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+        "identity": {
+          "fixture": "four-independent-targets",
+          "calibration": "fixture",
+          "calibration_sha256": "fixture-calibration",
+          "urdf_sha256": "fixture-urdf"
+        },
+        "policy": {
+          "state_age_s": 0.2,
+          "settle_s": 0.6,
+          "pose_drift_rad": 0.001,
+          "retire_gap_s": 2.0,
+          "sample_s": 2.0,
+          "min_frames": 20,
+          "max_gap_s": 0.3,
+          "min_valid_fraction": 0.8,
+          "position_p95_m": 0.003,
+          "normal_rms_deg": 1.5,
+          "scene_distance_m": 0.006,
+          "scene_age_s": 0.5,
+          "lock_lifetime_s": 60.0
+        },
+        "joint_position_rad_median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_id": "base_link",
+        "camera_frame_id": "d405_color_optical_frame",
+        "targets": [
+          {
+            "track_id": 1,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 2,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 3,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 4,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          }
+        ],
+        "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+        "point_semantics": "visible top surface center; not grasp TCP",
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      "status": {
+        "state": "locked",
+        "reason": "immutable snapshot; one operation only",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": true,
+        "scene_confirmation_fresh": true,
+        "consumed_by": null,
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "2",
+      "action": "query",
+      "ok": true,
+      "snapshot": {
+        "schema": "xiangqi_stable_snapshot/v1",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "sample_start_ns": 1793537298789754689,
+        "sample_end_ns": 1793537300798006953,
+        "locked_ns": 1793537300812922503,
+        "unique_frames": 56,
+        "unique_feedback_states": 40,
+        "max_observation_gap_s": 0.068511416,
+        "controller_epoch": "fixture-epoch",
+        "stationary_generation": 0,
+        "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+        "identity": {
+          "fixture": "four-independent-targets",
+          "calibration": "fixture",
+          "calibration_sha256": "fixture-calibration",
+          "urdf_sha256": "fixture-urdf"
+        },
+        "policy": {
+          "state_age_s": 0.2,
+          "settle_s": 0.6,
+          "pose_drift_rad": 0.001,
+          "retire_gap_s": 2.0,
+          "sample_s": 2.0,
+          "min_frames": 20,
+          "max_gap_s": 0.3,
+          "min_valid_fraction": 0.8,
+          "position_p95_m": 0.003,
+          "normal_rms_deg": 1.5,
+          "scene_distance_m": 0.006,
+          "scene_age_s": 0.5,
+          "lock_lifetime_s": 60.0
+        },
+        "joint_position_rad_median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_id": "base_link",
+        "camera_frame_id": "d405_color_optical_frame",
+        "targets": [
+          {
+            "track_id": 1,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 2,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 3,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 4,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          }
+        ],
+        "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+        "point_semantics": "visible top surface center; not grasp TCP",
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      "status": {
+        "state": "pending_confirmation",
+        "reason": "fresh stopped feedback required",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": false,
+        "scene_confirmation_fresh": true,
+        "consumed_by": null,
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "3",
+      "action": "consume",
+      "ok": false,
+      "error": "snapshot not currently eligible or already consumed",
+      "status": {
+        "state": "pending_confirmation",
+        "reason": "fresh stopped feedback required",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": false,
+        "scene_confirmation_fresh": true,
+        "consumed_by": null,
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "4",
+      "action": "query",
+      "ok": true,
+      "snapshot": {
+        "schema": "xiangqi_stable_snapshot/v1",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "sample_start_ns": 1793537298789754689,
+        "sample_end_ns": 1793537300798006953,
+        "locked_ns": 1793537300812922503,
+        "unique_frames": 56,
+        "unique_feedback_states": 40,
+        "max_observation_gap_s": 0.068511416,
+        "controller_epoch": "fixture-epoch",
+        "stationary_generation": 0,
+        "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+        "identity": {
+          "fixture": "four-independent-targets",
+          "calibration": "fixture",
+          "calibration_sha256": "fixture-calibration",
+          "urdf_sha256": "fixture-urdf"
+        },
+        "policy": {
+          "state_age_s": 0.2,
+          "settle_s": 0.6,
+          "pose_drift_rad": 0.001,
+          "retire_gap_s": 2.0,
+          "sample_s": 2.0,
+          "min_frames": 20,
+          "max_gap_s": 0.3,
+          "min_valid_fraction": 0.8,
+          "position_p95_m": 0.003,
+          "normal_rms_deg": 1.5,
+          "scene_distance_m": 0.006,
+          "scene_age_s": 0.5,
+          "lock_lifetime_s": 60.0
+        },
+        "joint_position_rad_median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_id": "base_link",
+        "camera_frame_id": "d405_color_optical_frame",
+        "targets": [
+          {
+            "track_id": 1,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 2,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 3,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 4,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          }
+        ],
+        "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+        "point_semantics": "visible top surface center; not grasp TCP",
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      "status": {
+        "state": "locked",
+        "reason": "immutable snapshot; one operation only",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": true,
+        "scene_confirmation_fresh": true,
+        "consumed_by": null,
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "5",
+      "action": "consume",
+      "ok": true,
+      "idempotent": false,
+      "snapshot": {
+        "schema": "xiangqi_stable_snapshot/v1",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "sample_start_ns": 1793537298789754689,
+        "sample_end_ns": 1793537300798006953,
+        "locked_ns": 1793537300812922503,
+        "unique_frames": 56,
+        "unique_feedback_states": 40,
+        "max_observation_gap_s": 0.068511416,
+        "controller_epoch": "fixture-epoch",
+        "stationary_generation": 0,
+        "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+        "identity": {
+          "fixture": "four-independent-targets",
+          "calibration": "fixture",
+          "calibration_sha256": "fixture-calibration",
+          "urdf_sha256": "fixture-urdf"
+        },
+        "policy": {
+          "state_age_s": 0.2,
+          "settle_s": 0.6,
+          "pose_drift_rad": 0.001,
+          "retire_gap_s": 2.0,
+          "sample_s": 2.0,
+          "min_frames": 20,
+          "max_gap_s": 0.3,
+          "min_valid_fraction": 0.8,
+          "position_p95_m": 0.003,
+          "normal_rms_deg": 1.5,
+          "scene_distance_m": 0.006,
+          "scene_age_s": 0.5,
+          "lock_lifetime_s": 60.0
+        },
+        "joint_position_rad_median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_id": "base_link",
+        "camera_frame_id": "d405_color_optical_frame",
+        "targets": [
+          {
+            "track_id": 1,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 2,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 3,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 4,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          }
+        ],
+        "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+        "point_semantics": "visible top surface center; not grasp TCP",
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      "status": {
+        "state": "consumed",
+        "reason": "immutable snapshot; one operation only",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": false,
+        "scene_confirmation_fresh": true,
+        "consumed_by": "fixture-op",
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "6",
+      "action": "consume",
+      "ok": true,
+      "idempotent": true,
+      "snapshot": {
+        "schema": "xiangqi_stable_snapshot/v1",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "sample_start_ns": 1793537298789754689,
+        "sample_end_ns": 1793537300798006953,
+        "locked_ns": 1793537300812922503,
+        "unique_frames": 56,
+        "unique_feedback_states": 40,
+        "max_observation_gap_s": 0.068511416,
+        "controller_epoch": "fixture-epoch",
+        "stationary_generation": 0,
+        "configuration_sha256": "509caf3c22d04dd9dd2fadf51fa715c38db2335d851344d97e09171fe5e83617",
+        "identity": {
+          "fixture": "four-independent-targets",
+          "calibration": "fixture",
+          "calibration_sha256": "fixture-calibration",
+          "urdf_sha256": "fixture-urdf"
+        },
+        "policy": {
+          "state_age_s": 0.2,
+          "settle_s": 0.6,
+          "pose_drift_rad": 0.001,
+          "retire_gap_s": 2.0,
+          "sample_s": 2.0,
+          "min_frames": 20,
+          "max_gap_s": 0.3,
+          "min_valid_fraction": 0.8,
+          "position_p95_m": 0.003,
+          "normal_rms_deg": 1.5,
+          "scene_distance_m": 0.006,
+          "scene_age_s": 0.5,
+          "lock_lifetime_s": 60.0
+        },
+        "joint_position_rad_median": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "frame_id": "base_link",
+        "camera_frame_id": "d405_color_optical_frame",
+        "targets": [
+          {
+            "track_id": 1,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.1,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 2,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.18,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 3,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.26,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          },
+          {
+            "track_id": 4,
+            "samples": 56,
+            "valid_fraction": 1.0,
+            "camera_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "camera_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "camera_surface_center_m_radial_p95_m": 0.0,
+            "base_surface_center_m": [
+              0.33999999999999997,
+              0.1,
+              0.2
+            ],
+            "base_surface_center_m_mad_m": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base_surface_center_m_radial_p95_m": 0.0,
+            "camera_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "camera_surface_normal_rms_deg": 0.0,
+            "camera_surface_normal_temporally_stable": true,
+            "base_surface_normal": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "base_surface_normal_rms_deg": 0.0,
+            "base_surface_normal_temporally_stable": true,
+            "class_name": "red_pawn",
+            "class_vote_fraction": 1.0,
+            "plane_rms_m_max": 0.0005,
+            "class_verified": false,
+            "yaw_observed": false,
+            "orientation_valid_for_motion": false,
+            "motion_ready": false,
+            "grasp_ready": false
+          }
+        ],
+        "stamp_semantics": "host SDK acquisition stamp; not exposure time",
+        "point_semantics": "visible top surface center; not grasp TCP",
+        "motion_ready": false,
+        "grasp_ready": false
+      },
+      "status": {
+        "state": "consumed",
+        "reason": "immutable snapshot; one operation only",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": false,
+        "scene_confirmation_fresh": true,
+        "consumed_by": "fixture-op",
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    },
+    {
+      "request_id": "7",
+      "action": "consume",
+      "ok": false,
+      "error": "snapshot not currently eligible or already consumed",
+      "status": {
+        "state": "consumed",
+        "reason": "immutable snapshot; one operation only",
+        "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+        "observation_eligible": false,
+        "scene_confirmation_fresh": true,
+        "consumed_by": "fixture-op",
+        "sample_frames": 0,
+        "sample_elapsed_s": 0.0,
+        "counters": {
+          "ineligible_frame": 20,
+          "locked": 1
+        },
+        "motion_ready": false,
+        "grasp_ready": false
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {},
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 2
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 5
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 8
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 11
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 13
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 16
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "waiting for valid independent RGB-D geometry",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 19
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 2,
+      "sample_elapsed_s": 0.033505915000000004,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 5,
+      "sample_elapsed_s": 0.135983041,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 8,
+      "sample_elapsed_s": 0.239335931,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 11,
+      "sample_elapsed_s": 0.34169919200000004,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 14,
+      "sample_elapsed_s": 0.44408027800000005,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 17,
+      "sample_elapsed_s": 0.5460153050000001,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 20,
+      "sample_elapsed_s": 0.64846516,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 23,
+      "sample_elapsed_s": 0.749773419,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 26,
+      "sample_elapsed_s": 0.8506754900000001,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 29,
+      "sample_elapsed_s": 0.9521442330000001,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 32,
+      "sample_elapsed_s": 1.054181246,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 34,
+      "sample_elapsed_s": 1.156528059,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 36,
+      "sample_elapsed_s": 1.257981599,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 38,
+      "sample_elapsed_s": 1.3257674910000001,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 41,
+      "sample_elapsed_s": 1.4616821020000001,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 43,
+      "sample_elapsed_s": 1.564251123,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 46,
+      "sample_elapsed_s": 1.66631386,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 49,
+      "sample_elapsed_s": 1.76903399,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 52,
+      "sample_elapsed_s": 1.8720557910000002,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "collecting",
+      "reason": "collecting independent RGB-D frames",
+      "snapshot_id": null,
+      "observation_eligible": false,
+      "scene_confirmation_fresh": false,
+      "consumed_by": null,
+      "sample_frames": 55,
+      "sample_elapsed_s": 1.9742931240000001,
+      "counters": {
+        "ineligible_frame": 20
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {}
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 1
+      }
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 2
+      }
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "locked",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": true,
+      "scene_confirmation_fresh": true,
+      "consumed_by": null,
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "consumed",
+      "reason": "immutable snapshot; one operation only",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": "fixture-op",
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": "fixture-op",
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 20,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    },
+    {
+      "state": "pending_confirmation",
+      "reason": "fresh stopped feedback required",
+      "snapshot_id": "452a5ceee08541d8988f148ec566ce61",
+      "observation_eligible": false,
+      "scene_confirmation_fresh": true,
+      "consumed_by": "fixture-op",
+      "sample_frames": 0,
+      "sample_elapsed_s": 0.0,
+      "counters": {
+        "ineligible_frame": 23,
+        "locked": 1
+      },
+      "motion_ready": false,
+      "grasp_ready": false,
+      "transport_rejections": {
+        "invalid request JSON": 3
+      }
+    }
+  ],
+  "physical_commands": 0
+}

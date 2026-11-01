@@ -126,6 +126,7 @@ class FeedbackWindow:
         elif not 0 <= (now-self.last)*1e-9 <= self.p.state_age_s: reason = 'feedback stale'
         elif (self.last-self.start)*1e-9 < self.p.settle_s: reason = 'settling'
         elif image_t < self.start: reason = 'image predates stationary interval'
+        elif (image_t-self.start)*1e-9 < self.p.settle_s: reason = 'image captured before stationary settle interval'
         row = next((r for r in reversed(self.rows) if r['t'] <= image_t), None)
         if reason is None and (row is None or not 0 <= (image_t-row['t'])*1e-9 <= self.p.state_age_s):
             reason = 'no sufficiently recent preceding feedback'

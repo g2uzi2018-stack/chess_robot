@@ -34,6 +34,6 @@ def expire_observation(record):
     revoke_base(record, 'image observation expired during pipeline')
     record.update(detection_valid=False, camera_geometry_valid=False)
     for d in record['detections']:
-        d.update(detection_valid=False, camera_geometry_valid=False)
+        d.update(detection_valid=False, camera_geometry_valid=False, camera_complete_center_target=False)
         for key in ('camera_surface_center_m', 'camera_surface_normal'):
             d.pop(key, None)

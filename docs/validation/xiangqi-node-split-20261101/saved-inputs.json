@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "independent_saved_scenes": 1,
+  "same_cached_detector_outputs": true,
+  "pure_cpu_no_inference": true,
+  "cases": [
+    {
+      "case": 0,
+      "roi": null,
+      "raw_targets": 4,
+      "targets": 4,
+      "maximum_coordinate_normal_delta": 0.0,
+      "payload_bytes": 5829,
+      "passed": true
+    },
+    {
+      "case": 1,
+      "roi": [
+        320,
+        80,
+        960,
+        720
+      ],
+      "raw_targets": 5,
+      "targets": 4,
+      "maximum_coordinate_normal_delta": 0.0,
+      "payload_bytes": 5879,
+      "passed": true
+    }
+  ],
+  "physical_commands": 0,
+  "limitation": "Full/ROI of one saved frame, not labelled accuracy or split production FPS acceptance"
+}

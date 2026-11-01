@@ -3,6 +3,8 @@ import multiprocessing
 from multiprocessing import shared_memory
 from concurrent.futures import ProcessPoolExecutor
 import time
+import json,os
+from pathlib import Path
 import numpy as np
 
 class FrameSlots:
@@ -11,6 +13,11 @@ class FrameSlots:
         self.color_offset=64;self.depth_offset=self.color_offset+width*height*3;self.mask_offset=self.depth_offset+width*height*4
         size=self.mask_offset+max_masks*width*height
         self.blocks=[shared_memory.SharedMemory(create=True,size=size) for _ in range(count)] if self.owner else [shared_memory.SharedMemory(name=n) for n in names]
+        self.manifest_path=None
+        if self.owner and os.environ.get('XIANGQI_SHM_MANIFEST'):
+            self.manifest_path=Path(os.environ['XIANGQI_SHM_MANIFEST'])
+            data=dict(owner_pid=os.getpid(),token=os.environ.get('XIANGQI_SUPERVISOR_TOKEN'),names=[b.name for b in self.blocks])
+            tmp=self.manifest_path.with_suffix('.tmp');tmp.write_text(json.dumps(data));tmp.replace(self.manifest_path)
         self.locks=locks if locks is not None else [multiprocessing.get_context('spawn').Lock() for _ in range(count)]
         self.headers=[np.ndarray((2,),np.int64,buffer=s.buf) for s in self.blocks]
         self.colors=[np.ndarray((height,width,3),np.uint8,buffer=s.buf,offset=self.color_offset) for s in self.blocks]
@@ -28,17 +35,22 @@ class FrameSlots:
         self.headers.clear();self.colors.clear();self.depths.clear();self.masks.clear()
         for block in self.blocks:
             block.close()
-            if self.owner:block.unlink()
+            if self.owner:
+                try:block.unlink()
+                except FileNotFoundError:pass
+        if self.owner and self.manifest_path:
+            try:self.manifest_path.unlink()
+            except FileNotFoundError:pass
 
 worker_slots=None;worker_experiment=None
-def initialize_gpu(configuration):
+def initialize_gpu(configuration,camera_only=False):
     global worker_slots,worker_experiment
     from recognize_tracked import Experiment
-    worker_slots=FrameSlots(**configuration);worker_experiment=Experiment(640,half=False)
-def initialize_geometry(configuration):
+    worker_slots=FrameSlots(**configuration);worker_experiment=Experiment(640,half=False,camera_only=camera_only)
+def initialize_geometry(configuration,camera_only=False):
     global worker_slots,worker_experiment
     from recognize_tracked import Experiment
-    worker_slots=FrameSlots(**configuration);worker_experiment=Experiment(640,half=False,geometry_only=True)
+    worker_slots=FrameSlots(**configuration);worker_experiment=Experiment(640,half=False,geometry_only=True,camera_only=camera_only)
 def detect_slot(job):
     start=time.monotonic();slot=job['slot']
     with worker_slots.locks[slot]:
@@ -64,10 +76,10 @@ def geometry_slot(job,detection):
     return record,overlay
 
 class Pipeline:
-    def __init__(self,width=1280,height=720):
+    def __init__(self,width=1280,height=720,camera_only=False):
         self.slots=FrameSlots(width,height);context=multiprocessing.get_context('spawn');configuration=self.slots.configuration()
-        self.gpu=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_gpu,initargs=(configuration,))
-        self.geometry=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_geometry,initargs=(configuration,))
+        self.gpu=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_gpu,initargs=(configuration,camera_only))
+        self.geometry=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_geometry,initargs=(configuration,camera_only))
         self.gpu_job=None;self.geometry_jobs=[];self.free=list(range(self.slots.count));self.next_id=0;self.last_returned=-1
     def can_submit(self):return self.gpu_job is None and bool(self.free)
     def submit(self,color,depth,metadata,roi=None,draw=False,context=None):

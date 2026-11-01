@@ -1,5 +1,13 @@
 # 棋子跟随编号与平滑预览试验
 
+## 2026-11-01 当前节点拓扑
+
+旧 `/xiangqi_readonly_experiment` 已拆为 `/xiangqi_perception` 与 `/xiangqi_scene` 两个独立进程。前者只输出相机系类别/几何和帧内实例序号到 `/perception/xiangqi/measurements`；后者维护基座变换、跨帧ID与两秒快照，继续输出原 `/pose/xiangqi/detections` 及 observation 接口。识别无需arm或scene也可启动，编号不下放到无状态视觉前端。
+
+旧 `start_live_tracked.sh` 现前台监督启动两个进程；亦可分别用 `start_perception.sh`、`start_scene.sh` 启动。不要与现有实例重复发布。模型/严格FP32/640与质量门限保留；新topic传小型JSON，图像/深度/掩膜仍留在视觉内三槽共享内存。源码默认PT，TRT需现场工件及局部依赖。历史29.31fps属于旧拓扑，不是此次拆分后的完整验收。
+
+详见[节点拆分、审核、启动与回退](../../../docs/validation/xiangqi-node-split-20261101/README.md)。后文历史段落保留其原时间与条件，以本节和新验收目录为当前入口。
+
 2026-10-31现场：相机1280×720、请求30Hz、手动25000μs/增益16。用户要求编号跟随棋子移动，不绑定固定槽位。
 
 ## 行为
@@ -40,7 +48,7 @@ colcon --log-base runs/xiangqi_tracking_20261031_01/log build \
 
 独立绘制源码入口：`bash tools/testing/xiangqi_tracking/start_tracking_renderer.sh`。
 
-两个入口都不启动、使能或移动机械臂/夹爪；识别需要已存在的新鲜反馈，无反馈时只报告等待。现有相机继续复用，禁止重复打开USB。现场已运行的user service仍可使用`runs/`中的同等脚本；本次源码整理不重启它们。
+两个入口都不启动、使能或移动机械臂/夹爪；图像识别不依赖反馈，基座变换和新快照资格才要求可信停稳反馈。现有相机继续复用，禁止重复打开USB。现场视觉service使用固定源码快照，实际切换与回退见本次节点拆分验收记录。
 
 现场两个临时user service：
 

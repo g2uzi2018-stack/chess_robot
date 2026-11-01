@@ -1,0 +1,101 @@
+{
+  "read_only": true,
+  "physical_commands": 0,
+  "window_s": 30.012861908995546,
+  "nodes": [
+    [
+      "xiangqi_scene",
+      "/"
+    ],
+    [
+      "xiangqi_perception",
+      "/"
+    ],
+    [
+      "chess_robot_arm",
+      "/"
+    ],
+    [
+      "vision_node",
+      "/"
+    ],
+    [
+      "preview_node",
+      "/"
+    ],
+    [
+      "xiangqi_split_deployment_observer",
+      "/"
+    ],
+    [
+      "xiangqi_tracking_preview",
+      "/"
+    ],
+    [
+      "gripper_node",
+      "/"
+    ],
+    [
+      "panel_node",
+      "/"
+    ]
+  ],
+  "topics": {
+    "/perception/xiangqi/measurements": {
+      "messages": 626,
+      "unique": 626,
+      "detection_valid_unique": 625,
+      "valid_completion_hz": 20.82440527981349,
+      "base_valid_unique": 0,
+      "observer_receive_age_ms": {
+        "50": 44.962794,
+        "95": 46.3127566
+      },
+      "last_compute": {
+        "predictor_device": "cuda:0",
+        "model_parameter_device": null,
+        "boxes_device": "cuda:0",
+        "masks_device": null,
+        "fp16": false,
+        "inference_backend": "tensorrt",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+        "matmul_allow_tf32": false,
+        "cudnn_allow_tf32": false
+      },
+      "last_reason": null,
+      "last_source_epoch": "2be83a96773847c18021fdde90153350",
+      "last_detection_count": 0,
+      "last_camera_geometry_valid": false,
+      "last_motion_ready": false,
+      "last_grasp_ready": false
+    },
+    "/pose/xiangqi/detections": {
+      "messages": 624,
+      "unique": 624,
+      "detection_valid_unique": 624,
+      "valid_completion_hz": 20.79108623136579,
+      "base_valid_unique": 623,
+      "observer_receive_age_ms": {
+        "50": 52.4470865,
+        "95": 55.1004711
+      },
+      "last_compute": {
+        "predictor_device": "cuda:0",
+        "model_parameter_device": null,
+        "boxes_device": "cuda:0",
+        "masks_device": null,
+        "fp16": false,
+        "inference_backend": "tensorrt",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+        "matmul_allow_tf32": false,
+        "cudnn_allow_tf32": false
+      },
+      "last_reason": null,
+      "last_source_epoch": "2be83a96773847c18021fdde90153350",
+      "last_detection_count": 0,
+      "last_camera_geometry_valid": false,
+      "last_motion_ready": false,
+      "last_grasp_ready": false
+    }
+  }
+}

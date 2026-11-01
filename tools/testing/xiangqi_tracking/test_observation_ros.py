@@ -4,25 +4,35 @@ from pathlib import Path
 os.environ.update(ROS_DOMAIN_ID='116',ROS_LOCALHOST_ONLY='1')
 HERE=Path(__file__).resolve().parent
 if '--worker' in sys.argv:
-    import live_tracked as live
+    from split_supervisor import run_split
+    sys.exit(run_split(commands={role:[sys.executable,str(HERE/'test_observation_ros.py'),'--worker-'+role] for role in ('scene','perception')}))
+if '--worker-perception' in sys.argv or '--worker-scene' in sys.argv:
+    import perception_node
+    import scene_node
     from test_stable_observation import frame
     class FixtureAudit:
         def __init__(self,*a):self.controller=1;self.epoch_start_ns=0;self.token='fixture-epoch';self.ok=True;self.reason='isolated fixture'
         def poll(self,now):self.host=now;return True
         def close(self):pass
     class FixturePipeline:
-        def __init__(self):self.ready=[];self.count=0
+        def __init__(self,**kwargs):self.ready=[];self.count=0
         def can_submit(self):return not self.ready
         def busy(self):return bool(self.ready)
         def submit(self,color,depth,metadata,roi=None,draw=False,context=None):
             r=frame(self.count);r.update(stamp_ns=metadata['stamp_ns'],identity={'fixture':'four-independent-targets'},
                 source_joint_position_rad=metadata.get('joint',{}).get('position',[]),source_joint_names=['joint'+str(i) for i in range(1,7)],
-                base_transform_valid=metadata['base_eligible'],base_transform_reason=metadata['base_reason'],processing_s=.001,detector_ms=0.,geometry_ms=0.,camera_geometry_valid=True)
-            for i,d in enumerate(r['detections']):d.update(box_xyxy=[250+i*120,300,310+i*120,360],class_name='red_pawn',camera_geometry_valid=True)
+                base_transform_valid=False,processing_s=.001,detector_ms=0.,geometry_ms=0.,camera_geometry_valid=True,
+                image_size=[1280,720],inference_roi_xyxy=roi or [0,0,1280,720],compute={'inference_backend':'fixture','fp16':False})
+            for i,d in enumerate(r['detections']):d.update(id=i,class_id=0,detection_valid=True,center_pixel=[280+i*120,330],box_xyxy=[250+i*120,300,310+i*120,360],class_name='red_pawn',camera_geometry_valid=True,touches_image_edge=False,touches_processing_edge=False)
             self.ready.append((dict(metadata=metadata,context=context,started=time.monotonic(),draw=False),r,None));self.count+=1
         def poll(self):r=self.ready;self.ready=[];return r
         def close(self):pass
-    live.Pipeline=FixturePipeline;live.AuditEpoch=FixtureAudit;live.main();sys.exit()
+    if '--worker-perception' in sys.argv:
+        perception_node.Pipeline=FixturePipeline;sys.argv=[sys.argv[0]];perception_node.main()
+    else:
+        from test_node_split import FixtureBase
+        scene_node.BaseGeometry=FixtureBase;scene_node.AuditEpoch=FixtureAudit;sys.argv=[sys.argv[0]];scene_node.main()
+    sys.exit()
 import numpy as np,rclpy
 from rclpy.qos import qos_profile_sensor_data,QoSProfile,DurabilityPolicy
 from sensor_msgs.msg import Image,CameraInfo,JointState
@@ -70,6 +80,9 @@ try:
     deadline=time.monotonic()+12
     while not statuses or statuses[-1]['state']!='locked':
         spin(.05);assert time.monotonic()<deadline,(statuses[-1] if statuses else 'no status')
+    for malformed in ['['*1100+'0'+']'*1100,'{"action":"query","request_id":NaN}',
+                      '{"action":"query","request_id":1e999}']:
+        request.publish(String(data=malformed));spin(.1)
     first=rpc('query');second=rpc('query');snapshot=first['snapshot'];sid=snapshot['snapshot_id']
     assert first['ok'] and snapshot==second['snapshot'] and len(snapshot['targets'])==4
     assert snapshot['sample_end_ns']-snapshot['sample_start_ns']>=2e9 and snapshot['unique_frames']>=20
@@ -83,7 +96,8 @@ try:
     assert rpc('consume',snapshot_id=sid,operation_id='fixture-op')['idempotent']
     assert not rpc('consume',snapshot_id=sid,operation_id='other-op')['ok']
     q=.01;spin(.15);assert not statuses[-1]['observation_eligible']
-    (out/'result.json').write_text(json.dumps(dict(passed=True,domain=116,snapshot=snapshot,responses=responses,statuses=statuses,physical_commands=0),indent=2))
+    assert statuses[-1].get('transport_rejections',{}).get('invalid request JSON',0)>=3
+    (out/'result.json').write_text(json.dumps(dict(passed=True,domain=116,bad_requests_rejected_then_query_recovered=True,snapshot=snapshot,responses=responses,statuses=statuses,physical_commands=0),indent=2))
     print(json.dumps(dict(passed=True,domain=116,targets=4,unique_frames=snapshot['unique_frames'],unique_feedback_states=snapshot['unique_feedback_states'],physical_commands=0)))
 finally:
     child.send_signal(signal.SIGTERM)
