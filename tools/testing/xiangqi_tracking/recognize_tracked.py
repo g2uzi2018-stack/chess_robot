@@ -1,11 +1,12 @@
 """Offline segmentation + visible surface position experiment; no robot commands."""
-import argparse, hashlib, json, sys, time, xml.etree.ElementTree as ET
+import argparse, hashlib, json, os, sys, time, xml.etree.ElementTree as ET
 from pathlib import Path
 import cv2, numpy as np, yaml
 
 ROOT=Path('/home/kuang/workspace/chess_robot')
 TRAIN=Path('/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1')
 WEIGHTS=TRAIN/'runs/train/weights/best.pt'
+MODEL_ARTIFACT=Path(os.environ.get('XIANGQI_MODEL_ARTIFACT',str(WEIGHTS)))
 CALIB=ROOT/'docs/validation/handeye-20261030/flange_T_camera_candidate.yaml'
 URDF=ROOT/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'
 
@@ -60,7 +61,21 @@ class Experiment:
         import torch,ultralytics
         from ultralytics import YOLO
         torch.set_num_threads(2); cv2.setNumThreads(1)
-        self.model=None if geometry_only else YOLO(str(WEIGHTS))
+        if MODEL_ARTIFACT.suffix not in ('.pt','.engine'):raise ValueError('Only PT and TensorRT artifacts are supported')
+        self.inference_backend='tensorrt' if MODEL_ARTIFACT.suffix=='.engine' else 'pytorch'
+        artifact_sha=hashlib.sha256(MODEL_ARTIFACT.read_bytes()).hexdigest()
+        expected=os.environ.get('XIANGQI_MODEL_ARTIFACT_SHA256')
+        if expected and artifact_sha!=expected:raise ValueError('Inference artifact SHA256 mismatch')
+        source_sha=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest()
+        expected_source=os.environ.get('XIANGQI_SOURCE_WEIGHTS_SHA256')
+        if expected_source and source_sha!=expected_source:raise ValueError('Source weights changed; rebuild/validate the engine')
+        if self.inference_backend=='tensorrt':
+            if half:raise ValueError('The deployed TensorRT policy requires FP32')
+            torch.set_float32_matmul_precision('highest')
+            torch.backends.cuda.matmul.allow_tf32=False
+            torch.backends.cudnn.allow_tf32=False
+        self.artifact_sha256=artifact_sha
+        self.model=None if geometry_only else YOLO(str(MODEL_ARTIFACT),task='segment')
         if self.model is not None:assert self.model.task=='segment'
         self.imgsz=imgsz
         self.half=half
@@ -77,7 +92,7 @@ class Experiment:
             calibration_hash=hashlib.sha256(CALIB.read_bytes()).hexdigest();urdf_hash=hashlib.sha256(URDF.read_bytes()).hexdigest()
         except Exception as e:
             self.base_model_reason='base model unavailable: '+type(e).__name__
-        self.identity=dict(weights=str(WEIGHTS),weights_sha256=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest(),calibration=str(CALIB),calibration_sha256=calibration_hash,urdf_sha256=urdf_hash,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz)
+        self.identity=dict(weights=str(WEIGHTS),weights_sha256=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest(),calibration=str(CALIB),calibration_sha256=calibration_hash,urdf_sha256=urdf_hash,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
 
     def base_transform(self,metadata):
         # Eligibility is independent of reference_valid/motion readiness. Legacy
@@ -108,7 +123,15 @@ class Experiment:
         result=self.model.predict(color[y1:y2,x1:x2],device=0,imgsz=self.imgsz,conf=.25,verbose=False,retina_masks=True,half=self.half)[0]
         predictions=result.boxes.data.cpu().numpy()
         masks=(result.masks.data.cpu().numpy()>.5).astype(np.uint8) if result.masks is not None else None
-        compute=dict(predictor_device=str(self.model.predictor.device),model_parameter_device=str(next(self.model.model.parameters()).device),boxes_device=str(result.boxes.data.device),masks_device=str(result.masks.data.device) if result.masks is not None else None,fp16=bool(self.model.predictor.model.fp16))
+        parameter_device=None
+        if hasattr(self.model.model,'parameters'):
+            try:parameter_device=str(next(self.model.model.parameters()).device)
+            except StopIteration:pass
+        fp16=bool(self.model.predictor.model.fp16)
+        if self.inference_backend=='tensorrt' and fp16:raise ValueError('TensorRT engine is not FP32')
+        compute=dict(predictor_device=str(self.model.predictor.device),model_parameter_device=parameter_device,boxes_device=str(result.boxes.data.device),masks_device=str(result.masks.data.device) if result.masks is not None else None,fp16=fp16,inference_backend=self.inference_backend,inference_artifact_sha256=self.artifact_sha256)
+        if self.inference_backend=='tensorrt':
+            compute.update(matmul_allow_tf32=bool(__import__('torch').backends.cuda.matmul.allow_tf32),cudnn_allow_tf32=bool(__import__('torch').backends.cudnn.allow_tf32))
         return dict(predictions=predictions,masks=masks,names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=time.monotonic()-start,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
 
     def run(self,color,depth,metadata,roi=None,draw=True,detection=None):

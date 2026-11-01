@@ -1,0 +1,16 @@
+{
+  "service": "chess-robot-xiangqi-preview-20261031.service",
+  "launcher": "/home/kuang/workspace/chess_robot/runs/stable_observation_20261101_01/start_visual.sh",
+  "source": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/source",
+  "drop_in": "/home/kuang/.config/systemd/user/chess-robot-xiangqi-preview-20261031.service.d/zz-vision-acceleration.conf",
+  "config": {
+    "fixed_clocks": true,
+    "model_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+    "artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+    "source_weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+    "source_weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e"
+  },
+  "repo_source_updated": true,
+  "git_committed": false,
+  "transient_visual_unit_recreated": true
+}

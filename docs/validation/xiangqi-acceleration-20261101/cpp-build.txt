@@ -1,0 +1,5 @@
+Starting >>> chess_robot_tracking_preview
+[Processing: chess_robot_tracking_preview]
+Finished <<< chess_robot_tracking_preview [42.4s]
+
+Summary: 1 package finished [42.8s]

@@ -82,6 +82,11 @@ CPU跟踪自检（无ROS发布）：使用上述Python运行器执行`piece_trac
 
 ## 2026-11-01 独立图像路径 / v2 资格字段
 
-检测及相机表面几何不再要求 arm/reference/mode5；base 资格仍要求同步可信停稳反馈和模型/FK 校验。旧 detection.valid 仍表示基座几何合格，camera-only 使用 camera_geometry_valid；顶层 frame_id 仍为 base_link，camera 字段明确属于 d405_color_optical_frame。motion_ready/grasp_ready 始终 false。无 base 不提供稳定 base ID；原 track-state.json 不读取、不改写，v2 会话 ID 不跨中断继承。渲染支持预测/相机坐标及缺源恢复。详见 docs/validation/history-vision-decouple-20261101.md。
+检测及相机表面几何不再要求 arm/reference/mode5；base 资格仍要求同步可信停稳反馈和模型/FK 校验。旧 detection.valid 仍表示基座几何合格，camera-only 使用 camera_geometry_valid；顶层 frame_id 仍为 base_link，camera 字段明确属于 d405_color_optical_frame。motion_ready/grasp_ready 始终 false。无 base 不提供稳定 base ID；原 track-state.json 不读取、不改写，v2 会话 ID 不跨中断继承。渲染支持预测/相机坐标及缺源恢复。详见 [稳定观测与资格说明](STABLE_OBSERVATION.md)。
 
 启动脚本支持 ROS_DOMAIN_ID、ROS_LOCALHOST_ONLY 及 ROS remap 参数。识别另可设 XIANGQI_SOURCE_DIR / XIANGQI_RUN_DIR；渲染可设 XIANGQI_RENDER_PREFIX。脚本不会启动 arm、夹爪、相机或手眼驱动。生产常驻识别用 XIANGQI_BENCHMARK_LOCK 指向 runs/perf_ceiling_20261031/benchmark.lock，持锁覆盖在途 GPU/CPU 槽并周期让出；外层已持锁的隔离测试不设置该可选变量。
+
+
+## 2026-11-01 TensorRT FP32 与运行期时钟加速
+
+原模型、640推理尺度和两秒门限不变；现场顺序窗口PT动态时钟30秒14.07fps，TRT FP32/固定CPU-GPU-EMC时钟180秒29.31fps。发布延迟p95为186.09→108.11ms。四目标中心同时合格为12.01→19.89fps，不能把处理率当成每帧全部目标合格率。断电前已部署；没有新增开机自启，未在本次Git整理中重启服务。代码、工件哈希、四组实验取舍、原始字段、时钟恢复和回退方法见 [加速验收记录](../../../docs/validation/xiangqi-acceleration-20261101/README.md)。

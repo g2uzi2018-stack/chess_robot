@@ -1,0 +1,11 @@
+{
+  "active": false,
+  "owner_pid": 3681477,
+  "invocation_id": "3b025864141642bb850dc3d646521d24",
+  "boot_id": "fc9de482-7b4d-49ba-87a0-c68a6999152a",
+  "folder": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock-sessions/3b025864141642bb850dc3d646521d24",
+  "snapshot": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock-sessions/3b025864141642bb850dc3d646521d24/original.conf",
+  "created_at": "2026-11-01T08:29:04.953815+00:00",
+  "released_at": "2026-11-01T08:31:05.436763+00:00",
+  "release_verification": "PASS restored 54 saved sysfs values; normalized CPU/GPU/EMC/fan report and MAXN match the pre-test snapshot\n"
+}

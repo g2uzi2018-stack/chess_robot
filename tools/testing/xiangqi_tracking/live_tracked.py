@@ -81,6 +81,7 @@ def main():
             if time.monotonic()-config_check>1:
                 from recognize_tracked import WEIGHTS,CALIB,URDF
                 paths=[WEIGHTS,CALIB,URDF,Path(__file__),Path(__file__).with_name('recognize_tracked.py')]
+                if os.environ.get('XIANGQI_MODEL_ARTIFACT'):paths.append(Path(os.environ['XIANGQI_MODEL_ARTIFACT']))
                 if policy_path:paths.append(Path(policy_path))
                 try:current=tuple((str(p),p.stat().st_mtime_ns,p.stat().st_size) for p in paths)
                 except OSError:current=('configuration file missing',)
