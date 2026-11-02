@@ -5,6 +5,7 @@ MovJ fallback or automatic motion retry. The commissioning backend is bounded.
 """
 import argparse,csv,gzip,hashlib,ipaddress,json,math,os,pathlib,signal,subprocess,time
 import numpy as np
+import yaml
 from scipy.spatial.transform import Rotation
 import rclpy
 from rclpy.action import ActionClient
@@ -18,8 +19,13 @@ def main():
     parser.add_argument('--controller-ip',required=True,type=lambda s:str(ipaddress.IPv4Address(s)))
     parser.add_argument('--project-root',type=pathlib.Path,default=pathlib.Path(__file__).resolve().parents[2])
     parser.add_argument('--execute-local',action='store_true')
-    parser.add_argument('--initialize-reference-at-home',action='store_true',
-                        help='Explicitly establish one reference at the previously verified neutral Home; never reset between tasks')
+    recovery=parser.add_mutually_exclusive_group(required=True)
+    recovery.add_argument('--initialize-reference-at-home',action='store_true',
+                        help='Legacy name: initialize only at the historical reference pose, never at daily Home')
+    recovery.add_argument('--checkpoint-file',type=pathlib.Path,
+                        help='Pure nonzero-history recovery from an existing full checkpoint; no automatic enable')
+    parser.add_argument('--no-unobserved-motion',action='store_true',
+                        help='Explicit operator attestation required with --checkpoint-file')
     parser.add_argument('--expanded-local',action='store_true',
                         help='25/30/35 mm batches, 20 mm approach; real actions, no replay')
     parser.add_argument('--expanded-plan-only',action='store_true')
@@ -29,12 +35,16 @@ def main():
     if (args.scan or args.negative_local) and args.execute_local:parser.error('scan/negative tests never execute')
     if args.expanded_local and not args.execute_local:parser.error('expanded-local requires execute-local')
     if args.expanded_plan_only and args.execute_local:parser.error('expanded-plan-only never executes')
-    if not args.initialize_reference_at_home:parser.error('explicit --initialize-reference-at-home required; no automatic zeroing')
+    if args.checkpoint_file and (not args.no_unobserved_motion or not args.checkpoint_file.is_file()):
+        parser.error('checkpoint recovery requires an existing file and explicit --no-unobserved-motion')
     assert os.environ['ROS_DOMAIN_ID']=='96' and os.environ['ROS_LOCALHOST_ONLY']=='1'
     root=args.project_root.resolve();out=pathlib.Path(args.out)
     out.mkdir(parents=True,exist_ok=False)
     cfg=root/'src/chess_robot_arm/config';model=root/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'
     home=np.array(json.loads((root/'config/arm/home_reference.json').read_text())['joint_positions_rad'])
+    reference=np.array(yaml.safe_load((root/'config/arm/twist_reference.yaml').read_text())['chess_robot_arm']['ros__parameters']['reference']['joint_positions_rad'])
+    if args.initialize_reference_at_home and (args.execute_local or args.negative_local or args.expanded_plan_only) and np.max(np.abs(home-reference))>.12+.03:
+        parser.error('historical initialization pose is outside the daily commissioning envelope; restore a trusted checkpoint at the daily endpoint with --checkpoint-file and --no-unobserved-motion; the motion envelope is never expanded for initialization')
     reference_sha=hashlib.sha256((root/'config/arm/home.yaml').read_bytes()).hexdigest()
     rclpy.init();node=rclpy.create_node('business_hardware_acceptance')
     commissioning=args.execute_local or args.negative_local or args.expanded_plan_only
@@ -52,6 +62,9 @@ def main():
     client=ActionClient(node,MoveArm,'/arm/move');initialize=node.create_client(InitializeReference,'/arm/initialize_reference')
     log=(out/'node.log').open('w')
     cmd=[str(root/'install/chess_robot_arm/lib/chess_robot_arm/arm_node'),'--ros-args','--params-file',str(cfg/'arm.yaml'),'--params-file',str(cfg/'home.yaml')]
+    cmd+=['--params-file',str(root/'config/arm/home.yaml'),'--params-file',str(root/'config/arm/twist_reference.yaml')]
+    if args.checkpoint_file:
+        cmd+=['-p','checkpoint.file:='+str(args.checkpoint_file.resolve()),'-p','checkpoint.auto_restore:=true','-p','checkpoint.no_unobserved_motion:=true','-p','checkpoint.enable_after_restore:=false']
     if commissioning:cmd+=['--params-file',str(cfg/'commissioning.yaml')]
     if args.execute_local:cmd+=['-p','hardware.enable:=true']
     if args.expanded_local or args.expanded_plan_only:
@@ -120,15 +133,16 @@ def main():
         assert client.wait_for_server(timeout_sec=15)
         wait(lambda:state is not None and state.feedback_fresh and joint is not None)
         assert not state.simulated and not state.hardware_certified
-        assert state.controller_mode==5 and np.max(np.abs(np.asarray(joint.position)-home))<.003
+        assert state.controller_mode==5 and np.max(np.abs(np.asarray(joint.position)-(reference if args.initialize_reference_at_home else home)))<.003
         p,q=pose_values();report['initial']={'tcp_m':p,'quaternion_xyzw':q,'joints_rad':list(joint.position),'mode':state.controller_mode}
         tick=time.monotonic();wait(lambda:time.monotonic()-tick>.6)
-        response=future(initialize.call_async(InitializeReference.Request()));assert response.success,response.detail
+        if args.initialize_reference_at_home:
+            response=future(initialize.call_async(InitializeReference.Request()));assert response.success,response.detail
         wait(lambda:state.reference_valid);report['status']='RUNNING';save()
         if args.expanded_local or args.expanded_plan_only:
             origin=np.asarray(p);clearance=.02
             report['local_origin_tcp_m']=p;report['approach_clearance_m']=clearance
-            report['reference_initializations']=1;report['batches']=[]
+            report['reference_initializations']=int(args.initialize_reference_at_home);report['batches']=[]
             if args.execute_local:
                 goal('initial_home',4,execute=True)
                 stop_target=(origin+[0,0,.003-clearance]).tolist()

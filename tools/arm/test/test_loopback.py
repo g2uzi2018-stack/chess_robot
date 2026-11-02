@@ -91,7 +91,13 @@ def main():
     fixture=Fixture(home);events=[]
     try:
         with tempfile.TemporaryDirectory(prefix='arm_tool_protocol_') as directory:
-            directory=pathlib.Path(directory);canonical=directory/'home.yaml';canonical.write_bytes(home_file.read_bytes())
+            directory=pathlib.Path(directory);canonical=directory/'config/arm/home.yaml'
+            canonical.parent.mkdir(parents=True);canonical.write_bytes(home_file.read_bytes())
+            mirror=directory/'src/chess_robot_arm/config/home.yaml';mirror.parent.mkdir(parents=True)
+            mirror.write_bytes(home_file.read_bytes())
+            reference=canonical.parent/'twist_reference.yaml'
+            reference.write_bytes((home_file.parent/'twist_reference.yaml').read_bytes())
+            reference_before=reference.read_bytes()
             config=yaml.safe_load(config_file.read_text());config['controller'].update(ip='127.0.0.1',dashboard_port=fixture.dashboard.getsockname()[1],feedback_port=fixture.feedback.getsockname()[1])
             config['capture'].update(duration_s=.15,min_frames=5,max_gap_s=.1)
             config['home'].update(arrival_dwell_s=.03,timeout_s=5.,stop_timeout_s=2.)
@@ -125,7 +131,8 @@ def main():
             run('capture-home','--output-dir',directory/'candidate');assert canonical.read_bytes()==saved
             run('capture-home','--output-dir',directory/'applied','--apply')
             assert (directory/'applied/previous_home.yaml').read_bytes()==saved
-            assert (directory/'home_reference.json').exists() and fixture.writes==before
+            assert (canonical.parent/'home_reference.json').exists() and fixture.writes==before
+            assert mirror.read_bytes()==canonical.read_bytes() and reference.read_bytes()==reference_before
             events.append('capture candidate preserves canonical; apply updates only temporary files and backs up old Home; zero robot writes')
             fixture.duplicates=True;saved=canonical.read_bytes()
             run('capture-home','--output-dir',directory/'duplicates','--apply',success=False)

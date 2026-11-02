@@ -19,6 +19,7 @@ def generate_launch_description():
         Node(package='chess_robot_arm', executable='arm_node', name='chess_robot_arm',
              output='screen', parameters=[os.path.join(share, 'config', 'arm.yaml'),
                                          os.path.join(share, 'config', 'home.yaml'),
+                                         os.path.join(share, 'config', 'twist_reference.yaml'),
                                          {'urdf_file': LaunchConfiguration('urdf_file'),
                                           'controller.ip': LaunchConfiguration('controller_ip'),
                                           'safety.model_file': LaunchConfiguration('safety_model_file')}])

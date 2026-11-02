@@ -104,9 +104,9 @@ void Config::validate() const {
               enable_ack_timeout_ms>0 && enable_ack_timeout_ms<=10000,
           "invalid network bounds");
   for (size_t i = 0; i < 6; ++i)
-    require(std::isfinite(home[i]) && positive(velocity[i]) &&
+    require(std::isfinite(home[i]) && std::isfinite(twist_reference[i]) && positive(velocity[i]) &&
                 positive(acceleration[i]),
-            "invalid Home or manufacturer joint limits");
+            "invalid daily Home, history reference or manufacturer joint limits");
   require(flange_tcp.matrix().allFinite() &&
               std::abs(flange_tcp.linear().determinant() - 1) < 1e-6 &&
               (flange_tcp.linear().transpose() * flange_tcp.linear() -
@@ -266,7 +266,9 @@ void validateCapture(const std::string &f, double stamp, double now,
           "stale, zero or future capture stamp");
 }
 State::State(const Config &c, std::shared_ptr<const chess_robot_twist::Model> m)
-    : config_(c), model_(m), tracker_(m, c.tracker_options) {}
+    : config_(c), model_(m), tracker_(m, c.tracker_options) {
+  require(m->home() == c.twist_reference, "model/history reference mismatch");
+}
 void State::invalidateReferenceLocked() {++reference_generation_;tracker_.invalidate();}
 void State::update(const Feedback &f) {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -340,9 +342,11 @@ void State::initialize() {
       Clock::now() - *stationary_since_ <
           std::chrono::duration<double>(config_.dwell))
     throw Failure(FEEDBACK_FAULT, "reference requires fresh stationary dwell");
+  if (jointDistance(last_.q, config_.twist_reference) > config_.home_tolerance)
+    throw Failure(REFERENCE_INVALID, "initialize requires historical reference pose, not daily Home");
   ++reference_generation_;
   tracker_.initializeAtHome(last_.q, config_.home_tolerance);
-  diagnostic_ = "explicit Home reference initialized";
+  diagnostic_ = "explicit historical reference initialized";
 }
 Snapshot State::checkpoint() {
   std::lock_guard<std::mutex> lock(mutex_);
@@ -537,8 +541,8 @@ std::string State::restore(const std::vector<std::string> &files, bool no_motion
                     double(last_host-stationary_idle_since)*1e-9>=config_.dwell &&
                     host>last_host && (joined.mode==4 || joined.mode==5) &&
                     maxSpeed(joined)<=config_.stationary_speed && model_->withinJointBounds(joined.q) &&
-                    jointDistance(previous.q,config_.home)<=config_.home_tolerance &&
-                    jointDistance(joined.q,config_.home)<=config_.home_tolerance &&
+                    jointDistance(previous.q,config_.twist_reference)<=config_.home_tolerance &&
+                    jointDistance(joined.q,config_.twist_reference)<=config_.home_tolerance &&
                     delta<=config_.power_cycle_endpoint_tolerance,
                 "recorded stopped power-cycle join requires stationary Home dwell to disabled/idle encoders; "+
                     stopped_join_detail+"; recorded_stopped_join_committed=false; recorded_expanded_stopped_join_used=false");
@@ -553,8 +557,8 @@ std::string State::restore(const std::vector<std::string> &files, bool no_motion
         require(config_.power_cycle_handoff && !recorded_epoch_joined && have && recorded_fault_tail &&
                     previous.mode==9 && host>last_host &&
                     (joined.mode==4 || joined.mode==5) && maxSpeed(joined)<=config_.stationary_speed &&
-                    jointDistance(previous.q,config_.home)<=config_.home_tolerance &&
-                    jointDistance(joined.q,config_.home)<=config_.home_tolerance &&
+                    jointDistance(previous.q,config_.twist_reference)<=config_.home_tolerance &&
+                    jointDistance(joined.q,config_.twist_reference)<=config_.home_tolerance &&
                     jointDistance(previous.q,joined.q)<=.001,
                 "recorded power epoch must join terminal Home fault to unchanged disabled/idle encoders");
         // Only this explicit, attested file boundary changes controller epochs.
@@ -596,7 +600,7 @@ std::string State::restore(const std::vector<std::string> &files, bool no_motion
             files[file_index+1]==config_.power_cycle_join_file;
         require(have && terminal_or_known_join && recent_stationary_home>0 &&
                     host-recent_stationary_home <= int64_t(config_.freshness*1e9) &&
-                    jointDistance(current.q,config_.home)<=config_.home_tolerance,
+                    jointDistance(current.q,config_.twist_reference)<=config_.home_tolerance,
                 "power-cycle recovery requires terminal near-Home fault after recorded stationary Home");
         recorded_fault_tail=true;
       } else {
@@ -604,7 +608,7 @@ std::string State::restore(const std::vector<std::string> &files, bool no_motion
         require(current.mode==4 || current.mode==5 || current.mode==7,"invalid historical mode");
       }
       if (current.mode==5 && maxSpeed(current)<=config_.stationary_speed &&
-          jointDistance(current.q,config_.home)<=config_.joint_tolerance)
+          jointDistance(current.q,config_.twist_reference)<=config_.joint_tolerance)
         recent_stationary_home=host;
       if (!have) {
         require(current.mode==5 && maxSpeed(current)<=config_.stationary_speed,
@@ -661,8 +665,8 @@ std::string State::restore(const std::vector<std::string> &files, bool no_motion
   require(have && have_ && !tracker_.valid(), "history restore needs invalid reference and real feedback"+stopped_failure_context()+cold_failure_context());
   const bool power_handoff=!cold_configured && config_.power_cycle_handoff &&
       (last_.mode==4 || last_.mode==5) &&
-      jointDistance(last_.q,config_.home)<=config_.home_tolerance &&
-      jointDistance(previous.q,config_.home)<=config_.home_tolerance;
+      jointDistance(last_.q,config_.twist_reference)<=config_.home_tolerance &&
+      jointDistance(previous.q,config_.twist_reference)<=config_.home_tolerance;
   // This exception is deliberately local to the final live endpoint. Recorded
   // Other file/fault-epoch joins retain their fixed .001 rad bound and original bytes.
   const double endpoint_tolerance=power_handoff ? config_.power_cycle_endpoint_tolerance : .001;

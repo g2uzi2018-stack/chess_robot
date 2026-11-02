@@ -144,6 +144,9 @@ class ArmNode final : public rclcpp::Node {
     auto h = array("home.joint_positions_rad",
                    std::vector<double>(c.home.begin(), c.home.end()), 6);
     std::copy(h.begin(), h.end(), c.home.begin());
+    auto reference = array("reference.joint_positions_rad",
+                   std::vector<double>(c.twist_reference.begin(), c.twist_reference.end()), 6);
+    std::copy(reference.begin(), reference.end(), c.twist_reference.begin());
     auto names = param("home.joint_names",
                        std::vector<std::string>{"joint1", "joint2", "joint3",
                                                 "joint4", "joint5", "joint6"});
@@ -643,7 +646,9 @@ public:
   ArmNode() : Node("chess_robot_arm") {
     configure();
     model_ = std::make_shared<chess_robot_twist::Model>(
-        config_.urdf, "base_link", "Link6", config_.flange_tcp, config_.home);
+        config_.urdf, "base_link", "Link6", config_.flange_tcp, config_.twist_reference);
+    if (!model_->withinJointBounds(config_.twist_reference))
+      throw Failure(INVALID_GOAL, "history reference outside URDF bounds");
     if (!model_->withinJointBounds(config_.home))
       throw Failure(INVALID_GOAL, "Home outside URDF bounds");
     if (!config_.safety_model_file.empty())

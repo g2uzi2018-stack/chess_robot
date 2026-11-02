@@ -63,6 +63,8 @@ class Session:
         p.update(test_fixture=True,backend='hardware' if execution else 'read_only',
                  urdf_file=str(PROJECT/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'),
                  approach_clearance_m=.01,gripper_timeout_s=.5)
+        p['reference']=yaml.safe_load((PROJECT/'config/arm/twist_reference.yaml').read_text())['chess_robot_arm']['ros__parameters']['reference']
+        p['home']=yaml.safe_load((PROJECT/'config/arm/home.yaml').read_text())['chess_robot_arm']['ros__parameters']['home']
         p['controller'].update(ip=info['host'],dashboard_port=info['dashboard_port'],feedback_port=info['feedback_port'])
         p['hardware']={key:execution for key in p['hardware']}
         p['motion']={'paused':False} # loopback-only fixture opt-in
@@ -90,6 +92,17 @@ class Session:
         response=future(self.init.call_async(InitializeReference.Request()))
         assert response.success,response.detail
         spin_until(lambda:self.latest.reference_valid)
+        # Synthetic measured fixture history, never a second initialization:
+        # the vertical-operation cases begin at the new daily target while the
+        # node retains the historical reference and observes every path sample.
+        import numpy as np
+        daily=np.array(p['home']['joint_positions_rad'])
+        with self.fixture.lock:
+            self.fixture.start_q=self.fixture.state()[0]
+            self.fixture.target_q=daily;self.fixture.start_time=time.monotonic();self.fixture.duration=.6
+        spin_until(lambda:self.joints and self.latest.controller_mode==5 and
+                   max(abs(a-b) for a,b in zip(self.joints[-1].position,daily))<1e-8)
+        assert self.latest.reference_valid and self.latest.total_twist_rad>0
     def receive(self,message):
         if self.latest is None:self.started=time.monotonic()
         self.latest=message

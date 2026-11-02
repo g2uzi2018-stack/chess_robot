@@ -32,9 +32,15 @@ int main(int argc, char **argv) {
           .toRotationMatrix();
   config.validate();
   auto model = std::make_shared<chess_robot_twist::Model>(
-      config.urdf, "base_link", "Link6", config.flange_tcp, config.home);
+      config.urdf, "base_link", "Link6", config.flange_tcp, config.twist_reference);
   Snapshot start{chess_robot_twist::Tracker(model, config.tracker_options)};
-  start.tracker.initializeAtHome(config.home, config.home_tolerance);
+  start.tracker.initializeAtHome(config.twist_reference, config.home_tolerance);
+  // Explicit synthetic reference -> daily target trajectory for this offline
+  // probe only; never label daily Home itself as a zero-history pose.
+  for(int i=1;i<=20;++i) {
+    Joints q;for(size_t j=0;j<6;++j)q[j]=config.twist_reference[j]+(config.home[j]-config.twist_reference[j])*i/20;
+    start.tracker.advance(q);
+  }
   start.feedback.q = config.home;
   start.feedback.mode = 5;
   start.fresh = start.reference = true;

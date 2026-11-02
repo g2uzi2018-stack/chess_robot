@@ -45,6 +45,9 @@ int main(int argc,char **argv) {
     Config c;c.urdf=p["urdf_file"].as<std::string>();c.ip=p["controller"]["ip"].as<std::string>();
     c.controller_family=p["controller"]["protocol_family"].as<std::string>();c.controller_firmware=p["controller"]["firmware_version"].as<std::string>();
     auto home=h["home"]["joint_positions_rad"].as<std::vector<double>>();check(home.size()==6,"Home dimension");std::copy(home.begin(),home.end(),c.home.begin());
+    check(bool(plan["reference_parameters"]), "explicit reference_parameters required; daily home_parameters cannot define history");
+    auto reference=YAML::LoadFile(plan["reference_parameters"].as<std::string>())["chess_robot_arm"]["ros__parameters"]["reference"]["joint_positions_rad"].as<std::vector<double>>();
+    check(reference.size()==6,"history reference dimension");std::copy(reference.begin(),reference.end(),c.twist_reference.begin());
     auto tr=p["tcp"]["translation_m"].as<std::vector<double>>(),rpy=p["tcp"]["rpy_rad"].as<std::vector<double>>();check(tr.size()==3 && rpy.size()==3,"TCP dimension");
     c.flange_tcp.translation()=Eigen::Vector3d(tr[0],tr[1],tr[2]);
     c.flange_tcp.linear()=(Eigen::AngleAxisd(rpy[2],Eigen::Vector3d::UnitZ())*Eigen::AngleAxisd(rpy[1],Eigen::Vector3d::UnitY())*Eigen::AngleAxisd(rpy[0],Eigen::Vector3d::UnitX())).toRotationMatrix();
@@ -55,7 +58,7 @@ int main(int argc,char **argv) {
     c.power_cycle_fault_restart_offset_bytes=p["reference"]["power_cycle_fault_restart_offset_bytes"].as<int64_t>();
     c.power_cycle_fault_restart_sha256=p["reference"]["power_cycle_fault_restart_sha256"].as<std::string>();
     c.checkpoint_file=plan["output_checkpoint"].as<std::string>();check(!std::filesystem::exists(c.checkpoint_file),"migration never overwrites an existing checkpoint");c.validate();
-    auto model=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.home);
+    auto model=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.twist_reference);
     Feedback endpoint;std::ifstream snapshot(plan["old_endpoint_snapshot"].as<std::string>());
     for(double &q:endpoint.q)check(bool(snapshot>>q),"old endpoint q missing");
     check(bool(snapshot>>endpoint.mode>>endpoint.controller_stamp),"old endpoint mode/stamp missing");endpoint.received=Clock::now();

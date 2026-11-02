@@ -32,10 +32,10 @@ struct CheckpointTest:testing::Test {
   void SetUp() override {
     char path[]="/tmp/chess-checkpoint-test-XXXXXX";auto p=::mkdtemp(path);
   ASSERT_NE(p,nullptr);root=p;
-    c.urdf=ARM_TEST_URDF;c.checkpoint_file=(root/"state.save").string();
+    c.home=c.twist_reference;c.urdf=ARM_TEST_URDF;c.checkpoint_file=(root/"state.save").string();
     c.checkpoint_dwell=.002;c.dwell=.001;c.freshness=.2;c.stationary_speed=.002;
     c.flange_tcp.translation()=Eigen::Vector3d(0,0,.2);
-    model=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.home);
+    model=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.twist_reference);
   }
   void TearDown() override {std::filesystem::remove_all(root);}
   Snapshot saved(double wrist=.4) {
@@ -94,7 +94,7 @@ TEST_F(CheckpointTest, ModelControllerAndToolChangesRefuseOldSave) {
   changed=c;changed.controller_firmware="different";
   {CheckpointStore store(changed);
   EXPECT_THROW(store.load(),Failure);}
-  changed=c;changed.home[0]+=.001;
+  changed=c;changed.twist_reference[0]+=.001;
   {CheckpointStore store(changed);
   EXPECT_THROW(store.load(),Failure);}
 }
@@ -358,4 +358,29 @@ TEST_F(CheckpointTest, DurableSaveHoldsAdmissionUntilWriterCompletes) {
   while(!saving)std::this_thread::yield();
   std::thread action([&]{admitted=gate.reserve("motion");});writer.join();action.join();
   EXPECT_TRUE(admitted);gate.release();
+}
+
+TEST_F(CheckpointTest, DailyHomeChangeKeepsIdentityAndFullNonzeroHistoryOnRestart) {
+  auto original=saved(330*pi/180);auto expected=original.tracker.checkpoint();
+  std::string identity;
+  {CheckpointStore before(c);identity=before.identity();before.save(original);}
+  // Former daily Home A equals the persistent v1 reference. B is the new default.
+  auto changed=c;changed.home=Config{}.home;
+  ASSERT_GT(jointDistance(changed.home,changed.twist_reference),changed.home_tolerance);
+  CheckpointStore after(changed);EXPECT_EQ(after.identity(),identity);
+  auto loaded=after.load();
+  EXPECT_EQ(loaded.local,expected.local);EXPECT_EQ(loaded.previous_phase,expected.previous_phase);
+  EXPECT_EQ(loaded.joints,expected.joints);
+  auto changed_model=std::make_shared<chess_robot_twist::Model>(changed.urdf,"base_link","Link6",changed.flange_tcp,changed.twist_reference);
+  State restarted(changed,changed_model);stopped(restarted,loaded.joints);
+  restarted.restoreCheckpoint(loaded,true);
+  auto actual=restarted.snapshot().tracker.checkpoint();
+  EXPECT_EQ(actual.local,expected.local);EXPECT_EQ(actual.previous_phase,expected.previous_phase);
+  EXPECT_EQ(actual.joints,expected.joints);
+  EXPECT_GT(restarted.snapshot().tracker.metrics().total,pi);
+}
+TEST_F(CheckpointTest, HistoryReferenceChangeCannotLoadSameFileEvenWithSameDailyHome) {
+  {CheckpointStore before(c);before.save(saved());}
+  auto changed=c;changed.twist_reference[5]+=.01;
+  CheckpointStore after(changed);EXPECT_THROW(after.load(),Failure);
 }

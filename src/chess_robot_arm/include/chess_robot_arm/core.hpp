@@ -44,7 +44,13 @@ struct Config {
   std::string backend = "read_only", ip = "127.0.0.1", urdf;
   int dashboard_port = 29999, feedback_port = 30004, timeout_ms = 500,
       stop_ack_timeout_ms = 1500, enable_ack_timeout_ms = 5000;
-  Joints home{{1.3873624514421463, 0.29600795831732624, 1.4554299194273725,
+  // Daily motion target; changing it does not rebase accumulated cable history.
+  Joints home{{1.3350072344142241, 0.29860853512178864, 1.456467353830013,
+               -0.17973892243259029, -1.5708955295455018,
+               -0.30805257040040035}};
+  // Persistent geometry/zero basis of existing v1 history. Never teach this via
+  // daily Home capture; changing it requires a separately reviewed calibration.
+  Joints twist_reference{{1.3873624514421463, 0.29600795831732624, 1.4554299194273725,
                -0.18064158423931584, -1.5707963267948966,
                -0.06370430298043014}};
   // Pinned official Nova5 ROS2 limits; device configuration must be verified before motion.

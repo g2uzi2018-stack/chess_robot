@@ -7,6 +7,7 @@ run="${2:-$root/runs/history_vision_regression_$(date +%Y%m%d_%H%M%S)}"
 test -f "$baseline"
 test ! -e "$run" || { echo 'Output already exists; choose a new directory.' >&2; exit 1; }
 mkdir -p "$run/source/src"
+cp -a "$root/config" "$run/source/"
 exec 9>"$root/runs/perf_ceiling_20261031/benchmark.lock"
 flock 9
 trap 'echo "Evidence: $run"' EXIT

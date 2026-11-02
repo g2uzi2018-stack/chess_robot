@@ -1,0 +1,11 @@
+chess_robot_arm:
+  ros__parameters:
+    reference:
+      # Original v1 history basis; daily Home capture MUST NOT change this.
+      joint_positions_rad:
+        - 1.3873624514421463
+        - 0.29600795831732624
+        - 1.4554299194273725
+        - -0.18064158423931584
+        - -1.5707963267948966
+        - -0.06370430298043014

@@ -5,6 +5,7 @@ Run with the project's urdf_tools_env Python after sourcing ROS when used with
 an rclpy integration client. Test data must stay on an isolated ROS domain.
 """
 import json
+import yaml
 import math
 import pathlib
 import re
@@ -59,8 +60,8 @@ class ControllerFixture:
         self.project=pathlib.Path(project);self.out=pathlib.Path(out)
         self.out.mkdir(parents=True,exist_ok=True)
         self.model=Model(self.project)
-        home=json.loads((self.project/'config/arm/home_reference.json').read_text())
-        self.q=np.array(home['joint_positions_rad']);self.start_q=self.q.copy();self.target_q=self.q.copy()
+        reference=yaml.safe_load((self.project/'config/arm/twist_reference.yaml').read_text())['chess_robot_arm']['ros__parameters']['reference']['joint_positions_rad']
+        self.q=np.array(reference);self.start_q=self.q.copy();self.target_q=self.q.copy()
         self.start_time=time.monotonic();self.duration=0
         self.command_id=0;self.stop_count=0;self.actuation=[];self.commands=[];self.forbidden=[]
         self.lock=threading.RLock();self.closed=threading.Event();self.threads=[]

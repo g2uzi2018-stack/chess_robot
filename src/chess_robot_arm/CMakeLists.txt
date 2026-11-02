@@ -29,6 +29,17 @@ ament_target_dependencies(arm_node rclcpp rclcpp_action rcl_interfaces chess_rob
 install(TARGETS chess_robot_arm_core arm_node EXPORT export_arm ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY include/ DESTINATION include)
 install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
+# Install canonical sources last, including through --symlink-install. Never
+# let a stale package mirror become the installed daily target.
+execute_process(COMMAND "${CMAKE_COMMAND}" -E compare_files
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/home.yaml"
+  "${CMAKE_CURRENT_SOURCE_DIR}/config/home.yaml" RESULT_VARIABLE home_mirror_status)
+if(NOT home_mirror_status EQUAL 0)
+  message(FATAL_ERROR "Daily Home source/package mirror drift; reconcile or use capture --apply before building")
+endif()
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/home.yaml"
+              "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/twist_reference.yaml"
+        DESTINATION share/${PROJECT_NAME}/config)
 install(FILES README.md DESTINATION share/${PROJECT_NAME})
 install(PROGRAMS scripts/validate_target.sh DESTINATION lib/${PROJECT_NAME})
 ament_export_targets(export_arm HAS_LIBRARY_TARGET)

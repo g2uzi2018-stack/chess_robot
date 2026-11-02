@@ -4,11 +4,13 @@
 #include "arm_tools/net.hpp"
 #include <algorithm>
 #include <charconv>
+#include <exception>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
 #include <thread>
 #include <unistd.h>
+#include <fcntl.h>
 #include <yaml-cpp/yaml.h>
 
 namespace arm_tools {
@@ -32,12 +34,23 @@ void idle(const Feedback &f, const Settings &s) {
   for (double q : f.q)
     require(std::isfinite(q), "nonfinite measured joint");
 }
+void syncPath(const std::filesystem::path &p, bool directory = false) {
+  int fd=::open(p.c_str(),O_RDONLY|O_CLOEXEC|(directory ? O_DIRECTORY : O_NOFOLLOW));
+  require(fd>=0,"cannot open config for fsync: "+p.string());
+  const int result=::fsync(fd);::close(fd);
+  require(result==0,"config fsync failed: "+p.string());
+}
+void syncParent(const std::filesystem::path &p) {
+  syncPath(p.parent_path().empty() ? std::filesystem::path(".") : p.parent_path(),true);
+}
 void write(const std::filesystem::path &p, const std::string &bytes) {
   std::ofstream out(p, std::ios::binary | std::ios::trunc);
   out.exceptions(std::ios::failbit | std::ios::badbit);
   out << bytes;
   out.flush();
   out.close();
+  syncPath(p);
+  syncParent(p);
 }
 void replace(const std::filesystem::path &p, const std::string &bytes) {
   auto temporary = p;
@@ -45,6 +58,7 @@ void replace(const std::filesystem::path &p, const std::string &bytes) {
   try {
     write(temporary, bytes);
     std::filesystem::rename(temporary, p);
+    syncParent(p);
   } catch (...) {
     std::error_code ec;
     std::filesystem::remove(temporary, ec);
@@ -275,6 +289,19 @@ Capture collect(const Settings &s, Reader read,
 void saveHome(const Capture &c, const std::filesystem::path &directory,
               const std::filesystem::path &canonical, bool apply) {
   require(c.frames >= 2, "invalid Home capture");
+  const auto canonical_path = std::filesystem::weakly_canonical(canonical);
+  const auto project = canonical_path.parent_path().parent_path().parent_path();
+  const auto mirror = project / "src/chess_robot_arm/config/home.yaml";
+  if (apply) {
+    require(std::filesystem::absolute(canonical).lexically_normal() == canonical_path &&
+                canonical_path == project / "config/arm/home.yaml" &&
+                std::filesystem::is_regular_file(mirror) &&
+                std::filesystem::is_regular_file(project / "config/arm/twist_reference.yaml"),
+            "--apply requires project canonical config/arm/home.yaml and package mirror/reference; do not apply an installed copy");
+    require(std::filesystem::weakly_canonical(directory) != canonical_path.parent_path() &&
+                std::filesystem::weakly_canonical(directory) != mirror.parent_path(),
+            "capture directory must not overwrite canonical or package configuration");
+  }
   YAML::Node root;
   if (std::filesystem::exists(canonical))
     root = YAML::LoadFile(canonical.string());
@@ -318,7 +345,9 @@ void saveHome(const Capture &c, const std::filesystem::path &directory,
   const auto old_yaml = readFile(canonical);
   const bool had_metadata = std::filesystem::exists(metadata);
   auto old_metadata = had_metadata ? readFile(metadata) : std::string();
+  const auto old_mirror = apply ? readFile(mirror) : std::string();
   write(directory / "previous_home.yaml", old_yaml);
+  write(directory / "previous_package_home.yaml", old_mirror);
   if (had_metadata)
     write(directory / "previous_home_reference.json", old_metadata);
   // A marker makes an interrupted two-file update observable at the next
@@ -330,15 +359,28 @@ void saveHome(const Capture &c, const std::filesystem::path &directory,
   try {
     replace(canonical, yaml);
     replace(metadata, json.str());
+    replace(mirror, yaml);
     std::filesystem::remove(marker);
+    syncParent(marker);
   } catch (...) {
-    replace(canonical, old_yaml);
-    if (had_metadata)
-      replace(metadata, old_metadata);
-    else
-      std::filesystem::remove(metadata);
+    const auto original=std::current_exception();
+    std::string failures;
+    auto rollback=[&](const auto &path,const std::string &bytes) {
+      try {replace(path,bytes);} catch(const std::exception &e) {failures+="; "+path.string()+": "+e.what();}
+    };
+    // Attempt every restoration independently; a failed package rollback must
+    // never prevent restoring the canonical provenance JSON.
+    rollback(canonical,old_yaml);
+    rollback(mirror,old_mirror);
+    if (had_metadata) rollback(metadata,old_metadata);
+    else {
+      try {std::filesystem::remove(metadata);syncParent(metadata);}
+      catch(const std::exception &e) {failures+="; metadata removal: "+std::string(e.what());}
+    }
+    require(failures.empty(),"Home apply rollback incomplete; pending marker retained; inspect backups"+failures);
     std::filesystem::remove(marker);
-    throw;
+    syncParent(marker);
+    std::rethrow_exception(original);
   }
 }
 

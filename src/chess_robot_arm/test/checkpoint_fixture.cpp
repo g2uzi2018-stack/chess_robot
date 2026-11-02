@@ -11,10 +11,10 @@ int main(int argc,char **argv) {
     c.test_fixture=true;c.controller_family="v4";c.controller_firmware="checkpoint-loopback-fixture";
     c.flange_tcp.translation().z()=.2;
     c.flange_tcp.linear()=(Eigen::AngleAxisd(-pi/2,Eigen::Vector3d::UnitY())*Eigen::AngleAxisd(pi/2,Eigen::Vector3d::UnitX())).toRotationMatrix();
-    c.validate();auto model=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.home);
-    chess_robot_twist::Tracker t(model);t.initializeAtHome(c.home,c.home_tolerance);
+    c.validate();auto model=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.twist_reference);
+    chess_robot_twist::Tracker t(model);t.initializeAtHome(c.twist_reference,c.home_tolerance);
     if(std::string(argv[5])=="clean-nonzero") {
-      for(int i=1;i<=40;++i) {auto q=c.home;q[5]+=.4*i/40;t.advance(q);}
+      for(int i=1;i<=40;++i) {auto q=c.twist_reference;q[5]+=.4*i/40;t.advance(q);}
     }
     Snapshot s(t);s.fresh=s.reference=true;s.feedback.mode=5;s.feedback.q=t.lastJoints();s.feedback.controller_stamp=1;
     CheckpointStore store(c);store.save(s);if(std::string(argv[5])=="dirty")store.markMotionPending();

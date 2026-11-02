@@ -617,6 +617,10 @@ class RosSession:
             write_json(out/'power_cycle_evidence.json',self.power_cycle_evidence)
         self.params = yaml.safe_load((root/'src/chess_robot_arm/config/arm.yaml').read_text())
         p = self.params['chess_robot_arm']['ros__parameters']
+        # Bind the effective persistent basis into qualification/continuation
+        # evidence as well as passing its canonical file to the child node.
+        p['reference']['joint_positions_rad'] = yaml.safe_load(
+            (root/'config/arm/twist_reference.yaml').read_text())['chess_robot_arm']['ros__parameters']['reference']['joint_positions_rad']
         p.update(backend='exploration' if not args.fixture else 'hardware',
                  test_fixture=args.fixture, approach_clearance_m=0.0,
                  urdf_file=str(root/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'))
@@ -739,8 +743,9 @@ class RosSession:
         self.client = ActionClient(self.node, MoveArm, prefix+'/move')
         self.restore = self.node.create_client(RestoreReference, prefix+'/restore_reference')
         command = [str(root/'install/chess_robot_arm/lib/chess_robot_arm/arm_node'),'--ros-args',
-                   '--params-file',str(root/'src/chess_robot_arm/config/home.yaml'),
-                   '--params-file',str(out/'parameters.yaml')]
+                   '--params-file',str(out/'parameters.yaml'),
+                   '--params-file',str(root/'config/arm/home.yaml'),
+                   '--params-file',str(root/'config/arm/twist_reference.yaml')]
         write_json(out/'command.json', command)
         self.log = (out/'node.log').open('w')
         self.process = subprocess.Popen(command, stdout=self.log, stderr=subprocess.STDOUT)

@@ -150,7 +150,12 @@ TEST(Operator, CaptureHasMedianAndRejectsMotionOrTimestampRegression) {
 }
 TEST(Operator, CandidateDoesNotOverwriteAndApplyPreservesBackup) {
   Directory d;
-  auto canonical = d.path / "home.yaml";
+  std::filesystem::create_directories(d.path / "config/arm");
+  std::filesystem::create_directories(d.path / "src/chess_robot_arm/config");
+  auto canonical = d.path / "config/arm/home.yaml";
+  auto mirror = d.path / "src/chess_robot_arm/config/home.yaml";
+  {std::ofstream out(mirror);out << "old mirror";}
+  {std::ofstream out(d.path / "config/arm/twist_reference.yaml");out << "immutable reference";}
   {
     std::ofstream out(canonical);
     out << "chess_robot_arm:\n  ros__parameters:\n    home:\n      taught: "
@@ -171,12 +176,35 @@ TEST(Operator, CandidateDoesNotOverwriteAndApplyPreservesBackup) {
   auto saved = YAML::LoadFile(
       canonical.string())["chess_robot_arm"]["ros__parameters"]["home"];
   EXPECT_TRUE(saved["taught"].as<bool>());
+  EXPECT_DOUBLE_EQ(YAML::LoadFile(mirror.string())["chess_robot_arm"]["ros__parameters"]["home"]["joint_positions_rad"][0].as<double>(), .25);
+  EXPECT_TRUE(std::filesystem::exists(d.path / "apply/previous_package_home.yaml"));
   EXPECT_DOUBLE_EQ(saved["joint_positions_rad"][0].as<double>(), .25);
   EXPECT_TRUE(std::filesystem::exists(d.path / "apply/previous_home.yaml"));
-  EXPECT_TRUE(std::filesystem::exists(d.path / "home_reference.json"));
-  EXPECT_FALSE(std::filesystem::exists(d.path / ".home_update_pending"));
+  EXPECT_TRUE(std::filesystem::exists(d.path / "config/arm/home_reference.json"));
+  EXPECT_FALSE(std::filesystem::exists(d.path / "config/arm/.home_update_pending"));
+  {std::ifstream in(d.path / "config/arm/twist_reference.yaml");std::string value;std::getline(in,value);EXPECT_EQ(value,"immutable reference");}
+  std::filesystem::create_directory(d.path / "alias");
+  std::filesystem::create_symlink(canonical,d.path / "alias/home.yaml");
+  EXPECT_THROW(saveHome(c,d.path / "candidate",d.path / "alias/home.yaml",true),std::runtime_error);
+  EXPECT_THROW(saveHome(c,canonical.parent_path(),canonical,true),std::runtime_error);
 }
 
+TEST(Operator, FailedMirrorWriteAttemptsAllRollbacksAndKeepsPendingMarker) {
+  Directory d;auto canonical=d.path/"config/arm/home.yaml";
+  auto mirror=d.path/"src/chess_robot_arm/config/home.yaml";
+  std::filesystem::create_directories(canonical.parent_path());
+  std::filesystem::create_directories(mirror.parent_path());
+  {std::ofstream out(canonical);out<<"chess_robot_arm: {ros__parameters: {home: {taught: false}}}\n";}
+  {std::ofstream out(mirror);out<<"old mirror\n";}
+  {std::ofstream out(canonical.parent_path()/"twist_reference.yaml");out<<"immutable\n";}
+  std::filesystem::create_directory(d.path/"capture");Capture c;c.frames=100;c.median.fill(.25);
+  std::filesystem::permissions(mirror.parent_path(),std::filesystem::perms::owner_read|std::filesystem::perms::owner_exec);
+  EXPECT_THROW(saveHome(c,d.path/"capture",canonical,true),std::runtime_error);
+  std::filesystem::permissions(mirror.parent_path(),std::filesystem::perms::owner_all);
+  EXPECT_FALSE(YAML::LoadFile(canonical.string())["chess_robot_arm"]["ros__parameters"]["home"]["taught"].as<bool>());
+  EXPECT_FALSE(std::filesystem::exists(canonical.parent_path()/"home_reference.json"));
+  EXPECT_TRUE(std::filesystem::exists(canonical.parent_path()/".home_update_pending"));
+}
 TEST(Home, PreviewDoesNotSendAnyCommand) {
   auto s = settings();
   size_t calls = 0;

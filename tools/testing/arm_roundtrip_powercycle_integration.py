@@ -11,6 +11,7 @@ import os
 import pathlib
 import struct
 import time
+import yaml
 from types import SimpleNamespace
 from arm_controller_fixture import ControllerFixture
 from arm_roundtrip import RosSession,Runner,load_home,manifest,sha,write_json
@@ -70,14 +71,15 @@ def main():
     home=load_home(root);data=manifest(home)
     point={'id':'up_10mm','kind':'coarse','tcp_m':[home['tcp_m'][0],home['tcp_m'][1],home['tcp_m'][2]+.010]}
     data.update(coarse_points=[point],rays={},max_refinements_per_ray=0,maximum_targets=1)
-    raw=out/'old_epoch_feedback.bin';old_last_clock=history(raw,home)
+    reference=yaml.safe_load((root/'config/arm/twist_reference.yaml').read_text())['chess_robot_arm']['ros__parameters']['reference']['joint_positions_rad']
+    raw=out/'old_epoch_feedback.bin';old_last_clock=history(raw,{'joints_rad':reference})
     prior=out/'prior_simulated_fault.json'
     write_json(prior,{'status':'EXECUTION_FAULT_STOP_UNCONFIRMED','simulation':True,'fixture_only':True})
     power=out/'power_fixture_evidence.json'
     write_json(power,{'human_statement':'SIMULATED FIXTURE: power cycle only; no manual joint/cable motion',
        'only_power_cycle_no_manual_joint_or_cable_motion':True,
        'prior_fault_result':{'path':str(prior),'sha256':sha(prior)},'simulation':True})
-    fixture=PowerCycleFixture(root,out/'fixture',home['joints_rad'])
+    fixture=PowerCycleFixture(root,out/'fixture',reference)
     common=dict(fixture=True,execute=True,controller_ip='127.0.0.1',
         fixture_endpoints=out/'fixture/endpoints.json',history_audit=[raw],history_attestation=None,
         speed_evidence=None,goal_timeout=45,margin_evaluator=None,recover_home=True,

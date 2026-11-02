@@ -132,7 +132,7 @@ TEST(Streaming, WindowDeadlineAndEchoFaultsStopWithoutReplay) {
 }
 namespace {
 Config config() {
-  Config c;
+  Config c; c.home=c.twist_reference;
   c.motion_paused=false;c.controller_family="v4";c.controller_firmware="4.6.2.4-test-fixture";
   c.default_profile="conservative";
   c.urdf = ARM_TEST_URDF;
@@ -150,7 +150,7 @@ Config config() {
 }
 std::shared_ptr<const chess_robot_twist::Model> model(const Config &c) {
   return std::make_shared<chess_robot_twist::Model>(
-      c.urdf, "base_link", "Link6", c.flange_tcp, c.home);
+      c.urdf, "base_link", "Link6", c.flange_tcp, c.twist_reference);
 }
 Feedback feedback(const Config &c, uint64_t stamp = 1) {
   Feedback f;
@@ -2249,4 +2249,84 @@ TEST(FeedbackTransport, DuplicatePacketsDoNotRestartOneSecondDeadline) {
   const auto start=Clock::now();EXPECT_THROW(driver.readFeedback(),std::exception);
   const auto elapsed=std::chrono::duration<double>(Clock::now()-start).count();
   EXPECT_GE(elapsed,.8);EXPECT_LT(elapsed,1.25);
+}
+
+TEST(HomeSeparation, DefaultDailyTargetIsNewAndHistoryReferenceIsPinnedV1) {
+  Config c;
+  EXPECT_DOUBLE_EQ(c.home[0],1.3350072344142241);
+  EXPECT_DOUBLE_EQ(c.home[5],-.30805257040040035);
+  EXPECT_DOUBLE_EQ(c.twist_reference[0],1.3873624514421463);
+  EXPECT_DOUBLE_EQ(c.twist_reference[5],-.06370430298043014);
+  auto valid=config();valid.home=c.home;EXPECT_NO_THROW(valid.validate());
+  valid.home[0]=NAN;EXPECT_THROW(valid.validate(),Failure);
+  valid.home=c.home;valid.twist_reference[0]=NAN;EXPECT_THROW(valid.validate(),Failure);
+}
+TEST(HomeSeparation, NewDailyHomeCannotInitializeOrResetHistoricalReference) {
+  auto c=config();c.home=Config{}.home;auto m=model(c);State state(c,m);
+  auto f=feedback(c);f.received=Clock::now()-std::chrono::milliseconds(10);state.update(f);
+  f.controller_stamp++;f.received=Clock::now();state.update(f);
+  EXPECT_THROW(state.initialize(),Failure);EXPECT_FALSE(state.snapshot().reference);
+  f.q=c.twist_reference;f.controller_stamp++;f.received=Clock::now();state.update(f);
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+  f.controller_stamp++;f.received=Clock::now();state.update(f);
+  EXPECT_NO_THROW(state.initialize());
+  auto original=state.snapshot().tracker;
+  for(int i=1;i<=30;++i) {f.q=c.twist_reference;f.q[5]+=(c.home[5]-c.twist_reference[5])*i/30;
+    f.controller_stamp++;f.received=Clock::now();state.update(f);}
+  auto before=state.snapshot().tracker.checkpoint();
+  EXPECT_GT(state.snapshot().tracker.metrics().total,0);
+  EXPECT_THROW(state.initialize(),Failure);
+  EXPECT_EQ(state.snapshot().tracker.checkpoint().local,before.local);
+}
+TEST(HomeSeparation, HomePlansToDailyTargetWithHistoricalTrackingAndNoLiveMutation) {
+  auto c=config();c.home=Config{}.home;auto m=model(c);OfflineKinematics k(m);
+  Snapshot s{chess_robot_twist::Tracker(m,c.tracker_options)};
+  s.tracker.initializeAtHome(c.twist_reference,c.home_tolerance);
+  s.feedback=feedback(c);s.feedback.q=c.twist_reference;s.fresh=s.reference=true;
+  const auto before=s.tracker.checkpoint();
+  Planner planner(c,m,k,[]{});Goal g;g.operation=Operation::Home;
+  auto plan=planner.plan(g,s);ASSERT_EQ(plan.segments.size(),1u);
+  EXPECT_EQ(plan.segments.back().samples.back().q,c.home);
+  auto predicted=s.tracker;for(const auto &sample:plan.segments.front().samples)predicted.advance(sample.q);
+  EXPECT_GT(predicted.metrics().total,0);
+  EXPECT_EQ(s.tracker.checkpoint().local,before.local);
+  s.reference=false;EXPECT_THROW(planner.plan(g,s),Failure);
+  s.reference=true;s.fresh=false;EXPECT_THROW(planner.plan(g,s),Failure);
+}
+TEST(HomeSeparation, BusyAndUntrustedFeedbackCannotInitializeHistoricalReference) {
+  auto c=config();c.home=Config{}.home;auto m=model(c);State state(c,m);TaskGate gate;std::string detail;
+  EXPECT_FALSE(gate.initialize(state,detail));EXPECT_FALSE(state.snapshot().reference);
+  ASSERT_TRUE(gate.reserve("busy"));EXPECT_FALSE(gate.initialize(state,detail));gate.release();
+  auto wrong=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.home);
+  EXPECT_THROW(State(c,wrong),Failure);
+}
+TEST(HomeSeparation, OriginalAuditReplaysFromHistoricalPoseAfterDailyTargetChange) {
+  auto c=config();c.power_cycle_handoff=true;EndpointAudit audit(c);c.home=Config{}.home;
+  auto m=model(c);State state(c,m);endpointFeedback(state,c,audit.joints.back());
+  ASSERT_NO_THROW(state.restore({audit.path},true));
+  chess_robot_twist::Tracker expected(m,c.tracker_options);
+  expected.initializeAtHome(c.twist_reference,c.home_tolerance);
+  for(const auto &q:audit.joints)expected.advance(q);
+  expected.advance(audit.joints.back());
+  const auto actual=state.snapshot().tracker.checkpoint().local, wanted=expected.checkpoint().local;
+  ASSERT_EQ(actual.size(),wanted.size());
+  for(size_t i=0;i<actual.size();++i)EXPECT_NEAR(actual[i],wanted[i],1e-10);
+  EXPECT_GT(state.snapshot().tracker.metrics().total,0);
+}
+TEST(HomeSeparation, CommissioningUsesDailyEnvelopeAfterNonzeroHistoryRestore) {
+  auto c=config();c.home=Config{}.home;c.backend="commissioning";
+  c.safety_model_file=ARM_TEST_GUARD;c.checkpoint_dwell=.001;
+  auto m=model(c);GeometryGuard guard(c,m);
+  EXPECT_THROW(guard.check(c.twist_reference),Failure);
+  ASSERT_NO_THROW(guard.check(c.home));
+  chess_robot_twist::Tracker historical(m,c.tracker_options);
+  historical.initializeAtHome(c.twist_reference,c.home_tolerance);
+  for(int i=1;i<=40;++i) {Joints q;for(size_t j=0;j<6;++j)q[j]=c.twist_reference[j]+(c.home[j]-c.twist_reference[j])*i/40;historical.advance(q);}
+  State live(c,m);endpointFeedback(live,c,c.home,4);
+  ASSERT_NO_THROW(live.restoreCheckpoint(historical.checkpoint(),true));
+  EXPECT_EQ(live.snapshot().tracker.checkpoint().local,historical.checkpoint().local);
+  EXPECT_GT(live.snapshot().tracker.metrics().total,0);
+  OfflineKinematics k(m);Planner planner(c,m,k,[]{},[&](const Joints &q){guard.check(q);});
+  Goal g;g.operation=Operation::Joint;g.expected_start=g.positions=c.home;g.positions[0]+=.005;
+  EXPECT_NO_THROW(planner.plan(g,live.snapshot()));
 }

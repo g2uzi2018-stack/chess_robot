@@ -36,7 +36,8 @@ std::string fingerprint(const Config &c) {
   s<<"chess-checkpoint-model-v1\n"<<digest(read(c.urdf,16*1024*1024))<<'\n'
    <<c.ip<<':'<<c.dashboard_port<<':'<<c.feedback_port<<'\n'
    <<c.controller_family<<'\n'<<c.controller_firmware<<'\n'<<c.test_fixture<<'\n';
-  for (double q:c.home) s<<q<<',';
+  // Preserve the v1 byte identity: the former Home field was this basis.
+  for (double q:c.twist_reference) s<<q<<',';
   for (int i=0;i<4;++i) for(int j=0;j<4;++j)s<<c.flange_tcp(i,j)<<',';
   s<<c.tracker_options.max_joint_step_rad<<','<<c.tracker_options.max_phase_step_rad;
   return digest(s.str());

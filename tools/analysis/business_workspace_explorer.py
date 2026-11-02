@@ -66,6 +66,7 @@ def main():
     client=ActionClient(node,MoveArm,'/arm/move');restore=node.create_client(RestoreReference,'/arm/restore_reference')
     command=[str(root/'install/chess_robot_arm/lib/chess_robot_arm/arm_node'),'--ros-args']
     for file in ['arm.yaml','home.yaml','exploration.yaml']:command+=['--params-file',str(config/file)]
+    command+=['--params-file',str(root/'config/arm/home.yaml'),'--params-file',str(root/'config/arm/twist_reference.yaml')]
     command+=['-p','controller.ip:='+args.controller_ip,'-p','urdf_file:='+str(root/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'),'-p','safety.model_file:='+str(config/'nova5_ag95_geometry.yaml'),'-p','audit.directory:='+str(out/'audit')]
     if args.execute:command+=['-p','hardware.enable:=true']
     (out/'command.json').write_text(json.dumps(command,indent=2)+'\n')

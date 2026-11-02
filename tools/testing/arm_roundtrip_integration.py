@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 import time
+import yaml
 from types import SimpleNamespace
 from arm_controller_fixture import ControllerFixture
 from arm_roundtrip import RosSession,Runner,ExecutionFault,load_home,manifest,write_json
@@ -48,7 +49,7 @@ def main():
         with fixture.lock:
             fixture.target_q=fixture.target_q.copy();fixture.target_q[0]+=.03
             fixture.start_q=fixture.target_q.copy();fixture.duration=0
-        session.wait(lambda:session.snapshot()['joints_rad'][0]>home['joints_rad'][0]+.02,3)
+        session.wait(lambda:session.snapshot()['joints_rad'][0]>yaml.safe_load((root/'config/arm/twist_reference.yaml').read_text())['chess_robot_arm']['ros__parameters']['reference']['joint_positions_rad'][0]+.02,3)
         session.needs_qualification=True # simulated qualification uses same real business-node action chain
         result=Runner(data,session,run,execute=True).run()
         result['simulation']=True

@@ -44,7 +44,7 @@ int main(int argc,char **argv) {
     c.flange_tcp.linear()=(Eigen::AngleAxisd(-pi/2,Eigen::Vector3d::UnitY()) *
         Eigen::AngleAxisd(pi/2,Eigen::Vector3d::UnitX())).toRotationMatrix();
     c.validate();
-    auto m=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.home);
+    auto m=std::make_shared<chess_robot_twist::Model>(c.urdf,"base_link","Link6",c.flange_tcp,c.twist_reference);
     Feedback f;std::ifstream live(argv[5]);
     for (double &q:f.q) if (!(live>>q)) throw std::runtime_error("six measured joint radians required");
     if (!(live>>f.mode>>f.controller_stamp)) throw std::runtime_error("snapshot mode and controller stamp required");
