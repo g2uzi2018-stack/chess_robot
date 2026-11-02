@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>chess_robot_panel</name><version>0.1.0</version>
+  <description>Local browser panel for manual AG95 opening control.</description>
+  <maintainer email="zzkuang0516@163.com">kuang</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend><depend>rclcpp_action</depend><depend>rcl_interfaces</depend>
+  <depend>chess_robot_interfaces</depend><depend>sensor_msgs</depend><depend>ament_index_cpp</depend><depend>boost</depend>
+  <exec_depend>launch_ros</exec_depend><exec_depend>ament_index_python</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

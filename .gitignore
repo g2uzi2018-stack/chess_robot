@@ -37,3 +37,8 @@ logs/
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Isolated manual-panel build products
+/build_panel/
+/install_panel/
+/log_panel/
