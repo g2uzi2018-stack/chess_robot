@@ -1,5 +1,15 @@
 # Whole-arm geometric twist library
 
+## 1 职责与调用
+
+1. **功能**
+   - 全臂几何旋转策略库；只计算FK/展开相位及净/总扭转，无节点、网络或硬件指令。
+2. **接口**
+   - `Model`输入URDF/Home/TCP及关节位置，输出几何/FK；`Tracker`输入连续实测关节，输出完整相位和扭转指标。
+   - 关节界与扭转界分别检查；反馈时效由[机械臂节点](../chess_robot_arm/README.md)负责，物理线缆力学不在此库范围。
+
+
+
 C++17 ROS 2 library; no node, network client or actuation. It models the arm as a
 framed geometric centerline from the chosen base through joint origins to TCP.
 Coincident origins retain the final outgoing frame. Material directors are fixed

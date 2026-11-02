@@ -2,7 +2,7 @@
 
 模型已装配到项目中。当前项目只提供模型资源和导出工具，不附带本地网页查看器或 HTTP 服务。
 
-## 最简步骤
+## 1 最简步骤
 
 在 AGX 的项目根目录运行（只用 Python 标准库，不要求 ROS 环境）：
 
@@ -25,7 +25,7 @@ python3 tools/description/export_browser_model.py
 也可以直接在查看器中选择本仓库的 `src` 文件夹，然后选择组合纯 URDF；
 两个 package.xml 用于解析 `package://` 路径。导出包则不依赖 ROS 包路径解析。
 
-## 修改与重新生成
+## 2 修改与重新生成
 
 ROS 2 Humble 环境中已有 Xacro 时：
 
@@ -50,7 +50,7 @@ xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
   include_ground:=true > runs/nova5_with_ag95_ground.urdf
 ```
 
-## 尚需对照实物的内容
+## 3 尚需对照实物的内容
 
 - 夹爪为原装指垫，当前使用用户提供的 20260117 v2 新相机与嵌槽式支架 STL，替换了旧相机版本。
 - 新 CAD 与法兰安装面配准后，额外安装偏移默认为 0；仍需核实实物是否与这份 CAD 相同。抓取参考点相对基座 200 mm，未实机标定。

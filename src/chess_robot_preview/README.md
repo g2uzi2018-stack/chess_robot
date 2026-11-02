@@ -18,6 +18,10 @@ ros2 launch chess_robot_preview camera_preview.launch.py
 ```
 
 本机局域网地址：[http://192.168.30.26:8088](http://192.168.30.26:8088)。监听地址默认只绑定 AGX 的这个 LAN 网卡。
+页头“夹爪控制”跳转到 [手动控制面板](http://192.168.30.26:8089)，控制面板可点击“图像预览”返回，均在当前标签页跳转。
+离开预览会释放查看需求；进入控制页不会自动初始化或移动夹爪。现场路径、启动和维护见[双网页操作说明](../../docs/operations/web-panels.md)。
+preview在进程启动时缓存网页文件；修改安装目录HTML/CSS后需重新启动预览进程才能生效。
+当前 `chess_robot_preview.service` 同时管理相机与预览，重启该服务会短暂重新连接相机。
 单独启动预览节点时，相机节点和预览节点须处于同一 ROS domain。
 
 本次已安装并启动用户服务 `chess_robot_preview.service`，包含相机与预览节点，使用 `ROS_DOMAIN_ID=90`、`ROS_LOCALHOST_ONLY=1`。未启用开机自启。

@@ -6,7 +6,17 @@ consistency validation. Existing arm and vision nodes retain their responsibilit
 It does not open USB, call the controller SDK, enable hardware, initialize/restore
 references, clear errors, control the gripper, or publish production TF.
 
-## Configuration and modes
+
+## 1 用途与当前结果
+
+1. **职责**
+   - 停稳采样、ChArUco识别、PARK求解与留出一致性；不直接打开USB/调用SDK、不发夹爪命令、不发布生产TF。
+2. **入口**
+   - 下节维护配置/模式，接口与目标转换随后说明；移植前读[PORTING](PORTING.md)。
+   - [现场结果](../../docs/validation/handeye-20261030.md)含48观测与后续激光多点粗检，实体毫米精度尚未量化。
+
+
+## 2 Configuration and modes
 
 Copy `config/handeye.example.yaml`. The template deliberately has UNKNOWN board
 parameters, no trajectory, disabled execution and `mode: validate`. Its model,
@@ -50,7 +60,7 @@ package explicitly rejects `legacy_pattern: false`; CMake also rejects OpenCV
 the even-row pattern incompatibility. A different physical pattern needs an
 explicit compatible implementation/library and new validation.
 
-## Existing interfaces and exact-target conversion
+## 3 Existing interfaces and exact-target conversion
 
 The arm's PREGRASP operation adds base +Z `approach_clearance_m`. Immediately
 before every goal, the node reads the existing arm's parameter service and checks
@@ -93,7 +103,7 @@ positions/velocities, anomaly generations, differences and rejection reasons.
 Failure to establish the window leaves `physical_stop_confirmed=false` with an
 explicit `stop_confirmation_failure`, independently of the cancel response.
 
-## Launch and artifacts
+## 4 Launch and artifacts
 
 Build without scanning ignored Python environments under `runs/`:
 
@@ -143,7 +153,7 @@ compare reconstructed fixed-board poses against a training-only reference.
 remains false. A separate physical point/measurement test is still required before
 using the result for grasping. No result is automatically written to URDF or TF.
 
-## Tests (synthetic only)
+## 5 Tests (synthetic only)
 
 ```bash
 colcon --log-base log_handeye test --base-paths src/chess_robot_handeye \
@@ -173,7 +183,7 @@ reading a partially truncated YAML file or sleeping a guessed startup interval.
 It also verifies clean fixture teardown before reporting PASS. Plan's fixture
 intentionally publishes no visual messages to prove the visual gate is execute-only.
 
-## Known-board marker refinement (static recognition)
+## 6 Known-board marker refinement (static recognition)
 
 The product detector retains rejected candidates from normal `detectMarkers`.
 Only when a native decoded marker belongs to the configured board does it call
@@ -204,7 +214,7 @@ These numbers establish static recognition usability only, not hand-eye,
 robot/point positioning or industrial accuracy. Physical deployment remains
 subject to the existing configuration and acceptance gates.
 
-## Reuse and field evidence
+## 7 Reuse and field evidence
 
 Read [PORTING.md](PORTING.md) before moving to another scene, robot or camera.
 The installed core is available as `chess_robot_handeye::handeye_core`; the node
@@ -213,5 +223,5 @@ is ROS 2 Humble, Linux and OpenCV 4.5.x (tested 4.5.4), eye-in-hand, six bounded
 revolute joints. It is not an independently certified industrial calibration product.
 
 The [2026-10-30 field report](../../docs/validation/handeye-20261030.md) records
-48 captures, held-out consistency and two qualitative physical corner checks.
+48 captures, held-out consistency, two initial physical corner checks and the later multi-point laser coarse check.
 Those checks do not establish submillimetre physical accuracy or a verified TCP.

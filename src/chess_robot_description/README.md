@@ -10,7 +10,7 @@
 - `meshes/tool_mount/camera_mount_assembly_m.json`：CAD 安装基准、坐标变换、7 个分量、来源与 SHA-256。
 - `meshes/tool_mount/new_jiazhua1.STL`：原始复合网格，仅作来源对照，默认模型不引用；它包含完整的静态夹爪，不能再当独立支架叠加。
 
-## 本轮修正
+## 1 本轮修正
 
 2026-10-24 移除手指/指垫共四个附加碰撞盒和蓝色 `safety_padding_link`；保留 AG95 原碰撞 STL。固定复合夹爪改为仅保留后侧相机和安装件，活动 AG95 只出现一次。
 
@@ -18,7 +18,7 @@
 
 主动关节的默认模型上限改为 0.94 rad，对应当前网格约 0.648 mm 夹口。它是防止模型自穿入的几何限值，不是实机驱动限位或标定。
 
-## 构建与查看
+## 2 构建与查看
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -30,7 +30,7 @@ python3 tools/description/export_browser_model.py
 
 在在线解析器中导入完整 `runs/browser_model.zip`，选择 `nova5_with_ag95.urdf`。只导入 URDF 不会带入 STL。
 
-## 参数与安装基准
+## 3 参数与安装基准
 
 装配链为 `Link6 → camera_bracket_link → ag95_base_link`。用户 STL 已烘焙 CAD 配准变换和毫米缩放，在 URDF 中使用单位缩放、零 origin。
 
@@ -47,7 +47,7 @@ python3 tools/description/export_browser_model.py
 
 默认 `grasp_link` 的局部 +X 指向夹爪伸出方向，其 +Z 不是接近轴；抓取代码需要使用一致的轴约定。
 
-## 验证边界
+## 4 验证边界
 
 本体的六个关节 effort/velocity 为原厂 0 占位值。尚无完整 SRDF、有效运动限值或实机碰撞误差验收。删除旧包络不代表碰撞检查已关闭，也不代表历史自碰撞原因已消除；细化后的模型仍需验证安装基准、误差余量和实际碰撞姿态。
 

@@ -1,377 +1,129 @@
-# Arm controller (ROS 2 Humble, C++17)
+# 机械臂节点：接口、规划与执行
 
-This package delivers software for a six-axis Nova5 arm. It defaults to passive
-`read_only` and loopback IPv4; in this default mode it sends no enable/reset/configuration commands and
-never initializes the cable reference automatically. The integrated source has
-been built and tested on AGX / ROS 2 Humble. See the delivered acceptance report
-for exact evidence. Hardware ServoJ/Stop certification remains outstanding.
-The launch now loads a sampled geometry/Jacobian guard for the supplied Nova5,
-camera and AG95 model. It includes the user-specified table plane and documented
-adjacency exclusions. It is not continuous collision checking or a complete
-scene model. See `docs/validation/business-node-2026-10-25.md` for real tests.
+ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统一见[操作说明](../../docs/operations/arm-quickstart.md)。
 
-## Software repair baseline, 2026-10-25
+## 1 构建与配置
 
-Firmware reported by the operator is `4.6.2.4-stable-d9efa2ce0-202509261512`.
-The pinned official C++ V4 API is now used for FK/IK/ServoJ/Stop command encoding
-and `CFeedbackData` decoding. See `third_party/dobot_v4/UPSTREAM.json`,
-`LOCAL.patch`, and `README.md` for provenance and minimal deviations.
-Full evidence: `docs/validation/software-repair-20261025.md` in the workspace.
+1. **离线构建验证**
+   - 从工程根目录执行；脚本构建 twist/interfaces/arm 并运行单元测试，不启动节点、不连接控制器。
 
-Motion stays paused with `motion.paused=true` and `hardware.enable=false`.
-There are two configurable modes: low = 0.708 rad/s, 1.416 rad/s²;
-high = 2.36 rad/s, 4.72 rad/s². Default is `profiles.default=low`.
-These are the pinned official Nova5 ROS2 planning limits and its 0.3 scaling,
-not a measurement of this controller's reproduction/reduced limits. Confirm those
-limits before any motion. 3 rad/s exceeds this official planning configuration.
-No SpeedFactor/VelJ/AccJ command is injected into ServoJ execution: streaming
-velocity comes from the checked trajectory timing; SDK percentage is not rad/s.
-Legacy profile names remain accepted by their matching overlays.
+   ```bash
+   bash src/chess_robot_arm/scripts/validate_target.sh
+   ```
 
-`joint_states`, `state.header`, `state.tcp` and measured action final TCP use
-the ROS time sampled immediately after a complete feedback frame is received.
-The same snapshot supplies joints and FK; controller time is used only for
-ordering/duplicates. Publishing cannot freshen a receipt timestamp.
+2. **配置层次**
+   - `config/arm.yaml`：默认 `read_only`、回环地址、`motion.paused=true`、`hardware.enable=false`。
+   - `config/home.yaml`：与工程 `config/arm/home.yaml` 相同的六轴示教Home；不是六轴零位。
+   - `config/commissioning.yaml`：有界验收模板；反馈上限 **0.1 s**，TCP半径≤0.04 m、关节半径≤0.12 rad、净/总扭转≤20°。
+   - `config/exploration.yaml`：探索模板，反馈 **1.0 s**；low/high速度选择不扩大几何范围，不报告正式认证。
+   - 现场 `.runtime/arm.yaml` 与 `.runtime/arm-install-prefix` 为安装覆盖；不将模板的暂停/使能状态写成现场状态。
+   - 参数启动后不可变；模型/附件变化需重新生成和核对几何配置。
+3. **时效与超时**
+   - 当前探索窗口上限 **1.0 s**；通用 hardware 默认未改，commissioning上限仍0.1 s。
+   - 接收期限覆盖反馈窗口；重复帧既不刷新状态，也不重开读取期限。
+   - ServoJ ACK **0.15 s**、Stop ACK **1500 ms**、普通命令 **500 ms** 独立；1秒并非反馈频率。
+   - [1秒变更证据](../../docs/validation/feedback-window-1s-20261031.md)只有单元/loopback与停稳加载，没有新增真实运动资格验收。
 
-## Finite Home -> exact TCP -> Home acceptance
+## 2 ROS 接口
 
-Use `tools/testing/arm_roundtrip.py` and its `arm_roundtrip_README.md` from the
-workspace root. `testing.home_roundtrip_precheck=true` with zero approach clearance
-keeps the existing action schema while checking every outward candidate's predicted
-return to formal Home using copied winding history. It never executes that return
-implicitly. The tool confirms both separately measured legs and keeps a finite
-26-point / at-most-38-target ledger, CSV and 3D status plots.
+### 2.1 目标与返回
 
-The tool accepts source-backed controller limits or an explicit human command policy.
-The current user policy requests high 1 / low 0.3 rad/s and 1 / 0.3 rad/s² planning
-caps; these are not hardware-limit certification or a claim of measured speed.
-Fresh actual low/high qualification is required per source/binary/controller epoch.
-Existing arrival/stop tolerances and all protections remain active.
+1. **`/arm/move`：MoveArm Action**
+   - 功能：规划或执行一个受检目标；忙时拒绝，不排队。
+   - 入参：`target` 为 `base_link` 下的 `PoseStamped`，m、XYZW；感知目标保留原始非零采集时间戳，不能以发送时间替换。
+   - 入参：`operation` 为 PREGRASP=0、DESCEND=1、RETREAT=2、GRASP_SEQUENCE=3、HOME=4。
+   - 入参：`profile` 为空时取 `profiles.default`；`plan_only=true` 仅规划。
+   - 返回：`code`、`detail`、`executed`、`final_tcp`/`final_tcp_valid`、`trajectory`；[权威定义](../chess_robot_interfaces/action/MoveArm.action)。
+   - PLAN_READY=0 表示计划可用、未运动；COMPLETED=1 要求实测到位；`executed` 表示可能尝试过运动，不能当作成功。
+   - 反馈：`phase`、`job_id`、TCP有效位、参考有效位及净/总扭转。
+2. **目标语义**
+   - PREGRASP：目标加基座+Z接近间隙，朝向不变；手眼包会核对配置后反算输入目标。
+   - DESCEND/RETREAT：当前XY和姿态已对齐，按当前模型XY/姿态走竖直线，无隐藏横移/转向。
+   - GRASP_SEQUENCE：先检查三段，再执行预抓→下降→WAIT_GRIPPER→撤离；不发夹爪命令。
+   - `testing.home_roundtrip_precheck=true` 在零接近间隙时复制扭转历史检查目标→正式Home返程，实际返程仍为独立HOME任务，不隐式执行。
+   - 规划序列轨迹不包含夹爪等待时间，不能脱离任务状态机重放；确认失败或超时结束，不自动撤离。
+3. **`/arm/confirm_grasp`：ConfirmGrasp Service**
+   - 功能：确认当前WAIT_GRIPPER阶段；调用者仍需独立证明夹持结果。
+   - 入参：`job_id` 为该Action反馈中的精确UUID十六进制字符串，另有 `success`、`detail`。
+   - 返回：`accepted`、`detail`；过期或其他任务确认拒绝。
 
-Explicit `reference.power_cycle_handoff=true` preserves the complete recorded winding
-history across a declared power-only epoch after the original join/bounds/step/twist
-checks. Both flags default false. Only when `controller.enable_after_history_restore=true`
-is also explicitly set, a successful RestoreReference callback may check official
-GetErrorID for empty alarms and call official EnableRobot for mode4; it never calls
-ClearError. Enable ACK uses its own default 5 s budget. The client then requires
-reference_valid, fresh mode5 and the original stationary dwell before low HOME.
-No automatic reference initialization/reset or fault trajectory replay is introduced.
+### 2.1a 六关节手动角度
 
-`reference.power_cycle_endpoint_tolerance_rad` defaults to `0.001` rad. After an
-operator attests a power-only interval with no unobserved motion, an explicit
-`reference.power_cycle_handoff=true` may use a separately chosen small endpoint
-bound (for example `0.005` rad) for the final live join. It must be finite,
-positive, and no greater than `min(0.01 rad, reference.home_tolerance_rad,
-reference.max_joint_step_rad)`. The 0.01 rad (0.573 degree) cap keeps this exception
-smaller than the default Home envelope and tracker step; it is not an encoder
-accuracy specification. Both endpoints must still be near configured Home, with
-fresh stationary live mode 4/5 dwell and the existing stopped/fault history checks.
-Ordinary live joins, undeclared recorded file joins and old fault-epoch joins
-remain fixed at 0.001 rad; the named stopped boundary described below also uses
-the configured bounded tolerance.
-This does not alter Home, motion arrival/tracking/collision limits or clear twist:
-original history is replayed, then the tracker advances once to measured live
-joints and checks the original hard twist limits. RestoreReference `detail` and
-state diagnostics report per-joint live-minus-history deltas, the effective bound,
-whether an expanded join was actually used, and historical/restored twist.
-An increased bound only bounds endpoint disagreement; it cannot establish that
-unobserved movement did not occur. The operator attestation remains mandatory.
+`/arm/move_joints` 使用 [MoveJoints](../chess_robot_interfaces/action/MoveJoints.action)，不会改变原有 MoveArm 定义。`positions` 与 `expected_start` 按 joint1～joint6 排列，单位 rad；`header` 保留匹配实测 JointState 的原始时间戳、frame_id 为 base_link。`profile` 与 `plan_only` 和 MoveArm 相同，结果及反馈字段也相同。
 
-Latest physical continuation is BLOCKED: low Home passed, but new-epoch low qualification
-failed on a 146.428485 ms feedback receipt gap; Stop ACK and fresh stationary dwell
-were confirmed. No new target roundtrip or boundary refinement passed. The original
-14 successful targets remain historical evidence; they do not qualify the new epoch.
-See `docs/validation/home-roundtrip-20261026/REPORT.md`; the 10/25 report is historical.
+每次仅允许一个关节相对于 expected_start 改变，幅度不超过 10°，不进行角度取模。规划时必须停稳、反馈新鲜且参考有效，当前位置与 expected_start 的差异不得超过 joint_tolerance。它沿用 PTP 采样、模型关节限位、工作空间、全臂几何与线缆扭转检查，允许手动调整工具朝向，不强制抓取轴向下；模型和几何检查仍然有效。roundtrip 测试模式禁止该接口。
 
-## Build and offline validation on AGX
+两个 Action 共用 TaskGate、规划/执行线程、取消处理、持久化运动标记和实测到位确认；忙时拒绝，不排队。不自动 Home、初始化、清错或重试。测试夹具接口位于 `/simulation/arm/move_joints`。
 
-From the workspace root, with ROS 2 Humble and the dependencies in
-the package.xml files available:
+### 2.2 状态与参考
 
-```bash
-bash src/chess_robot_arm/scripts/validate_target.sh
-```
+1. **测量状态**
+   - `/arm/state`：[ArmState](../chess_robot_interfaces/msg/ArmState.msg)，含backend、phase/job_id、busy、feedback_fresh、reference_valid、controller_mode、TCP、扭转与diagnostic。
+   - `/arm/joint_states`：`sensor_msgs/JointState`，仅新鲜真实关节位置/速度；不合成反馈。
+   - `state.header`、TCP、JointState与最终TCP采用完整反馈帧收到后的ROS时刻；发布不能刷新原收帧时间。
+   - TCP来自实测关节的URDF正运动学，不是独立笛卡尔传感器；无物理精度认证。
+2. **`/arm/initialize_reference`**
+   - 功能：显式建立已知线缆中性Home的几何参考；不清零编码器。
+   - 入参：空；返回 `success`、`detail`。仅新鲜、连续停稳、近Home且空闲时允许。
+   - 回Home本身不清零扭转，非Home当前位置不能初始化。
+3. **`/arm/restore_checkpoint`**
+   - 功能：自动恢复未开启时显式恢复最新有效停稳存档。
+   - 入参：`no_unobserved_motion` 布尔声明；返回 `success`、`detail`。success 表示恢复后的历史资格，不等同执行器使能或运动就绪；可选使能失败但新鲜连续停稳确认保留历史时可返回 true，detail/actuator 诊断明确失败。
+   - 需真实无未观测运动、配置/关节/完整相位匹配，不能覆盖有效参考；[日常流程](../../docs/operations/arm-quickstart.md)。
+4. **`/arm/restore_reference`**
+   - 功能：原始audit的完整历史迁移/取证，不作为日常启动入口。
+   - 入参：有序 `audit_files` 与 `no_unobserved_motion`；返回 `success`、`detail`。
+   - 从真实Home重放完整展开相位，不能猜测缺失圈数；[历史边界契约](../../docs/validation/reference-recovery-history.md)。
+5. **回环命名空间**
+   - `test_fixture=true` 必须为IPv4 `127.0.0.1`；端点改为 `/simulation/arm/...`、`simulated=true`。
+   - 模拟状态不发布到真实端点，不将模拟结果当作硬件认证。
 
-The script builds the supplied twist package, interfaces and arm, runs their
-selected arm/interface tests, and reports colcon results. It does not launch a
-node, contact a controller or send hardware commands. Tests use the source URDF,
-actual FK with finite-difference numerical IK, injected transports, and IPv4
-localhost fixtures. Test source covers malformed/fragmented replies and retained
-partial notices, SDK unit/rotation conversions, duplicate/backward feedback,
-reference lifecycle, capture/pose/config validation, task admission/cancellation,
-late/duplicate confirmations, rod metrics, sampled path policy, velocity and
-acceleration caps, and disabled hardware producing zero actuation calls.
+## 3 传输、规划与执行
 
-To launch against a **separately authorized read-only** controller or a protocol
-fixture (not part of the validation script):
+1. **驱动与单位**
+   - 固定官方C++ V4 SDK编码FK/IK（正/逆运动学）、ServoJ/Stop、解码1440字节 `CFeedbackData`；来源在 `third_party/dobot_v4/UPSTREAM.json` 与 `LOCAL.patch`。
+   - SDK只用user=0/tool=0（基座/法兰）；内部m/rad，SDK边界mm/deg及 `Rz*Ry*Rx`；TCP转换在本地完成。
+   - 线缆数字使用十进制，避免控制器拒绝接近零时的科学计数法。
+2. **单连接与有界确认**
+   - 同一主机只用一条有序命令连接；每次核对错误码、原命令回显与整次期限，保留不完整notice诊断。
+   - ServoJ异步FIFO默认最多6条，严格回显及递增队列ID；125ms ACK可与30ms发点周期并存，超时/溢出仍失败。
+   - 含糊回包后禁止后续查询/运动，不自动重连重放；保留原连接只尝试一次Stop并核对自身ACK。
+   - 停止预算含在途查询/连接I/O、ACK和实测停稳；物理断链不能保证Stop成功，明确返回STOP_FAILED。
+   - 反馈校验长度、标记、有限字段及官方结构offset；相同控制器时间戳丢弃，回退使参考失效。
+3. **扭转与几何**
+   - 实测反馈独占推进 `chess_robot_twist::Tracker`；规划复制完整历史，不做关节绕回/圈数猜测。
+   - 每个规划/执行采样检查关节界、相位步长、工作区、净/总扭转和几何；无连续碰撞保证。
+   - GeometryGuard由 `tools/analysis/workspace_analysis.py --probe-only` 导出；来源见[离线工作区报告](../../docs/analysis/arm-workspace-2026-10-24.md)。桌面z=-0.010m，活动件20mm余量，非相邻组10mm，关节余量5°，归一化Jacobian最小奇异值≥0.05、条件数≤80。
+   - 固定/工具组与直接相邻组有明确排除；21开度夹爪包络不等于完整场景。
+4. **选解与采样**
+   - 厂家当前/Home seed的候选都核对SDK FK(IK)、URDF FK和路径；总扭转→净扭转绝对值→耗时排序。
+   - 5°中性带、2°角度滞回、1s耗时滞回抑制数值抖动；旧cost权重兼容解析但不参与排序，不证明全逆解全局最优。
+   - 竖直IK步长2mm、分支关节步长≤0.025rad；C1 Hermite与单一五次时间律按30ms采样，复查速度/加速度后必要时拉长时间。
+   - 重新检查竖直偏差、姿态、扭转和几何；离散模型不保证样本间连续极值或实物精确轨迹。
+5. **完成与取消**
+   - ACK不等于到位；最终关节/TCP误差、低速、mode5与连续dwell均需实测满足。
+   - 取消/故障/退出只有拥有运动的任务才Stop；只读/仅规划不发送Stop。
+   - Stop ACK或停稳验证失败锁定FAULT并拒绝新目标；不能通过提交Home清故障。
+   - 节点任务/反馈线程及驱动回复线程均join，无detached线程；关机验证期间反馈持续工作。
 
-```bash
-source install/setup.bash
-ros2 launch chess_robot_arm arm.launch.py controller_ip:=127.0.0.1
-ros2 topic echo /arm/state
-ros2 service call /arm/initialize_reference chess_robot_interfaces/srv/InitializeReference '{}'
-ros2 action send_goal /arm/move chess_robot_interfaces/action/MoveArm \
-  '{operation: 4, profile: conservative, plan_only: true}' --feedback
-```
+## 4 存档、诊断与适用范围
 
-Reference initialization succeeds only with fresh stationary feedback dwelling
-near the operator-taught Home. Without such feedback, the example fails explicitly;
-it does not synthesize joint states. Home above is a plan-only operation and
-needs no capture pose. Pose operations require a current nonzero ROS capture
-stamp, normalized quaternion and `base_link` frame. For an actual perception
-message use the action client API to forward its original stamp and pose; do not
-replace the capture time with the send time. No arbitrary target coordinates are
-provided as purported safe examples.
+1. **停稳存档**
+   - 保存周期10s、连续停稳1s；持久化完整局部展开相位、关节及配置指纹，checksum/fsync/原子rename/目录fsync，单写者锁。
+   - 实际运动前先写脏标记；坏/脏/不兼容/端点失配拒绝恢复，不回退旧档，不在非Home造初始参考。
+   - `checkpoint.auto_restore` 要求 `checkpoint.no_unobserved_motion`；`enable_after_restore` 才在成功后GetErrorID并按配置EnableRobot，不ClearError、不自动运动。
+   - 使能失败撤销临时信任，当前进程禁止反复自动使能；关闭后重新确认配置和真实状态。
+2. **日志**
+   - `audit.directory` 可选；独立异步队列8MiB/8192记录，默认每流64MiB/16文件含活动段，二进制记录不跨段。
+   - 原始记录为int64主机UTC纳秒＋1440控制器字节，小端；队列/磁盘错误报告丢弃数，不阻塞反馈。
+   - `diagnostics.feedback_trace` 默认false；启用时预分配262144行，反馈线程退出后写timing CSV/meta，满额有drop计数。
+3. **验收边界**
+   - 默认low=0.708rad/s、1.416rad/s²；high=2.36rad/s、4.72rad/s²来自固定官方ROS规划配置，不是现场控制器限值认证。
+   - 现场另用roundtrip_low=0.3、roundtrip_high=1.0、alignment=0.4的速度/加速度规划上限；以 `.runtime/arm.yaml` 为准。
+   - `backend=hardware` 要求hardware下五项布尔均true；它们是操作者声明，默认false。exploration/commissioning不会提升为认证模式。
+   - 标称TCP、实际控制器限值、附件模型、完整碰撞场景、ServoJ/Stop实测范围仍需按任务核对；外部控制客户端不受本节点排他锁保护。
+   - [业务探索操作](../../docs/operations/arm-business-acceptance.md)、[验证索引](../../docs/validation/README.md)。
 
-## Architecture and contracts
+## 2026-11-01：ROS状态发布频率
 
-* `driver.hpp`, `driver.cpp`, `net.hpp`, `dashboard_reply.hpp`, and
-  `feedback_frame.hpp`: typed V4 transport and framing. SDK only uses user=0,
-  tool=0 (base and flange); all configured TCP conversions are local. Internal
-  lengths/angles are metres/radians, SDK positions are mm/degrees with rotation
-  `Rz * Ry * Rx`. Every query has a bounded whole-operation timeout, error and
-  matching-echo check. Unterminated controller notice bytes remain diagnostic.
-  Wire numbers use decimal notation; the real controller rejects exponent
-  notation in near-zero Euler angles. Commands share one ordered connection:
-  this controller rejects a second command session from the same host. Stop
-  uses that same session, with a separate acknowledgement budget. A valid
-  controller rejection preserves the session. Ambiguous replies lock further
-  queries/motion without reconnecting; the original socket remains for Stop.
-  Real ServoJ uses a bounded asynchronous FIFO: six pending writes by default,
-  exact echoed commands/increasing queue IDs, 150 ms per acknowledgement.
-  A 125 ms reply fits at 30 ms send cadence; a deadline/overflow still fails
-  motion immediately. A bounded Stop-only drain may use an additional
-  controller.timeout_ms. On broken FIFO, Stop is sent once on the original
-  socket and only its exact acknowledgement is accepted within the Stop budget.
-  Old complete replies are only audited. No automatic reconnect/replay occurs;
-  a physically lost connection cannot guarantee a successful Stop and fails shut.
-  Executor still requires fresh mode=5 stationary feedback dwelling to verify it.
-  Framing retains coalesced/partial text and caps replies at 16 KiB. Feedback
-  decoding copies into the official LP64 structure with compile-time size/offset
-  assertions and validates the common 1440-byte header/finite fields.
-  Equal controller timestamps are discarded without advancing freshness/history;
-  regression invalidates trust. No controller clock synchronization is assumed.
-  Exploration defaults ServoJ horizon to the send period (30 ms), independently
-  of ACK budget. TCP_NODELAY/per-receive QUICKACK remain transport patches.
-* `Model`/`Tracker` from `chess_robot_twist`: authoritative URDF geometry and
-  whole-arm geometric rotation policy; the exported target is linked directly. Measured
-  feedback alone advances the live tracker under a short mutex. Planning copies
-  its full continuous history; invalid geometry/phase/joint jumps fail explicitly.
-  No joint angle wrapping or turn guessing occurs. All planner and executor
-  samples also call `withinJointBounds`; mathematical model FK is not a joint
-  bound policy. Signed/total twist are radians; energy is geometric rad²/m.
-  `/arm/restore_reference` explicitly replays original binary feedback audits
-  from a known stationary Home, preserving unwrapped local phases. It requires
-  idle admission, no latched fault, an explicit no-unobserved-motion attestation,
-  complete monotonic frames, valid recorded bounds/twist, and a fresh stationary
-  current endpoint within 0.001 rad of the last recorded endpoint with advancing
-  controller time. Gaps between stopped sessions are attested, never silently
-  reconstructed. The caller must use matching URDF/Home/TCP provenance. It
-  cannot overwrite a valid live reference and never initializes at the current
-  non-Home pose. A 330° replay test verifies it does not collapse to −30°.
-* `Planner`: checked PTP transfers/Home and incremental seeded IK for vertical
-  descent/retreat. Current and Home IK seeds are candidates; both SDK FK(IK) and
-  URDF FK must agree with the requested TCP. Checked candidates prioritize total
-  twist, then absolute net twist, then duration. Values within the 5° neutral
-  band are equivalent; leaving the current-seed incumbent requires more than
-  2° angular improvement, or (for equivalent twist) more than 1 s time saving.
-  These incumbent deadbands suppress switching from numerical noise without
-  mutable planning state. Legacy cost weights remain accepted but have no ranking
-  effect. Tests cover a slow-profile, FK-verified 330° / -30° equivalent pair,
-  noisy near-neutral comparisons, and an unsafe unwind candidate. Hard path limits remain
-  mandatory regardless of the preference. There is no hidden lateral or orientation transfer
-  in DESCEND/RETREAT. They require current XY and attitude already aligned within
-  configured tolerances, preserve actual model XY/attitude exactly as the desired
-  line, and check every interpolated FK against it. The actual arm remains subject
-  to configured FK/servo tolerances, not a mathematical exact-path guarantee.
-* `State`, `TaskGate`, `Executor`: explicit idle-only Home reference, atomic task
-  admission, exact UUID/phase matching confirmation, cancellation, bounded
-  execution and measured dwell completion. Queue ACK is never arrival. Fresh
-  feedback must satisfy final joint/TCP error, measured speed, idle mode 5 and
-  dwell. The common feedback subset does not validate a firmware-dependent queue
-  completion offset: idle mode plus measured arrival is the supported completion
-  evidence. An owned ambiguous motion send is stopped on fault/cancel/shutdown,
-  and fresh stationary idle feedback must verify Stop. Stop can wait behind a
-  bounded in-flight query; its total deadline includes command connection/I/O
-  and acknowledgement budgets plus the measured dwell. A stop verification failure
-  returns STOP_FAILED even when the ROS terminal status is canceled. Passive
-  monitoring and plan-only jobs never own motion and never issue Stop.
-* `node.cpp`: ROS transport only, one joined task worker and one joined feedback
-  worker; the driver owns a joined reply reader for each active stream. There
-  are no detached threads. Parameter values are immutable after startup.
-  Feedback monitoring remains active while the task worker verifies shutdown stop.
-
-`/arm/move` operations are PREGRASP=0, DESCEND=1, RETREAT=2,
-GRASP_SEQUENCE=3, HOME=4. An empty profile selects `profiles.default` (low);
-`conservative` remains a compatible low-mode alias.
-PREGRASP equals requested grasp position plus base +Z clearance with unchanged
-orientation. GRASP_SEQUENCE plans all three segments in advance and executes
-pregrasp → descent → WAIT_GRIPPER → retreat. `/arm/confirm_grasp` requires the
-exact action UUID hex string published in action feedback and `/arm/state`.
-Failure/timeout ends the task without retreat. It never sends gripper commands.
-Plan-only sequences return the geometric concatenation with no gripper waiting
-interval represented in trajectory time; that trajectory is informational and
-must not be replayed as a replacement for this task state machine.
-
-Successful plan-only returns PLAN_READY, executed=false, and the sampled joint
-trajectory. It does not assert movement completion. Successful motion returns
-COMPLETED only after measured arrival. `executed` means motion was attempted,
-including ambiguous network outcomes, and is true on later task failure after a
-previous segment moved. Final TCP is URDF model FK of real measured joints (not
-an independent calibrated Cartesian sensor) and has an explicit validity bit.
-Action rejection has standard ROS rejection semantics with a diagnostic log;
-typed error codes are returned for accepted jobs. Busy goals are rejected rather
-than queued. `/arm/joint_states` publishes only fresh real controller feedback.
-For protocol-fixture acceptance only, `test_fixture=true` requires IPv4
-127.0.0.1, reports simulated=true, and changes every endpoint to
-`/simulation/arm/...`. It cannot publish fixture data on the real arm endpoints.
-The fixture is external to this C++ node; there is no synthetic joint generator
-in the production driver. Fixture state never reports hardware_certified=true.
-
-If Stop acknowledgement or measured stop verification fails, the node latches
-FAULT and refuses goals and reference initialization. Establish real stationary
-idle feedback and resolve the failure before restarting with an explicitly
-verified Home reference. A fault cannot be cleared by submitting Home.
-
-## Bounded hardware commissioning
-
-`config/commissioning.yaml` is an overlay for explicit local acceptance. Its saved
-`hardware.enable` remains false and `motion.paused` defaults true. Backend `commissioning` uses the same production
-Planner, V4 driver and Executor, while `hardware_certified` remains false. It
-does not set the production verification booleans to true.
-
-Commissioning requires a loaded GeometryGuard, joint displacement from Home at
-most 0.12 rad and TCP radius at most 0.04 m (template: 0.1 rad / 0.03 m),
-freshness at most 0.1 s and net/total twist at most 20°. The old debug-only speed
-ceiling and its derived instantaneous velocity trip are removed. Low/high timing
-uses the official limits above; measured tracking, bounds, geometry, twist,
-freshness, arrival and Stop checks remain mandatory. Tracking uses the existing
-normal 0.15 rad tolerance rather than the old slow-only 0.005 rad setting;
-stationary thresholds/dwell are not raised. This is not physical certification.
-
-`backend=exploration` remains an uncertified geometry-bound mode with its existing
-near/inner/middle/outer/full envelopes and global twist protections. Low/high
-aliases use only the near envelope; choosing a speed does not enlarge geometry.
-Legacy stages now use low timing. Servo horizon defaults to the 30 ms cadence,
-with aheadtime=100 and gain=200 retained. Saved enable is false and motion paused.
-The explorer advances recorded batches only after feedback-confirmed setup
-points, follows a fixed coverage checklist, records planning rejects, and aborts
-on execution faults. Checked waypoints can change a transfer path; saved failed
-trajectories are never replayed. See the operation guide and latest report.
-
-The optional `safety.model_file` loads the geometry exported by
-`tools/analysis/workspace_analysis.py --probe-only`: table z=-0.010 m with 20 mm
-clearance, moving robot plus the 21-opening gripper envelope, 10 mm nonadjacent
-group separation, 5° joint margin, normalized Jacobian sigma_min >=0.05 and
-condition <=80. Fixed/tool and directly adjacent groups are excluded. FK, TCP
-and joint bounds must match the live node model. Regenerate the file after model
-or attachment changes. The geometry file's provenance and exclusions are the
-same as `docs/analysis/arm-workspace-2026-10-24.md`.
-
-`audit.directory` optionally records real command/reply latency and raw feedback
-for acceptance. It must name a new directory with an existing parent. Raw
-feedback records consist of an int64 host UTC nanosecond receipt followed by
-the 1440 controller bytes, little endian. It is disabled by default.
-
-## Sampling and remaining acceptance
-
-Defaults are conservative software inputs, not certified operating limits.
-Transfer geometry is a straight joint-space path. Cartesian IK uses 2 mm
-vertical increments and rejects branch steps over 0.025 rad. C1 Hermite
-interpolation and a single quintic scalar time law produce fixed 30 ms samples;
-finite-difference velocity and acceleration checks, including zero velocity
-before/after each segment, iteratively dilate time until all profile/cap limits
-pass. The resulting path is rechecked for Cartesian line/attitude tolerance,
-twist and geometry, so smoothing cannot bypass any constraint. Every timed sample
-is validated against bounds, workspace and twist. Downward-axis policy applies
-to transfers to pregrasp and all vertical samples; Home PTP may change attitude.
-There is no claim of continuous collision checking, continuous extrema proof,
-or exact physical path tracking between samples. Tracking deviations and schedule
-overruns abort. Total allocation is bounded by a configured sample cap.
-
-`config/home.yaml` preserves **exactly** the six operator-taught radians from
-`config/arm/home.yaml`, dated 2026-10-24. `config/arm.yaml` contains nominal URDF
-flange→TCP (+0.20 m flange Z, fixed RPY) and +X grasp approach. This is not a
-physical calibration. Workspace and caps require operator verification; URDF
-velocity/effort zeros are never used as operating limits. The 0.25 m approach
-clearance is a configurable task parameter, not a clearance measurement at Home.
-
-Production hardware execution requires backend=hardware AND all five booleans under
-`hardware` true. All default to false. Setting them is an operator attestation,
-not automatic certification: verify TCP calibration, joint/software limits,
-workspace, physical cable reference/twist range, SDK/URDF FK equivalence, actual
-ServoJ timing/ACK latency, interpolation/tracking, Stop behavior/latency and
-command ownership on the target controller before any physical acceptance.
-ServoJ support remains subject to the measured local acceptance scope. An
-ordered persistent transport avoids per-command connection setup. The bounded
-reply FIFO tolerates ACK tail latency independently of the write cadence; missed
-write deadlines, acknowledgement limits and feedback faults still stop execution.
-No native MovJ/MovL bypass is offered. This package cannot prevent commands from
-other controller clients; deployment must enforce exclusive motion ownership.
-
-
-## 2026-10-26 explicit 200 ms continuation and diagnostic evidence
-
-The finite Home/TCP/Home list is complete: 38 targets = 14 historical measured successes,
-9 newly measured round trips and 15 planning refusals; all 12 directional refinement slots were used.
-New-context low/high qualification passed and the robot finished at formal Home with its original winding history.
-See `docs/validation/home-roundtrip-200ms-20261026/REPORT.md` and
-`docs/validation/feedback-gap-20261026/REPORT.md`; earlier blocked reports remain historical evidence.
-
-The test tool keeps its 0.1 s default. The operator's explicit 0.2 s run uses
-`--feedback-freshness-s .2 --feedback-window-evidence FILE --feedback-trace`.
-Evidence binds the actual statement, old/new window and unchanged original fault result hashes.
-Only that safety change is authorized; other invariants and all stop/arrival/winding guards remain.
-An explicitly SHA-bound `--power-cycle-join-audit FILE` replays the known original power boundary inside
-the full raw history; it does not alter any recorded bytes/stamps or zero the reference.
-Keep a separate latest interval attestation rather than reusing the old power statement for new gaps.
-
-`diagnostics.feedback_trace` defaults false. When enabled, 262144 timing rows are preallocated and
-flushed after the feedback thread joins into audit/feedback_timing.csv and feedback_timing_meta.txt;
-this is diagnostic only, with explicit drop counts and no per-frame console printing.
-Use `tools/analysis/feedback_gap_diagnostic.py` offline with the same-connection capture for layered analysis.
-This run had no gaps above 100 or 200 ms; the old 146 ms root cause remains undetermined.
-Observed audit-stage wall delays are documented without claiming disk IO or vendor SDK failure.
-
-
-### Recorded stopped power-cycle boundary
-
-`reference.power_cycle_stopped_join_file` defaults empty. It declares exactly one
-noninitial original audit whose first disabled/idle frame records an attested
-power-only handoff from stationary mode 5 Home. It requires explicit
-`reference.power_cycle_handoff=true`, stationary recorded mode-5 dwell before
-the boundary, mode 4/5 and stationary speed after it, both endpoints within the
-original Home envelope, advancing original host time, valid joints/frames, and
-maximum joint delta within the validated `power_cycle_endpoint_tolerance_rad`.
-Only this declared boundary may reset its controller timestamp sequence, and the
-original first frame advances the existing tracker; all later motion is replayed.
-The separate `reference.power_cycle_join_file` still handles the original mode-9
-fault epoch at fixed 0.001 rad. Both declarations must identify different files.
-All undeclared boundaries retain the original join rules. Restore diagnostics
-report the recorded joint deltas/bound and report committed/expanded usage only
-after the complete history and final live join pass. No raw audit is rewritten.
-
-Recorded mode-5 dwell counts only strictly advancing accepted host observations
-whose adjacent interval is at most `feedback.freshness_s`. Ordinary file fragments
-may share a window when that continuity is present. An ordinary boundary gap or
-duplicate-controller-stamp padding cannot add stationary dwell: the next accepted
-observation after a larger/nonforward host interval starts a new window. The named
-power boundary checks the completed pre-gap window before resetting its epoch.
-
-### SHA-bound final fault suffix recovery
-
-`reference.power_cycle_fault_restart_file`, `_offset_bytes` and `_sha256`
-default to empty/-1/empty. Together with explicit power-cycle handoff they declare
-one exact restart boundary in the unique final original audit. A healthy measured
-stationary dwell must precede a short mode-9 suffix; its joints remain within the
-fixed 0.005 rad healthy anchor bound. The declared fresh disabled restart and its
-remaining suffix must stay within 0.001 rad. Original full-file SHA-256 must match
-before committing the trial tracker. Existing history, budgets and hard twist
-limits are retained; no reference zeroing or generic fault recovery is provided.
-
-The noninstalled `restore_reference_offline` tool replays files and in-memory
-feedback for regression only; it never connects to the controller. See
-[the narrow recovery acceptance](../../docs/validation/power-fault-recovery-20261030.md)
-for record format and historical evidence. A new power interval always needs its
-own factual no-unobserved-motion declaration and valid live state; these documents
-are not reusable permission to recover another run.
+`feedback.publish_hz` 默认20Hz，允许1～125Hz，启动后不可变。现场本轮已验证100Hz并写入`.runtime/arm.yaml`。该参数只调整ArmState/JointState及Action反馈发布；原始控制器采样、运动时序、安全新鲜度门限不变，停稳存档/任务维护仍为20Hz。重复发布不刷新源反馈stamp；应分别统计消息频率与唯一反馈时间戳频率。原始30004流本轮约122Hz，不宣称其硬件上限可由本参数提高。

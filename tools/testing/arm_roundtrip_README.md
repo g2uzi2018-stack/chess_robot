@@ -9,16 +9,18 @@
 节点对每个 IK 候选用同一个复制的扭转历史检查去程和预计目标→正式 Home 返程；只有两段通过
 才允许去程。真实返程仍是独立 HOME action，按最新反馈重新检查、执行和确认。
 
-## 当前状态
+## 1 历史范围与当前复用边界
 
-2026-10-26：历史14个不同目标实测往返成功；断电后显式恢复历史与使能、low Home通过，
-新epoch低档资格因146.428485 ms反馈接收空窗失败，业务Stop及新鲜停稳确认成功。
-当前BLOCKED、实机暂停，未在Home且参考失效；新增目标成功0、边界0/12，不宣称全部完成。
-设备绝对再现/缩减速度及加速度上限仍未知；本次 `--command-policy` 记录用户请求的高1/低0.3
-rad/s及1/0.3 rad/s²规划上限，不是本机硬件限值认证或实测速率。
-见 `docs/validation/home-roundtrip-20261026/REPORT.md`；10/25报告保持历史，模拟结果单列。
+1. **已完成的原批次**
+   - 2026-10-26在明确200ms上下文完成38目标账本：14历史往返成功＋9新增成功＋15规划拒绝，12个方向加密槽均使用。
+   - 此前146.428485ms空窗失败仍保留在[100ms报告](../../docs/validation/home-roundtrip-20261026/REPORT.md)，成功续测见[200ms报告](../../docs/validation/home-roundtrip-200ms-20261026/REPORT.md)。
+2. **当前不是启动入口**
+   - 当前安装1.0s反馈、停稳存档；[日常操作](../../docs/operations/arm-quickstart.md)。旧100/200ms资格不升级为1秒资格。
+   - 本工具默认0.1s，历史脚本可能0.2s；未来复用应读取当前节点参数并检查工具验证范围，不修改原记录冒充新验收。
+   - 本工具会按选项启动自己的业务节点；不要与当前节点并行争用控制器。新epoch需重新做绑定该版本的实测资格。
+   - 用户规划cap高1/低0.3rad/s及rad/s²不是控制器硬件限值认证。
 
-## 有限清单和时间
+## 2 有限清单和时间
 
 默认 26 点：基于正式 Home TCP，基座坐标 ±X/±Y/±Z 六方向各 0.15、0.30、0.60 m 共 18 点；
 再在 Home 上下 0.15 m 两高度各测左右前后 0.30 m 四点，共 8 点。低于工作区/桌面等非法点
@@ -35,7 +37,7 @@ rad/s及1/0.3 rad/s²规划上限，不是本机硬件限值认证或实测速�
 初始估计 10–25 分钟；首个目标运动前打印全部粗扫的实际节点去返规划时间总和，区分运动时间、
 SDK 规划和 dwell，不把该粗估当作保证时限。故障立即结束，不自动重放或强行回 Home。
 
-## 离线生成清单与回环
+## 3 离线生成清单与回环
 
 ```bash
 cd /home/kuang/workspace/chess_robot
@@ -52,7 +54,7 @@ ROS_DOMAIN_ID=98 ROS_LOCALHOST_ONLY=1 runs/urdf_tools_env/bin/python \
 `simulation=true`，真实工具拒绝把它当作真实速度证据。正式工具本身不调用 InitializeReference；
 仅回环 harness 在模拟 Home 显式建立一次模拟参考供测试。
 
-## 真实执行前置条件与入口
+## 4 真实执行前置条件与入口
 
 当前限值未知时不要填入猜测值。`--controller-limits` 要求 JSON 含：
 
@@ -106,7 +108,7 @@ hardware_limits_verified=false；不可伪造控制器限值文件，也不将�
 `--speed-evidence` 复用，任何绑定变化即拒绝。`--reuse-results` 只接受相同上下文完成批次的
 真实双段成功，保留原时间戳/来源；不自动续跑故障批次，不输入旧轨迹当运动命令。
 
-## 验收证据与输出
+## 5 验收证据与输出
 
 每段必须同时满足 business-node COMPLETED、executed、final_tcp_valid、接收时间新鲜、
 mode=5、停稳速度、固定朝向/目标误差和持续参考；另核对同步 joint/state/TCP 的同一时间戳。
@@ -122,7 +124,7 @@ stop unconfirmed，不能因为节点退出就声称机械臂停稳。
 分别标出规划通过、实测往返成功、复用历史成功、规划拒绝、执行失败和待测；`REPORT.md` 给
 每方向剩余边界区间。可单独运行 `arm_roundtrip_report.py RUN_DIRECTORY` 离线重绘。
 
-## 显式断电恢复与继续
+## 6 显式断电恢复与继续
 
 `--power-cycle-evidence /path/evidence.json` 必须绑定原fault results路径及SHA，保留本次真实
 human_statement，并要求 `only_power_cycle_no_manual_joint_or_cable_motion=true`；不能编造确认。
@@ -140,13 +142,13 @@ fresh mode5原 .002 rad/s/.4s静止dwell，存 `enabled_stationary_ready`，该�
 每点preflight立即持久化；发送前等待反馈失败与真正发出后失败分开归档，任何执行故障停止整批。
 
 
-## 2026-10-26 explicit 200 ms continuation and diagnostic evidence
+## 7 2026-10-26 explicit 200 ms continuation and diagnostic evidence
 
 The finite Home/TCP/Home list is complete: 38 targets = 14 historical measured successes,
 9 newly measured round trips and 15 planning refusals; all 12 directional refinement slots were used.
 New-context low/high qualification passed and the robot finished at formal Home with its original winding history.
-See `docs/validation/home-roundtrip-200ms-20261026/REPORT.md` and
-`docs/validation/feedback-gap-20261026/REPORT.md`; earlier blocked reports remain historical evidence.
+See [200ms report](../../docs/validation/home-roundtrip-200ms-20261026/REPORT.md) and
+[gap diagnostic](../../docs/validation/feedback-gap-20261026/REPORT.md); earlier blocked reports remain historical evidence.
 
 The test tool keeps its 0.1 s default. The operator's explicit 0.2 s run uses
 `--feedback-freshness-s .2 --feedback-window-evidence FILE --feedback-trace`.

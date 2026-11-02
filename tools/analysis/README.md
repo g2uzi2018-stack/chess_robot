@@ -1,6 +1,6 @@
 # 工作区和奇异性离线分析
 
-不连接控制器、不发布实机状态或运动指令。Python 做 URDF/网格处理、数据编排和标准静态绘图；
+本节的几何分析器不连接控制器、不发布实机状态或运动指令；下节另列真实Action客户端。Python做URDF/网格处理、数据编排和标准静态绘图；
 Eigen/FCL C++ 内核批量计算 FK、雅可比、地面包络及非相邻组保守距离。
 `workspace_policy_probe.cpp` 额外调用当前已构建的真实 Planner，测试其能否接收已知 FK 验证的奇异终态。
 
@@ -32,7 +32,7 @@ bash tools/analysis/run_workspace_study.sh
 
 结果是离线候选范围，不能替代实机 TCP/安装误差标定、业务节点的连续状态和轨迹验证。
 
-## 业务节点证据工具
+## 1 业务节点证据工具
 
 `business_node_acceptance.py` 为真实 Action 的只读扫描/显式实机验证入口，使用前阅读
 `docs/operations/arm-business-acceptance.md`。`--initialize-reference-at-home` 必须显式给出；
@@ -49,3 +49,10 @@ bash tools/analysis/run_workspace_study.sh
 `business_latency_probe.py --controller-ip IP --out NEW_DIR` 仅发送只读 GetAngle，记录 TCP_INFO、
 真实反馈及主机定时抖动；不初始化参考，不使能，不发运动或 Stop。仅在运动所有者退出后运行，
 避免与业务节点争用控制器的唯一命令连接。事后只读延迟不代表运动期间 ServoJ 的时序保证。
+
+## 2 当前入口
+
+1. **日常启动与恢复**
+   - 使用[机械臂操作](../../docs/operations/arm-quickstart.md)；本目录的探索脚本不是日常开机流程。
+2. **历史证据复核**
+   - [验证索引](../../docs/validation/README.md)区分旧100/200ms实机批次与当前1秒配置；复用客户端先读节点参数。

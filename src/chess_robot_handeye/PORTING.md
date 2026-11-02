@@ -7,7 +7,7 @@ The supported/tested baseline is Linux, ROS 2 Humble, C++17, OpenCV 4.5.x
 compatibility has not been implemented and validated. Eye-to-hand, continuous
 motion acquisition and hardware exposure synchronization are not supported.
 
-## What changes between installations
+## 1 What changes between installations
 
 | Change | Work required |
 |---|---|
@@ -23,7 +23,7 @@ mount transform, but invalidates mixed-session fixed-board consistency checks.
 Changing resolution/intrinsics, robot model or camera mounting requires new
 evidence; do not simply copy the old result into production.
 
-## Boundaries and units
+## 2 Boundaries and units
 
 `handeye_core` provides config parsing, rigid transforms, ChArUco/PnP detection,
 Park solving and held-out validation. It opens no robot/camera connection.
@@ -48,7 +48,7 @@ URDF joint names are read from the model, rather than assumed to be `joint1` etc
 The model's TCP must agree with the arm node; an approximate model TCP is not a
 measured physical finger midpoint.
 
-## Arm adapter contract
+## 3 Arm adapter contract
 
 Read `chess_robot_interfaces/action/MoveArm.action`, `msg/ArmState.msg` and the
 checks in `src/node.cpp` when implementing an adapter. Topic remapping alone does
@@ -73,7 +73,7 @@ not change message semantics.
 Other robot controllers are not covered by Nova5 acceptance evidence. A robot
 adapter must be tested independently before authorizing physical execution.
 
-## Camera adapter contract
+## 4 Camera adapter contract
 
 Inputs are sensor_msgs Image/CameraInfo and this repository's
 `chess_robot_vision/msg/FrameInfo`. They must have identical stamp and matching
@@ -88,7 +88,7 @@ driver, so a source build currently brings librealsense dependencies even if a
 different camera adapter is used. Splitting message definitions from that driver
 is a future packaging improvement, not a capability of this release.
 
-## Scene workflow
+## 5 Scene workflow
 
 1. Build/supply `chess_robot_interfaces`, `chess_robot_vision`,
    `chess_robot_twist` and normal ROS/OpenCV/yaml dependencies. Source those
@@ -127,7 +127,7 @@ and results; it does not publish a continuous preview overlay. Porting that live
 inspection UI requires packaging a separate detector publisher for the preview's
 configured image topic.
 
-## Verification before reuse
+## 6 Verification before reuse
 
 Run `colcon test` and inspect `colcon test-result`; the 14 synthetic integration
 cases use loopback ROS domain 119 and `/simulation/` endpoints without hardware.

@@ -2,7 +2,16 @@
 
 New C++ code; vendor examples are never launched. No enable, motion, safety/configuration write, reset, pause, continue or stop command is implemented. This package is not a motion driver. An operator must independently verify model, firmware, protocol and units before selecting a feedback profile.
 
-## Build
+
+## 1 使用范围
+
+1. **定位**
+   - 早期只读协议/模型工具，模拟RViz演示与当前业务节点分开；日常启动见[机械臂操作](../../docs/operations/arm-quickstart.md)。
+2. **控制连接**
+   - 真实只读工具也可能占用控制器命令连接；现有业务节点运行时不要直接另开查询客户端。
+
+
+## 2 Build
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -10,7 +19,7 @@ colcon build --base-paths src --packages-select chess_robot_description chess_ro
 source install/setup.bash
 ```
 
-## Evidence and offline checks
+## 3 Evidence and offline checks
 
 Run the registered offline suite after building:
 
@@ -65,7 +74,7 @@ The CLI prints the byte count and up to 256 bytes in hex. This exposes plain-tex
 controller notices such as `Control Mode Is Not Tcp` instead of hiding them
 behind a generic read timeout.
 
-## Record and inspect real feedback without ROS publication
+## 4 Record and inspect real feedback without ROS publication
 
 ```bash
 ros2 run chess_robot_validation nova5_feedback_capture <ip> 10 runs/<new-run-id>/actual
@@ -103,7 +112,7 @@ non-increasing-timestamp stop policy.
 checks offline and reports unique and identical duplicate frame counts. It
 rejects incomplete trailing frames and empty captures; no network is opened.
 
-## Actual feedback, only after protocol and units are confirmed
+## 5 Actual feedback, only after protocol and units are confirmed
 
 ```bash
 export ROS_DOMAIN_ID=62 ROS_LOCALHOST_ONLY=1
@@ -114,11 +123,11 @@ Reads 30004 only, publishes `/nova5/real_joint_states` with joint1..joint6, degr
 
 Run robot_state_publisher with the actual URDF and `joint_states:=/nova5/real_joint_states`; use `config/nova5.rviz`, fixed frame `base_link`. Base and flange/TCP equivalence with the controller remains unverified; `Link6` must not be labelled a validated TCP.
 
-## Explicit synthetic TF check
+## 6 Explicit synthetic TF check
 
 Start robot_state_publisher with `joint_states:=/validation/synthetic_joint_states`, the URDF as robot_description, `ROS_DOMAIN_ID=62 ROS_LOCALHOST_ONLY=1`, then run `nova5_tf_check runs/<run-id>/model_fk.csv`. This compares robot_state_publisher's TF to offline Eigen FK at 13 synthetic poses. It never publishes to the real feedback topic. This is model plumbing only, not hardware acceptance or collision clearance.
 
-## Preregistered thresholds
+## 7 Preregistered thresholds
 
 - KDL versus direct Eigen composition from the same URDF: <=1e-10 m position norm and <=1e-10 rotation-matrix Frobenius norm. Numerical implementation check, not a vendor accuracy specification.
 - Synthetic JointState to TF versus FK: <=1e-8 m and <=1e-8 rad, TF reception age <=0.5 s, exactly 13 poses. Numerical/transport check only.
@@ -128,6 +137,6 @@ Start robot_state_publisher with `joint_states:=/validation/synthetic_joint_stat
 
 No physical velocity limits are installed: the original URDF zero velocity/effort fields remain unchanged. The negative allowlist tests establish that this client blocks all actuation, not that the robot controller enforces speed limits. No claim of physical limit or absolute TCP accuracy validation is made.
 
-## RViz-only scope (user confirmed robot disconnected)
+## 8 RViz-only scope (user confirmed robot disconnected)
 
 `nova5_rviz_demo <urdf> <output.csv>` publishes only `/validation/synthetic_joint_states` and `/validation/synthetic_flange_path`. No network sockets or controller API are used. It plays a 20 s smooth, closed joint curve with 5 s holds before/after at nominal 50 Hz and logs generated joint positions/analytic velocities, KDL flange pose and scaled Jacobian conditioning. It checks model position bounds and the offline Jacobian criteria only. Physical velocity/acceleration limits, dynamics, collisions and execution accuracy are not validated. The cyan RViz path is the model's Link6 origin, not a measured TCP or a MovL command.

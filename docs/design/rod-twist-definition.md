@@ -3,7 +3,7 @@
 Status: implemented in C++ package `chess_robot_twist`; AGX native build and 20
 GTest cases passed. This is a rotation-policy model, not real cable mechanics.
 
-## Geometry
+## 1 Geometry
 
 FK constructs a centerline from base origin, through joint origins, to the
 configured grasp TCP. Coincident consecutive origins collapse to the last
@@ -27,7 +27,7 @@ This uses the adapted-frame/parallel-transport construction discussed in
 [Discrete Elastic Rods](https://www.cs.columbia.edu/cg/rods/index.html), without
 simulating stiffness, forces or dynamics.
 
-## Continuous metrics
+## 2 Continuous metrics
 
 Principal local phases are unwrapped across a trusted sequence of feedback or
 small planned steps. beta_i is continuous local phase minus Home phase.
@@ -54,7 +54,7 @@ The implementation checks finite step-size bounds; it does not claim a formal
 continuous-time proof between samples. Sampling, execution tracking margins and
 physical stop behavior still require system-level validation.
 
-## Independent checks and native regression
+## 3 Independent checks and native regression
 
 On the actual Nova5 URDF and taught Home:
 

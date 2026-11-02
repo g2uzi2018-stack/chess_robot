@@ -9,7 +9,16 @@ cd /home/kuang/workspace/chess_robot
 bash tools/arm/build.sh
 ```
 
-## 1. 清错误、使能及 TCP 控制
+
+## 1 入口边界
+
+1. **日常业务节点**
+   - 停稳存档启动统一用 `bash tools/arm/run_with_checkpoint.sh`，操作条件见[日常说明](../../docs/operations/arm-quickstart.md)。
+2. **独立人工维护**
+   - 以下三个维护工具不依赖ROS；直接回Home绕开业务规划/扭转检查，不能作为每次开机必跑步骤。
+
+
+## 2 清错误、使能及 TCP 控制
 
 ```bash
 # 只检查，不发送清错/使能/模式切换命令
@@ -26,7 +35,7 @@ bash tools/arm/arm_prepare.sh --request-tcp --apply
 没有找到独立“在线模式”命令，因此不承诺切换 DobotStudio 的 UI 在线状态。
 清不掉的错误会报告失败，不会继续使能。TCP 未切好时保留 `Control Mode Is Not Tcp` 诊断。
 
-## 2. 独立回 Home
+## 3 独立回 Home
 
 ```bash
 # 查看将使用的六轴角度和 MovJ 参数，无运动
@@ -47,7 +56,7 @@ Ctrl+C、超时、运动反馈故障或不明确的 ACK，会发送 Stop 并尝�
 这是人工维护的直接关节运动，会绕开业务路径/防绕转检查。使用前确认回程路径和控制权，
 业务节点不能同时发送运动。工具之间有进程锁；外部控制客户端不受此锁保护。
 
-## 3. 采集 Home
+## 4 采集 Home
 
 ```bash
 # 现场示教好姿态后采集，默认只保存候选
@@ -68,7 +77,7 @@ Home YAML 和 JSON 的更新使用临时文件替换、失败回滚及 `.home_up
 业务节点启动时加载自己的参数，采集不会偷偷修改其内存或安装目录配置。如果要让业务节点
 采用新 Home，应显式更新其 `home.joint_positions_rad` 配置并重启；本维护工具立即读取正式文件。
 
-## 配置与独立运行
+## 5 配置与独立运行
 
 `config/operator.yaml` 包含控制器网络、超时、关节范围、Home 比例速度/加速度和采集容差。
 位置限位来自现有 Nova5 URDF；使用其他型号前必须替换配置。所有工具支持网络和文件路径覆盖：

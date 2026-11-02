@@ -1,61 +1,38 @@
 # 中国象棋夹取
 
-使用越疆 Nova5 机械臂开展中国象棋棋子的识别、定位与夹取。
+Nova5＋AG95＋D405 的 ROS 2 Humble / C++ 工程。目标为识别、定位与夹取中国象棋棋子。
 
-## 开发方向
+## 1 当前进度
 
-- ROS 2 集成与功能代码使用 C++ 从头实现。
-- 机械臂基础运动与正逆运动学，优先使用与设备匹配的原厂控制器接口。
-- 保留原厂模型和协议资料；通信代码与示例仅作为参考材料。
+1. **已具备**
+   - 受限机械臂运动、完整扭转历史跟踪、停稳存档恢复、相机采集与网页预览、手眼候选外参。
+   - 夹爪与手动面板位于独立协作工作区；尚未合入主工程。
+2. **尚待完成**
+   - 真实夹指中点 TCP（工具中心点）、量化实体误差、棋子识别与自动夹取闭环。
+   - 当前 1 秒反馈窗口没有新增真实运动资格验收；内部标定残差不能充当末端精度。
+3. **现场入口**
+   - 工程：`/home/kuang/workspace/chess_robot`；Jetson AGX Orin / Ubuntu 22.04 / aarch64。
+   - [图像预览](http://192.168.30.26:8088)、[夹爪点动](http://192.168.30.26:8089)；服务不自启。
+   - 本次文档核对日期：**2026-10-31（Asia/Taipei）**；现场未提交改动不等于 GitHub 已更新。
 
-## 目录
+## 2 从这里查阅
 
-```text
-src/
-  chess_robot_description/   # Nova5 本体、支架与 AG95 组合模型
-  dh_ag95_description/       # AG95 夹爪 STL、关节与独立预览模型
-  chess_robot_vision/        # D405 采集、对齐、校正与帧信息
-  chess_robot_preview/       # 按需订阅、30 Hz 局域网预览面板
-  chess_robot_arm/           # 测量反馈、受限运动与扭转参考恢复
-  chess_robot_handeye/       # 配置驱动的静止采样、手眼求解与留出验证
-docs/
-  vendor/dobot/             # 原厂 TCP/IP 协议与版本说明
-reference/
-  dobot/                    # 原厂参考源码、示例、来源与校验值
-  ag95/                     # 旧装配对照件与迁移来源记录
-tools/description/          # 模型生成、检查和纯 URDF 资源导出工具
-```
+1. **日常使用**
+   - [机械臂启动、存档、断电恢复与故障定位](docs/operations/arm-quickstart.md)。
+   - [双网页、夹爪点动与服务恢复](docs/operations/web-panels.md)。
+2. **开发与接口**
+   - [完整文档索引：架构、包说明、构建、配置与模型](docs/README.md)。
+   - [机械臂接口与执行约束](src/chess_robot_arm/README.md)、[手眼采样与求解](src/chess_robot_handeye/README.md)。
+3. **结果与证据**
+   - [验证索引与历史适用范围](docs/validation/README.md)。
+   - [手眼标定及激光粗检](docs/validation/handeye-20261030.md)、[1 秒反馈窗口](docs/validation/feedback-window-1s-20261031.md)。
 
-## 当前状态
+## 3 资料维护
 
-- 开发目录：`~/workspace/chess_robot`。
-- 开发机基线：Jetson / aarch64 / Ubuntu 22.04.5 LTS。
-- 已实现机械臂控制测试包、D405 相机采集节点与独立预览节点；尚未形成自动夹取闭环。
-- 已整合 AG95 和用户更新的相机/支架，按新 CAD 配准安装基准，提供独立夹爪和组合 URDF；实机 TCP 等仍待标定。
-- [导出模型供在线解析器查看](docs/models/ag95-browser.md)：提供纯 URDF 与相对路径网格，不附带本地查看器。
-- 现有 [nova](https://github.com/g2uzi2018-stack/nova) 项目中有已能控制机械臂的参考代码（用户确认）；旧业务代码未迁入。
-- 已完成手眼标定候选外参与两处实体角点粗对准；真实夹指中点 TCP 和量化物理精度仍待确认。当前模型的原厂速度/力矩占位值尚未替换为实机配置。
-
-## 视觉与预览
-
-- D405 通过 USB 连接 AGX，当前配置请求 1280×720、30 Hz；相机节点提供校正图像、米制深度、内参与帧信息。请求帧率不代表实测持续帧率；USB 重插恢复记录见 [实测说明](docs/validation/d405-replug-20261030.md)。
-- [视觉包](src/chess_robot_vision/README.md) 与 [预览包](src/chess_robot_preview/README.md) 包含构建、启动和接口说明。
-- 当前 AGX 面板：<http://192.168.30.26:8088>；未点击的图像不加载，当前组合服务为 `chess_robot_preview.service`，ROS domain 90，未启用开机自启。
-- 面板提供彩色、深度及检测叠加图入口；检测项订阅 `/pose/debug/image`，可接标定板识别叠加图，无来源时显示“无数据”。临时实体测点叠加工具保留在本机 `runs/`，不是自动启动的产品接口。
-- 相机不发布压缩图；缩放、深度伪彩色和 JPEG 均由预览按需完成，仅通过 HTTP 返回浏览器；[当前职责与验证](docs/validation/preview-owned-20261025/REPORT.md)。
-- [历史 30 Hz 报告](docs/validation/preview-30hz-20261025.md)保留旧版三路性能记录，不代表当前仍有检测功能。
-
-## 资料入口
-
-- [手眼标定：构建、配置与采样](src/chess_robot_handeye/README.md)
-- [手眼标定：移植范围、接口适配与验收流程](src/chess_robot_handeye/PORTING.md)
-- [2026-10-30 标定与实体粗检结果](docs/validation/handeye-20261030.md)
-
-- [模型包](src/chess_robot_description/README.md)
-- [AG95 夹爪模型](src/dh_ag95_description/README.md)
-- [AI 辅助 URDF 装配验证路线与工具](docs/models/urdf-workflow.md)
-- [给后续 AI / 工程师的接力说明](docs/models/urdf-handoff.md)
-- [协议资料](docs/vendor/dobot/README.md)
-- [参考材料与来源](reference/dobot/README.md)
-
-初始化日期：2026-10-20（Asia/Taipei）。
+1. **权威内容各归一处**
+   - 包 README 维护构建与接口；`docs/operations/` 维护现场操作；`docs/validation/` 保存结论和证据索引。
+   - `runs/` 为被 Git 忽略的现场证据、部署与可恢复备份，不随克隆分发。
+   - `reference/` 与 `docs/vendor/` 保留原始资产、来源、校验值、许可证和厂家协议。
+2. **模型与实现**
+   - Xacro 是模型源，URDF 是生成物；Python 用于离线分析、测试与证据整理，ROS 功能节点使用 C++。
+   - 历史验证只证明报告中的版本和范围；新版本按当前配置重新核对，不改写旧结果。
