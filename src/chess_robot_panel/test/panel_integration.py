@@ -105,9 +105,13 @@ def run():
         port = sock.getsockname()[1]
     base = f'http://127.0.0.1:{port}'
     fixture = Fixture()
-    log_path = Path('/tmp/chess-panel-integration.log')
+    test_run = Path(os.environ.get('CHESS_ROBOT_TEST_RUN', '/tmp/chess-panel-integration'))
+    test_run.mkdir(parents=True, exist_ok=True)
+    log_path = test_run / 'panel-gripper.log'
     log = log_path.open('w')
-    panel = subprocess.Popen(['ros2', 'run', 'chess_robot_panel', 'panel_node', '--ros-args',
+    binary = os.environ.get('PANEL_EXECUTABLE')
+    command = [binary] if binary else ['ros2', 'run', 'chess_robot_panel', 'panel_node']
+    panel = subprocess.Popen(command + ['--ros-args',
         '-p', f'port:={port}', '-p', 'enable_control:=true',
         '-p', 'feedback_max_age_sec:=0.3', '-p', 'timeout_sec:=0.5'], stdout=log, stderr=log, start_new_session=True)
 

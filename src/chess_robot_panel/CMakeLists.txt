@@ -17,4 +17,13 @@ target_compile_options(panel_node PRIVATE -Wall -Wextra -Wpedantic)
 install(TARGETS panel_node DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch config web DESTINATION share/${PROJECT_NAME})
 install(FILES README.md DESTINATION share/${PROJECT_NAME})
+if(BUILD_TESTING)
+  enable_testing()
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+  add_test(NAME panel_gripper_loopback COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/panel_integration.py)
+  add_test(NAME panel_arm_loopback COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/panel_arm_integration.py)
+  set_tests_properties(panel_gripper_loopback panel_arm_loopback PROPERTIES
+    RUN_SERIAL TRUE TIMEOUT 90
+    ENVIRONMENT "PANEL_EXECUTABLE=$<TARGET_FILE:panel_node>;CHESS_ROBOT_TEST_RUN=${CMAKE_CURRENT_BINARY_DIR}/integration")
+endif()
 ament_package()
