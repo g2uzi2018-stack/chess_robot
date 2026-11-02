@@ -2,6 +2,8 @@
 
 ## 1 当前结论与边界
 
+[2026-11-02项目发布记录](project-release-20261102.md)保存当前源码/运行身份、整包测试、Home切换、service生命周期及现场只读检查；下列旧批次数字保留原版本范围。
+
 1. **机械臂恢复与反馈**
    - Home解耦代码阶段：提交`4ce936bd4bec11f8d34c641c4eac27a50258c402`，最终补丁SHA256为`72ed785945f4c55ddd6a504c1457e25d59c5073d5c74dd7b709faa85be1de199`。113 arm / 31 checkpoint / 20 twist / 12维护工具共176个C++用例、7个配置、27个roundtrip unit、13个history场景及维护工具/arm ROS/roundtrip/powercycle localhost协议回归通过；这些用例与全包测试有重叠，不能再相加充作独立总数。
    - 未修改旧serializer写档再由新实现恢复的兼容检查，以及真实checkpoint不可变副本检查均通过：原identity、local、previous_phase和端点保持，改变历史基准仍拒绝。真实副本检查不读取现场反馈、不覆盖原档、不执行现场恢复或动作。

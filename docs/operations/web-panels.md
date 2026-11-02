@@ -22,7 +22,7 @@ systemctl --user show chess_robot_console.service chess_robot_arm.service \
 cat /home/kuang/workspace/chess_robot/.runtime/arm-install-prefix
 ```
 
-本现场ROS环境为 `ROS_DOMAIN_ID=90`、`ROS_LOCALHOST_ONLY=1`，测试使用隔离domain。临时user service可能在停止或重启机器后被回收；不要假定旧unit或旧PID仍存在，也不要照历史目录再启动第二个驱动。
+本现场ROS环境为 `ROS_DOMAIN_ID=90`、`ROS_LOCALHOST_ONLY=1`，测试使用隔离domain。2026-11-02发布已将原arm/console/识别/渲染transient unit登记为同名持久user定义，相机沿用原持久unit加drop-in；本次没有enable操作，不承诺机器重启自动恢复。实际入口为 `runs/project_release_20261102_01/deployment/` 脚本；后续panel配对修复仅切换console中的panel到 `runs/panel_pairing_20261102_01/install`，其他节点继续使用整包版本；PID仍只作当前快照，不按历史PID操作或启动第二实例。配置备份和现场边界见[发布记录](../validation/project-release-20261102.md)。
 
 本现场网页绑定AGX的LAN地址，不必同时监听127.0.0.1。诊断时绕过HTTP代理直连实际绑定地址；本机回环连接拒绝或代理连接失败不等于节点故障：
 

@@ -12,6 +12,14 @@ C++17 / ROS 2 Humble。`panel_node` 在 AGX 提供浏览器界面，通过现有
 
 `GET /api/state` 包含 `arm`、`arm_config`、`arm_command`；`GET /api/arm/state` 提供独立机械臂快照。`POST /api/arm/joint` 接收 `{request_id, server_id, joint_index, target_deg}`，joint_index=0～5。后端订阅并按原始时间戳匹配 `/arm/state` 与 `/arm/joint_states`，将角度转成 rad，经 `/arm/move_joints` MoveJoints Action 发送，其他关节保持当前实测值。
 
+### 实测状态配对与准入
+
+ArmState与JointState使用QoS深度20，各自缓存最多32帧。只使用完全相同原始采集时间戳的真实配对，不把两路“各自最新一条”强行合成，也不刷新或伪造stamp。较新一侧可短时等待另一侧；选中的pair相对最新流最多落后100ms，并继续满足原1秒source/receive新鲜度。
+
+最新尚未配对的状态一旦参考无效、忙、控制器未就绪、非静止，或包含NaN/非法时间戳、同一路输入的时间戳回退或重复，立即清空pair与缓存并封禁准入。故障后必须形成全新的完整安全pair才恢复，pair的source stamp须严格晚于观察到unsafe时的ROS时刻；故障前采集、故障后排队到达的旧pair不能解锁，单路safe样本也不能复活故障前缓存；同一路同stamp重复包不刷新或覆盖状态。机械臂source未来时间戳严格拒绝，旧包仍受原1秒界限约束。故障恢复锁也禁用夹爪互斥入口，直到新安全pair形成。缓存解决异步到达和短时丢单路，不掩盖持续缺帧或增加原时效上限。HTTP可达不等于can_move=true；每次发送仍通过底层Action和实际反馈检查。
+
+本次修复与部署前后采样见[项目发布记录](../../docs/validation/project-release-20261102.md)。该记录的只读准入检查没有发送真实关节或夹爪命令。
+
 默认 `enable_arm_control=false`。启用必须同时满足 `enable_control=true`；实机还要求 `allow_hardware=true`。单次改变不超过 `arm_max_delta_deg`（上限 10°）；默认 profile 为 roundtrip_low，底层仍执行全部限位、几何、扭转及到位检查。参考有效、反馈新鲜且停稳、Action 可用才能发送。面板内夹爪和机械臂互斥，不自动 Home、初始化、使能、清错或重发。确定未执行的失败允许手动改值重试；执行结果不确定或超时保持锁定，迟到结果不能自动解锁。
 
 2026-10-31 历史部署前缀为主工程 `runs/joint_panel_20261031_01/install`；配置与回滚副本位于该目录旁的 `deployment/`。机械臂由 `chess_robot_arm.service` 管理，面板和夹爪由 `chess_robot_console.service` 管理，原 `chess_robot_manual_panel.service` 已停止。这不是当前版本选择指令；实际前缀以service和进程为准。下方原夹爪版本段仅保留历史来源。
@@ -110,5 +118,4 @@ Gemini 3.8 Flash提供布局初稿，已完成桌面/手机适配及点动交互
 不再列为可复制的当前启动步骤。原始部署配置和脚本保留在上述历史目录；当前操作见[网页说明](../../docs/operations/web-panels.md)。
 
 该组合启动入口会启动一个夹爪驱动；已有夹爪驱动时只用 `panel.launch.py`。
-消息时间采用同一 AGX 的 ROS 时钟，零时间戳或未来超过0.25秒的时间戳会禁用操作；
-DDS 传输延迟计入反馈年龄。HTTP Host 仅允许绑定地址及本机地址，POST 另查同源。
+消息时间采用同一AGX的ROS时钟，DDS传输延迟计入反馈年龄。机械臂source时间戳不得在未来；夹爪消息保留原零时间戳/未来超过0.25秒拒绝规则。HTTP Host仅允许绑定地址及本机地址，POST另查同源。

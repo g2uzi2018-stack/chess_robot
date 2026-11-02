@@ -32,7 +32,7 @@ Nova5＋AG95＋D405 的 ROS 2 Humble 工程。目标为识别、定位与夹取�
 
 工程位于Jetson AGX Orin的 `/home/kuang/workspace/chess_robot`，Ubuntu 22.04 / aarch64。
 夹爪节点原在同一Git仓库的 `feat/gripper-node-20261025` worktree开发，不是另一套机器人；源码整合与现场驱动更新分别验收，不从原夹爪worktree的旧机械臂/视觉包覆盖主工作区的新版本。
-Home目标/历史基准分离已在代码提交 `4ce936b` 完成离线验证与独立静态复核；该代码阶段不等于现场已切换，实际加载和功能检查另记。
+Home目标/历史基准分离及夹爪整合已完成源码验证和本次无动作部署检查；新目标已加载，历史未清零；随后修复100Hz面板配对问题，现场100次只读准入均通过。具体运行版本、门限与未验收范围见[11月2日发布记录](docs/validation/project-release-20261102.md)，不把节点健康写成实机运动或识别准确率验收。
 运行入口和安装前缀以[现场操作说明](docs/operations/arm-quickstart.md)与实际service/进程为准。提交或push不会自动切换冻结视觉源码或已运行的二进制。
 
 ## 4 资料维护
