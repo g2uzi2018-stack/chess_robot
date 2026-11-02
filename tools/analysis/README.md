@@ -34,9 +34,9 @@ bash tools/analysis/run_workspace_study.sh
 
 ## 1 业务节点证据工具
 
-`business_node_acceptance.py` 为真实 Action 的只读扫描/显式实机验证入口，使用前阅读
-`docs/operations/arm-business-acceptance.md`。`--initialize-reference-at-home` 必须显式给出；
-失败终止本批，不自动重放。没有跨进程参考恢复功能。
+`business_node_acceptance.py` 会启动自己的业务节点并使用Action，默认扫描不执行轨迹，但不是可与活跃控制所有者并行的纯离线工具。使用前阅读[业务验收边界](../../docs/operations/arm-business-acceptance.md)。
+
+必须在互斥的两种参考来源中明确选择：`--checkpoint-file FILE --no-unobserved-motion`从可信端点恢复已有历史，或`--initialize-reference-at-home`在历史参考姿态显式建立参考。前者为纯恢复，不自动使能；旧选项名中的Home指历史基准，不能在新日常目标随便清零。历史参考姿态若位于日常commissioning包络之外会拒绝初始化，不能为恢复而扩大原包络。失败终止本批，不自动重放。
 
 `business_evidence_audit.py RUN --evaluator PATH` 使用 `workspace_eval.cpp` 的离线二进制
 复核精确规划轨迹及真实反馈的桌面、非相邻包络、限位、奇异性余量。它不连接控制器，

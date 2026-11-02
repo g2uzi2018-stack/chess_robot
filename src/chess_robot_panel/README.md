@@ -14,7 +14,7 @@ C++17 / ROS 2 Humble。`panel_node` 在 AGX 提供浏览器界面，通过现有
 
 默认 `enable_arm_control=false`。启用必须同时满足 `enable_control=true`；实机还要求 `allow_hardware=true`。单次改变不超过 `arm_max_delta_deg`（上限 10°）；默认 profile 为 roundtrip_low，底层仍执行全部限位、几何、扭转及到位检查。参考有效、反馈新鲜且停稳、Action 可用才能发送。面板内夹爪和机械臂互斥，不自动 Home、初始化、使能、清错或重发。确定未执行的失败允许手动改值重试；执行结果不确定或超时保持锁定，迟到结果不能自动解锁。
 
-2026-10-31 已完成现场部署，运行前缀为主工程 `runs/joint_panel_20261031_01/install`；配置与回滚副本位于该目录旁的 `deployment/`。机械臂由 `chess_robot_arm.service` 管理，面板和夹爪由 `chess_robot_console.service` 管理，原 `chess_robot_manual_panel.service` 已停止。下方现场部署段仅描述原夹爪版本历史。
+2026-10-31 历史部署前缀为主工程 `runs/joint_panel_20261031_01/install`；配置与回滚副本位于该目录旁的 `deployment/`。机械臂由 `chess_robot_arm.service` 管理，面板和夹爪由 `chess_robot_console.service` 管理，原 `chess_robot_manual_panel.service` 已停止。这不是当前版本选择指令；实际前缀以service和进程为准。下方原夹爪版本段仅保留历史来源。
 
 ## 网页入口
 
@@ -22,7 +22,7 @@ C++17 / ROS 2 Humble。`panel_node` 在 AGX 提供浏览器界面，通过现有
 - [相机预览](http://192.168.30.26:8088)：页头“夹爪控制”返回8089，均在当前标签页跳转。
 - 页面跳转只切换网页，不会发送夹爪命令；离开控制页会结束连续点动的追加，最后已发出的步进仍可能走完。
 - 当前链接面向此AGX的局域网地址；仅有8089的SSH转发不会同时转发8088，需要分别配置或直接使用局域网地址。
-- 现场入口与维护见[双网页操作说明](../../docs/operations/web-panels.md)，实现和验收范围见[验证记录](../../docs/validation/manual-panel-20261031.md)。
+- 现场入口与维护见[双网页操作说明](../../docs/operations/web-panels.md)，原夹爪面板验收见[10月31日冻结记录](../../docs/validation/manual-panel-20261031.md)，六关节部署见[网页操作第6节](../../docs/operations/web-panels.md#6-六关节控制台部署验收2026-10-31)。
 
 ## 操作
 
@@ -106,17 +106,8 @@ HTTP 使用 Boost.Beast，单独 I/O 线程与 ROS executor；输入体限制8Ki
 以页面实时反馈为准。初始化期间位置超范围误锁定已修复；正常状态的范围检查与不自动重发仍保留。
 Gemini 3.8 Flash提供布局初稿，已完成桌面/手机适配及点动交互回归；夹持效果仍由使用者目视判断。
 
-```bash
-systemctl --user status chess_robot_manual_panel
-systemctl --user stop chess_robot_manual_panel
-# 临时服务在停止/重启机器后可能被回收，可用以下命令重新启动（会保持前台）：
-source /opt/ros/humble/setup.bash
-source /home/kuang/workspace/chess_robot_gripper/install_panel/setup.bash
-export ROS_DOMAIN_ID=90 ROS_LOCALHOST_ONLY=1
-ros2 launch chess_robot_panel manual_panel.launch.py \
-  panel_config:=/home/kuang/workspace/chess_robot_gripper/runs/manual_panel_20261031/panel.site.yaml \
-  gripper_config:=/home/kuang/workspace/chess_robot_gripper/runs/manual_panel_20261031/gripper.site.yaml
-```
+旧 `chess_robot_manual_panel.service` 和 `install_panel` 组合启动命令已经由机器人控制台入口替代，
+不再列为可复制的当前启动步骤。原始部署配置和脚本保留在上述历史目录；当前操作见[网页说明](../../docs/operations/web-panels.md)。
 
 该组合启动入口会启动一个夹爪驱动；已有夹爪驱动时只用 `panel.launch.py`。
 消息时间采用同一 AGX 的 ROS 时钟，零时间戳或未来超过0.25秒的时间戳会禁用操作；

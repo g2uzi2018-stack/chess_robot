@@ -1,14 +1,13 @@
 # 机械臂防绕线策略：设计建议
 
-日期：2026-10-24。本文保留早期需求与物理线缆标定建议；全臂几何旋转策略现已[实现](../../src/chess_robot_twist/README.md)，定义见[扭转模型](rod-twist-definition.md)。物理线缆力学/允许范围仍未标定；正式Home已保存。
+日期：2026-10-24。本文保留早期需求与物理线缆标定建议；全臂几何旋转策略现已[实现](../../src/chess_robot_twist/README.md)，定义见[扭转模型](rod-twist-definition.md)。物理线缆力学/允许范围仍未标定。2026-11-02起日常Home与历史基准分开，以下历史中的Home/线缆自然参考均应按其上下文区分。
 
-## 1 已保存的参考
+## 1 日常目标与历史参考
 
-- ROS 2 参数文件：`config/arm/home.yaml`，节点参数 `home.joint_names` / `home.joint_positions_rad` / `home.taught`。
-- 实测依据：`config/arm/home_reference.json`；3 秒、368 个真实反馈帧，六轴位置取中位数，来源哈希和时间保存在记录中。
-- 六轴角度约为 `[79.4900, 16.9600, 83.3900, -10.3500, -90.0000, -3.6500]` 度。
-- 用户已现场示教并确认保存此位置；此前 250 mm 目标已更新为实际到位，并指向本实测参考。未发送运动或重新设置编码器零点。
-- 此记录可以作为选解偏好的 Home 参考，不自动证明线材物理上没有预先扭转，也不代表 270°/360°已通过线缆范围标定。
+- 当前日常目标源为 `config/arm/home.yaml`，参数 `home.joint_positions_rad`；`home_reference.json`记录与目标匹配的采集来源。
+- 扭转历史基准为 `config/arm/twist_reference.yaml`，参数 `reference.joint_positions_rad`。原2026-10-24参考角度约 `[79.4900,16.9600,83.3900,-10.3500,-90.0000,-3.6500]` 度继续仅作为历史几何基准，旧采集证据见[冻结记录](../validation/home-reference-2026-10-24.md)。
+- 更新日常目标不更改历史基准、完整展开角或检查点identity；到了新Home也不清零。具体采集、校验与加载流程见[当前操作](../operations/arm-quickstart.md)。
+- 几何基准并不自动证明真实线缆中性，也不代表270°/360°已通过物理范围标定。真实更换历史基准需要独立物理校准和历史重建流程。
 
 ## 2 需求的准确含义
 
@@ -25,7 +24,7 @@
 3. **路径约束**：[MoveIt 概念文档](https://moveit.ai/documentation/concepts/) 提供关节、姿态和自定义约束。这些机制适合将来接入全场景规划；约束模型本身不会识别真实线材走线。
 4. **IK 的附加代价**：[MoveIt 的 Kinematics Cost Functions](https://moveit.picknik.ai/main/doc/how_to_guides/kinematics_cost_function/kinematics_cost_function_tutorial.html) 展示了最小关节位移等二级目标，可借鉴到厂家 IK 候选排序。目标位姿精度和硬限制先满足，代价不能把硬越界变为“代价较高但仍执行”。
 
-[pick_ik](https://github.com/PickNikRobotics/pick_ik) 也展示了关节居中和位移代价，但上游当前明确标为 deprecated，只保留基础维护；不建议为本项目新增该依赖。
+早期评估曾以[pick_ik](https://github.com/PickNikRobotics/pick_ik)的关节居中和位移代价作比较参考，本工程未引入它。本页保留设计来源，不把早期记录当成其当前维护状态或新的依赖选型结论。
 
 ## 4 建议的第一版机制
 

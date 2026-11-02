@@ -13,16 +13,19 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 
 2. **配置层次**
    - `config/arm.yaml`：默认 `read_only`、回环地址、`motion.paused=true`、`hardware.enable=false`。
-   - `config/home.yaml`：与工程 `config/arm/home.yaml` 相同的六轴示教Home；不是六轴零位。
+   - `config/home.yaml`：根 `config/arm/home.yaml` 的日常返回目标镜像，`home.joint_positions_rad`；默认已改为新采集值，不是六轴零位。
+   - 根 `config/arm/twist_reference.yaml`：`reference.joint_positions_rad`，原v1扭转历史基准；构建时连同正式Home安装到包内，`arm.launch.py`加载两份。日常Home采集不修改此基准。
+   - CMake检查根Home与包内镜像逐字一致；只复制包目录而漏掉根config不能作为完整构建快照。
    - `config/commissioning.yaml`：有界验收模板；反馈上限 **0.1 s**，TCP半径≤0.04 m、关节半径≤0.12 rad、净/总扭转≤20°。
    - `config/exploration.yaml`：探索模板，反馈 **1.0 s**；low/high速度选择不扩大几何范围，不报告正式认证。
    - 现场 `.runtime/arm.yaml` 与 `.runtime/arm-install-prefix` 为安装覆盖；不将模板的暂停/使能状态写成现场状态。
-   - 参数启动后不可变；模型/附件变化需重新生成和核对几何配置。
+   - 参数启动后不可变；日常Home采集/应用后经受控重启加载，不开放通用参数热更新。更新入口与只读校验见[Home操作](../../docs/operations/arm-quickstart.md#3-更新日常home)。
+   - `Config::home`仅为日常目标；`Config::twist_reference`用于Model几何基准。修改前者不改变完整展开历史或检查点身份；模型/附件或历史基准变化需重新核对，不能修改identity强行兼容。
 3. **时效与超时**
    - 当前探索窗口上限 **1.0 s**；通用 hardware 默认未改，commissioning上限仍0.1 s。
    - 接收期限覆盖反馈窗口；重复帧既不刷新状态，也不重开读取期限。
    - ServoJ ACK **0.15 s**、Stop ACK **1500 ms**、普通命令 **500 ms** 独立；1秒并非反馈频率。
-   - [1秒变更证据](../../docs/validation/feedback-window-1s-20261031.md)只有单元/loopback与停稳加载，没有新增真实运动资格验收。
+   - [1秒变更证据](../../docs/validation/feedback-window-1s-20261031.md)记录该批次单元/loopback与停稳加载；后续100Hz发布与一次下降记录见[验证索引](../../docs/validation/README.md)，不能合并成完整运动范围验收。
 
 ## 2 ROS 接口
 
@@ -63,9 +66,9 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
    - `state.header`、TCP、JointState与最终TCP采用完整反馈帧收到后的ROS时刻；发布不能刷新原收帧时间。
    - TCP来自实测关节的URDF正运动学，不是独立笛卡尔传感器；无物理精度认证。
 2. **`/arm/initialize_reference`**
-   - 功能：显式建立已知线缆中性Home的几何参考；不清零编码器。
-   - 入参：空；返回 `success`、`detail`。仅新鲜、连续停稳、近Home且空闲时允许。
-   - 回Home本身不清零扭转，非Home当前位置不能初始化。
+   - 功能：显式建立已知线缆历史基准的几何参考；不清零编码器，不用于更新日常Home。
+   - 入参：空；返回 `success`、`detail`。仅新鲜、连续停稳、接近 `reference.joint_positions_rad` 且空闲时允许；仍需明确真实参考可重建，接近姿态不证明无未观测绕转。
+   - 到达新日常Home不允许借此初始化或清零。正常有持久历史时用恢复，不用初始化替代。
 3. **`/arm/restore_checkpoint`**
    - 功能：自动恢复未开启时显式恢复最新有效停稳存档。
    - 入参：`no_unobserved_motion` 布尔声明；返回 `success`、`detail`。success 表示恢复后的历史资格，不等同执行器使能或运动就绪；可选使能失败但新鲜连续停稳确认保留历史时可返回 true，detail/actuator 诊断明确失败。
@@ -73,7 +76,8 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 4. **`/arm/restore_reference`**
    - 功能：原始audit的完整历史迁移/取证，不作为日常启动入口。
    - 入参：有序 `audit_files` 与 `no_unobserved_motion`；返回 `success`、`detail`。
-   - 从真实Home重放完整展开相位，不能猜测缺失圈数；[历史边界契约](../../docs/validation/reference-recovery-history.md)。
+   - 从已知历史参考姿态重放完整展开相位，不能从新日常Home猜测原始零基准或缺失圈数；[历史边界契约](../../docs/validation/reference-recovery-history.md)。
+   - 离线 `migrate_checkpoint_offline` 审阅计划必须显式给出 `reference_parameters`；缺项拒绝，不能从 `home_parameters` 推断历史基准。它不是任意更换历史零点的工具。
 5. **回环命名空间**
    - `test_fixture=true` 必须为IPv4 `127.0.0.1`；端点改为 `/simulation/arm/...`、`simulated=true`。
    - 模拟状态不发布到真实端点，不将模拟结果当作硬件认证。
@@ -110,9 +114,10 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 
 1. **停稳存档**
    - 保存周期10s、连续停稳1s；持久化完整局部展开相位、关节及配置指纹，checksum/fsync/原子rename/目录fsync，单写者锁。
+   - schema1身份字节布局保持；原Home槽位绑定同一个历史基准。日常目标变化不改identity，旧存档的关节、previous_phase和local保持；历史基准、模型、TCP或控制器变化仍拒绝。
    - 实际运动前先写脏标记；坏/脏/不兼容/端点失配拒绝恢复，不回退旧档，不在非Home造初始参考。
    - `checkpoint.auto_restore` 要求 `checkpoint.no_unobserved_motion`；`enable_after_restore` 才在成功后GetErrorID并按配置EnableRobot，不ClearError、不自动运动。
-   - 使能失败撤销临时信任，当前进程禁止反复自动使能；关闭后重新确认配置和真实状态。
+   - 可选使能失败单独报告；仅后续新的连续可信停稳端点确认可保留已提交历史，反馈gap、跳变或确认不可信仍使对应参考失效。当前进程不自动反复使能；详见[恢复状态机](../../docs/validation/history-vision-decouple-20261101.md)。
 2. **日志**
    - `audit.directory` 可选；独立异步队列8MiB/8192记录，默认每流64MiB/16文件含活动段，二进制记录不跨段。
    - 原始记录为int64主机UTC纳秒＋1440控制器字节，小端；队列/磁盘错误报告丢弃数，不阻塞反馈。

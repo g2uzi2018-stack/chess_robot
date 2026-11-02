@@ -1,5 +1,7 @@
 # Stopped checkpoint recovery and bounded diagnostics — 2026-10-31
 
+本页保留2026-10-31批次及明确标注的后续修复证据；“当前/未加载/回退”均指记录阶段。后续Home目标与历史基准已分开，旧部署/回退命令仅适用原批次，当前入口见[日常操作](../operations/arm-quickstart.md)。不要用旧报告覆盖新安装或改写旧测试结果。
+
 Implemented in the existing C++ arm node. No separate motion controller, reference
 zeroing, relaxed geometry/arrival/stop limits or production TF update was introduced.
 The operator explicitly promises no movement while powered down, and powers down

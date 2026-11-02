@@ -5,6 +5,8 @@
 1. **数据与控制链**
    - D405 → `vision_node`：采集、彩深对齐、校正、内参与帧信息。
    - 图像 → `preview_node` → 浏览器：按需订阅、缩放、深度伪彩色与 JPEG；不做棋子检测。
+   - RGB-D → `xiangqi_perception` → 相机测量JSON → `xiangqi_scene`：后者维护基座变换、跨帧ID和两秒快照；缺机械臂时相机检测可继续。
+   - `tracking_preview`：独立叠加绘制；视频帧率不代表识别完成率。
    - 目标 → `/arm/move` → Planner → FK/IK、扭转与几何检查 → Executor → Nova5 ServoJ。
    - 实测关节 → `chess_robot_twist` 连续历史 → `/arm/state` 与停稳存档。
    - `handeye_node` 使用现有运动与视觉接口，完成停稳采样、PARK 求解和留出验证；不发布生产 TF。
@@ -20,18 +22,24 @@
 
    | 包 | 责任与文档 | 主要配置 |
    |---|---|---|
-   | `chess_robot_arm` | [构建、Action/Service、执行保护](../src/chess_robot_arm/README.md) | [arm](../src/chess_robot_arm/config/arm.yaml)、[exploration](../src/chess_robot_arm/config/exploration.yaml)、[Home](../src/chess_robot_arm/config/home.yaml) |
+   | `chess_robot_arm` | [构建、Action/Service、执行保护](../src/chess_robot_arm/README.md) | [arm](../src/chess_robot_arm/config/arm.yaml)、[exploration](../src/chess_robot_arm/config/exploration.yaml)、[日常Home](../config/arm/home.yaml)、[历史基准](../config/arm/twist_reference.yaml) |
    | `chess_robot_twist` | [全臂几何扭转库](../src/chess_robot_twist/README.md)；无硬件 I/O | [扭转定义](design/rod-twist-definition.md)、[线缆策略](design/arm-cable-policy.md) |
+   | `chess_robot_gripper` | [AG95动作、反馈与故障语义](../src/chess_robot_gripper/README.md) | mock默认、hardware只读模板 |
+   | `chess_robot_panel` | [HTTP、网页、关节/夹爪互斥](../src/chess_robot_panel/README.md) | [panel](../src/chess_robot_panel/config/panel.yaml) |
    | `chess_robot_interfaces` | [MoveArm](../src/chess_robot_interfaces/action/MoveArm.action)、[ArmState](../src/chess_robot_interfaces/msg/ArmState.msg)、[恢复服务](../src/chess_robot_interfaces/srv/RestoreCheckpoint.srv) | 消息为接口权威定义 |
    | `chess_robot_vision` | [构建、图像与时间语义](../src/chess_robot_vision/README.md) | [D405](../src/chess_robot_vision/config/d405.yaml) |
    | `chess_robot_preview` | [构建、HTTP与通道扩展](../src/chess_robot_preview/README.md) | [channels](../src/chess_robot_preview/config/channels.yaml) |
+   | `chess_robot_tracking_preview` | [独立叠加与过期清除](../src/chess_robot_tracking_preview/README.md) | 包内配置 |
    | `chess_robot_handeye` | [构建、配置与采样](../src/chess_robot_handeye/README.md)、[移植范围](../src/chess_robot_handeye/PORTING.md) | [模板](../src/chess_robot_handeye/config/handeye.example.yaml) |
    | `chess_robot_validation` | [早期只读/模拟工具](../src/chess_robot_validation/README.md)；不是当前业务启动入口 | 包内 config |
 2. **安装边界**
    - ROS 2 Humble；各包 `package.xml`/`CMakeLists.txt` 定义依赖；依包 README 构建，使用 `--base-paths src` 或明确包目录，避免扫描 `runs/` 的环境。
    - 仓库 `arm.yaml` 默认只读、暂停；现场 `.runtime/arm.yaml` 是独立安装配置，当前为 exploration。
    - `.runtime/arm-install-prefix` 选择已测试的运行版本；构建产物不能自动替换它。
-   - 夹爪驱动保留于 `/home/kuang/workspace/chess_robot_gripper`；机器人控制台源代码已加入主工程 `src/chess_robot_panel`，运行前缀见[网页操作](operations/web-panels.md)。
+   - 日常Home与历史基准分开；采集/应用只更新目标和镜像，受控重启加载新目标，不改原绕转历史。`validate_home.py`在启动前只读校验一致性；详细语义见[Home操作](operations/arm-quickstart.md#2-日常home与历史参考分开保存)。
+   - 夹爪节点原在同仓库worktree `/home/kuang/workspace/chess_robot_gripper` 的 `feat/gripper-node-20261025` 分支开发；不是无关外部工程。整合后的包和统一接口以当前源码为准，现场安装仍需单独核对。
+   - 控制台与夹爪组合launch会启动一个夹爪驱动；已有驱动时仅启动panel，避免重复占用硬件。运行入口见[网页操作](operations/web-panels.md)。
+   - 象棋Python测量/场景链的依赖、模型与冻结生产入口见[视觉说明](../tools/testing/xiangqi_tracking/README.md)；源码默认行为不等于现场工件配置。
 
 ## 3 操作与诊断
 

@@ -1,38 +1,45 @@
 # 中国象棋夹取
 
-Nova5＋AG95＋D405 的 ROS 2 Humble / C++ 工程。目标为识别、定位与夹取中国象棋棋子。
+Nova5＋AG95＋D405 的 ROS 2 Humble 工程。目标为识别、定位与夹取中国象棋棋子。
 
-## 1 当前进度
+## 1 当前能力与边界
 
-1. **已具备**
-   - 受限机械臂运动、完整扭转历史跟踪、停稳存档恢复、相机采集与网页预览、手眼候选外参。
-   - 夹爪与手动面板位于独立协作工作区；尚未合入主工程。
-2. **尚待完成**
-   - 真实夹指中点 TCP（工具中心点）、量化实体误差、棋子识别与自动夹取闭环。
-   - 当前 1 秒反馈窗口没有新增真实运动资格验收；内部标定残差不能充当末端精度。
-3. **现场入口**
-   - 工程：`/home/kuang/workspace/chess_robot`；Jetson AGX Orin / Ubuntu 22.04 / aarch64。
-   - [图像预览](http://192.168.30.26:8088)、[夹爪点动](http://192.168.30.26:8089)；服务不自启。
-   - 本次文档核对日期：**2026-10-31（Asia/Taipei）**；现场未提交改动不等于 GitHub 已更新。
+| 功能 | 已有能力 | 验证边界 |
+|---|---|---|
+| 机械臂 | 受限运动、单关节手动控制、连续扭转历史、停稳存档恢复 | 实机结果绑定报告中的模型、配置与路径；不是完整工作空间认证 |
+| 夹爪与控制台 | AG95节点、开度/状态反馈、网页点动、六关节控制 | 接触和到位不代表可靠夹持；自动棋子抓取尚未验收 |
+| 相机与预览 | D405同步RGB-D、独立视频与检测叠加 | 相机帧率、网页刷新率与完整识别率分别统计 |
+| 象棋识别 | 独立相机测量与场景状态、同帧全图候选＋ROI类别、两秒稳定快照 | 近期四子窗口约17.2fps；不外推满棋盘或真实移动/遮挡 |
+| 标定 | 48观测手眼候选外参及激光粗检 | 内部一致性不是实体绝对精度；真实夹指中点TCP和实体误差仍待量化 |
+
+轻量YOLO26n单类候选模型已训练并离线验证，尚未接入生产；深度预检测只在 `depth_shadow` 实验中使用。
+四子候选＋ROI约35ms是离线阶段耗时，不是完整ROS实时帧率。自动运动/抓取资格不能由检测或快照成功推导。
 
 ## 2 从这里查阅
 
-1. **日常使用**
-   - [机械臂启动、存档、断电恢复与故障定位](docs/operations/arm-quickstart.md)。
-   - [双网页、夹爪点动与服务恢复](docs/operations/web-panels.md)。
-2. **开发与接口**
-   - [完整文档索引：架构、包说明、构建、配置与模型](docs/README.md)。
-   - [机械臂接口与执行约束](src/chess_robot_arm/README.md)、[手眼采样与求解](src/chess_robot_handeye/README.md)。
-3. **结果与证据**
-   - [验证索引与历史适用范围](docs/validation/README.md)。
-   - [手眼标定及激光粗检](docs/validation/handeye-20261030.md)、[1 秒反馈窗口](docs/validation/feedback-window-1s-20261031.md)。
+1. **使用和诊断**
+   - [机械臂启动、Home、历史恢复与故障定位](docs/operations/arm-quickstart.md)。
+   - [机器人控制台、夹爪点动与网页维护](docs/operations/web-panels.md)。
+   - 本现场网页：[图像预览](http://192.168.30.26:8088)、[机器人控制台](http://192.168.30.26:8089)。
+2. **开发和接口**
+   - [文档与功能包索引](docs/README.md)。
+   - [机械臂](src/chess_robot_arm/README.md)、[控制台](src/chess_robot_panel/README.md)、[视觉链](tools/testing/xiangqi_tracking/README.md)。
+3. **版本与证据**
+   - [验证索引及适用范围](docs/validation/README.md)。
+   - [手眼标定](docs/validation/handeye-20261030.md)、[候选/ROI与轻量模型](docs/validation/xiangqi-precheck-20261102/README.md)。
 
-## 3 资料维护
+## 3 源码与现场版本
 
-1. **权威内容各归一处**
-   - 包 README 维护构建与接口；`docs/operations/` 维护现场操作；`docs/validation/` 保存结论和证据索引。
-   - `runs/` 为被 Git 忽略的现场证据、部署与可恢复备份，不随克隆分发。
-   - `reference/` 与 `docs/vendor/` 保留原始资产、来源、校验值、许可证和厂家协议。
-2. **模型与实现**
-   - Xacro 是模型源，URDF 是生成物；Python 用于离线分析、测试与证据整理，ROS 功能节点使用 C++。
-   - 历史验证只证明报告中的版本和范围；新版本按当前配置重新核对，不改写旧结果。
+工程位于Jetson AGX Orin的 `/home/kuang/workspace/chess_robot`，Ubuntu 22.04 / aarch64。
+夹爪节点原在同一Git仓库的 `feat/gripper-node-20261025` worktree开发，不是另一套机器人；源码整合与现场驱动更新分别验收，不从原夹爪worktree的旧机械臂/视觉包覆盖主工作区的新版本。
+Home目标/历史基准分离已在代码提交 `4ce936b` 完成离线验证与独立静态复核；该代码阶段不等于现场已切换，实际加载和功能检查另记。
+运行入口和安装前缀以[现场操作说明](docs/operations/arm-quickstart.md)与实际service/进程为准。提交或push不会自动切换冻结视觉源码或已运行的二进制。
+
+## 4 资料维护
+
+- 包README维护构建和接口，`docs/operations/`维护当前操作，`docs/validation/`保存版本明确的结果与证据。
+- `runs/`包含运行安装、冻结源码、模型依赖及原始证据；被Git忽略不表示可删除。`.runtime/`保存现场配置和检查点，不随克隆分发。
+- `reference/`与`docs/vendor/`保留来源、哈希、许可证和厂家协议。Xacro是模型源，URDF为生成物；模型中的厂家速度/力矩占位不等于已核实的实机限值。
+- 旧[nova项目](https://github.com/g2uzi2018-stack/nova)提供过通信和开合约定参考；旧业务代码不能代替当前节点的完整回包校验、反馈确认和不自动重试机制。
+- 机械臂、夹爪、相机和预览节点使用C++；当前象棋测量/场景链使用独立Python进程。Python也用于离线分析、训练编排和回归。
+- 历史报告中的“当前/待部署/未提交”指当时快照。后续更新应追加新的证据，不能把旧结果改写为新版本验收。

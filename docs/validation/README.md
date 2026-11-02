@@ -2,19 +2,24 @@
 
 ## 1 当前结论与边界
 
-1. **1秒反馈安装**
-   - [2026-10-31变更与加载](feedback-window-1s-20261031.md)：147单元测试（104 arm / 23 checkpoint / 20 twist）、3个loopback场景通过。
-   - 650ms空窗保留参考；1200ms空窗或重复旧帧失效；只停稳重启加载，无新的真实运动资格验收。
-   - 运行前缀 `runs/feedback_window_1s_20261031_01/install`；PID2798832、SHA256见报告，不能按旧PID替换当前实例。
-2. **停稳存档与审查**
-   - [机制、迁移与审查修复](checkpoint-recovery-20261031.md)：135→142项为当时分阶段结果，当前合计见1秒报告。
-   - 原位恢复保留扭转；已测空闲进程重启与历史断电边界，部署后尚未追加真实物理断电试验。
-   - 主要证据：`runs/checkpoint_recovery_20261031_01/`、`runs/checkpoint_review_20261031_01/`。
-3. **标定与激光粗检**
-   - [48观测、留出一致性与实体结果](handeye-20261030.md)：36训练来自24位姿，12留出来自4位姿。
-   - 留出中位0.208875mm、最大0.339257mm/0.111317°仅是内部一致性，候选未发布生产TF。
-   - CH65→CH56→CH32→CH65粗检由用户确认可接受，未量化实体毫米误差；最后保持CH65。
-   - 证据：`runs/handeye_campaign_20261030_01/`、`runs/corner_validation_20261031_02/`、`runs/corner_validation_20261031_03/`。
+1. **机械臂恢复与反馈**
+   - Home解耦代码阶段：提交`4ce936bd4bec11f8d34c641c4eac27a50258c402`，最终补丁SHA256为`72ed785945f4c55ddd6a504c1457e25d59c5073d5c74dd7b709faa85be1de199`。113 arm / 31 checkpoint / 20 twist / 12维护工具共176个C++用例、7个配置、27个roundtrip unit、13个history场景及维护工具/arm ROS/roundtrip/powercycle localhost协议回归通过；这些用例与全包测试有重叠，不能再相加充作独立总数。
+   - 未修改旧serializer写档再由新实现恢复的兼容检查，以及真实checkpoint不可变副本检查均通过：原identity、local、previous_phase和端点保持，改变历史基准仍拒绝。真实副本检查不读取现场反馈、不覆盖原档、不执行现场恢复或动作。
+   - Gemini通过Cursor CLI对最终补丁做独立静态审查，无剩余实质问题，主代理验收；测试执行证据由实现/集成方提供，审查者没有独立重跑全部测试。对应交付含`test-summary.json`、`legacy-proof.json`、`production-checkpoint-proof.json`、`peer-final-review.json`与`peer-acceptance.json`。本条仅说明代码阶段，现场加载和最终整包结果应另有发布记录。
+   - [历史恢复与视觉解耦](history-vision-decouple-20261101.md)记录156项C++测试（107 arm / 29 checkpoint / 20 twist）及13个localhost历史场景；这些是对应源码版本的离线/模拟结果。
+   - [10月31日1秒窗口](feedback-window-1s-20261031.md)的147项与3个loopback属于更早批次，不能和156项相加，也不能代表后续源码已重新测试。
+   - 后续 `runs/lower5cm_feedback_20261101_01/delivery/summary.json`记录ROS状态发布约100Hz、原始反馈约122Hz、20/100Hz回环，以及一次约下降0.05033m的执行。位移来自关节和URDF FK，不是独立外部计量，也不扩展为完整运动范围验收。
+   - 当前加载版本、Home目标与历史基准的关系以[日常操作](../operations/arm-quickstart.md)和实际运行配置为准；历史PID和安装前缀不作为新部署入口。
+2. **象棋识别**
+   - [候选/ROI与轻量模型记录](xiangqi-precheck-20261102/README.md)：同帧全图候选＋ROI类别已部署，四子窗口约17.2fps；轻量候选模型未上线，深度仅shadow。
+   - 约35ms为保存四子数据的候选＋ROI阶段耗时，不是完整实时FPS；满棋盘、真实移动/遮挡和自动抓取尚未验收。
+   - [节点拆分](xiangqi-node-split-20261101/README.md)、[严格FP32加速](xiangqi-acceleration-20261101/README.md)、[两秒稳定观测](../../tools/testing/xiangqi_tracking/STABLE_OBSERVATION.md)各有独立版本与范围。旧拓扑29.31fps不能当作当前双阶段策略结果。
+3. **控制台、夹爪与标定**
+   - [夹爪首版软件/只读](gripper-node-20261025/REPORT.md)、[11点实机收窄](gripper-sweep-20261025/REPORT.md)保留各自批次结果；未建立毫米开口、实际力和棋子夹持可靠性。
+   - [10月31日原夹爪面板/初始化修复](manual-panel-20261031.md)保存瞬时值反例和独立浏览器/接口检查；后续六关节部署另记。
+   - [网页控制台](../operations/web-panels.md)记录单关节/夹爪接口、历史模拟检查和现场只读检查；网页可用不证明运动或夹持可靠性。
+   - [48观测与激光粗检](handeye-20261030.md)：36训练来自24位姿，12留出来自4位姿；留出中位0.208875mm、最大0.339257mm/0.111317°仅为内部一致性。
+   - 激光粗检由用户确认可接受，真实夹指中点TCP和实体毫米误差尚未量化，候选外参未等同生产TF认证。
 
 ## 2 历史记录怎样使用
 
@@ -25,6 +30,7 @@
 2. **证据保存边界**
    - 本目录小型JSON、候选YAML、PNG与验收摘要保留；原始audit/图像/CDR和部署在被Git忽略的 `runs/`。
    - 历史报告不代表全工作区、安全认证、物理精度或当前版本实机验收；模拟与真实结果分开。
+   - [过时文档入口迁移记录](documentation-migrations-20261102.md)列出6个已移除路径、替代入口及原文SHA；删除的是重复入口，不删除唯一验收数据。
    - 三份恢复实现报告的原文在 `runs/docs_cleanup_20261031_01/originals/`，删除/合并映射与SHA在同目录manifest；不把备份当第二套活跃文档。
 
 ## 3 保留的分项验收

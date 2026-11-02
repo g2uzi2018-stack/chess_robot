@@ -1,8 +1,8 @@
 # 独立机械臂维护工具
 
 三个入口只调用本目录的 C++ 程序。**不依赖 ROS、不链接任何 chess_robot 业务库，
-不要求启动抓取节点，也不读取或重置业务扭转参考。** 唯一共享的是 Home 数据文件。
-构建依赖 C++17、CMake、yaml-cpp；GTest 用于测试。AGX 已具备这些依赖。
+不要求启动抓取节点，也不读取或重置业务扭转参考。** 共享的是日常Home目标数据文件；扭转历史基准与检查点由业务节点独立维护，维护采集不修改它们。
+构建依赖 C++17、CMake、yaml-cpp；GTest 用于测试。AGX 已具备这些依赖。升级维护工具源码后须重建下列独立二进制，ROS的colcon构建不会自动更新它；脚本固定调用 `runs/arm_tools_build/arm_operator`。
 
 ```bash
 cd /home/kuang/workspace/chess_robot
@@ -68,14 +68,20 @@ bash tools/arm/arm_capture_home.sh --apply
 连续采集默认 3 秒、至少 100 个唯一反馈帧，要求 mode=4/5、低速、无反馈中断且关节漂移
 不超限。位置取逐轴中位数，保存反馈 CSV、候选 YAML 和来源 JSON，输出目录在 `runs`。
 采集不发送任何控制器写入指令。`--apply` 仅更新本地 `config/arm/home.yaml` 及
-`home_reference.json`，保留旧文件备份，不会移动机械臂或清零编码器/扭转参考。
+`home_reference.json`和包内 `src/chess_robot_arm/config/home.yaml` 镜像，保留三份旧文件备份，不会移动机械臂或清零编码器/扭转参考；不写 `config/arm/twist_reference.yaml`。
 
-Home YAML 和 JSON 的更新使用临时文件替换、失败回滚及 `.home_update_pending` 标记。
+正式Home、来源JSON与包内镜像的更新使用临时文件替换、fsync、各文件独立回滚及 `.home_update_pending` 标记；回滚不完整时保留标记并拒绝继续使用。`--apply`只接受项目正式路径与完整镜像/历史基准布局，不应用到安装目录副本。
 若掉电留下标记，先按标记路径检查备份并完成恢复；工具会拒绝继续使用不明确的 Home。
 采集 Home 不等于证明线缆中性、姿态向下或回程无碰撞，需要现场确认所采姿态。
 
-业务节点启动时加载自己的参数，采集不会偷偷修改其内存或安装目录配置。如果要让业务节点
-采用新 Home，应显式更新其 `home.joint_positions_rad` 配置并重启；本维护工具立即读取正式文件。
+业务节点启动时加载自己的参数，采集不偷偷修改其内存或安装目录配置。日常目标为 `home.joint_positions_rad`，历史基准为 `reference.joint_positions_rad`；更新前者不清零历史，后者不得由日常采集工具修改。
+
+```bash
+python3 tools/arm/validate_home.py --root /home/kuang/workspace/chess_robot
+```
+
+验证器只读检查来源类型/帧数与目标一致、六轴值/顺序/限位、镜像漂移与中断标记，不连接控制器，也不证明CSV真实性或物理中性。更新后使用受控启动入口加载根正式源；普通安装目录launch则需先重新安装配置。完整流程见[日常操作](../../docs/operations/arm-quickstart.md)。
+采集工具虽不发送写命令，仍直接读取控制器反馈；维护前核对反馈连接所有权，避免与活跃实例争用。
 
 ## 5 配置与独立运行
 

@@ -10,7 +10,7 @@
    - 当前 `.runtime/arm.yaml` 为exploration、反馈1.0s；仓库模板仍只读/暂停，认证标志false。
    - 现场profile为roundtrip_low/high/alignment，规划速度/加速度cap分别0.3/1.0/0.4；默认roundtrip_low。
    - 现场ServoJ aheadtime=50、gain=500，command_time_s=0表示使用30ms发送周期；探索模板的100/200不是现场值。
-   - 当前1秒加载后无新真实运动资格；[历史报告与范围](../validation/README.md)。
+   - 旧1秒加载批次没有新增运动资格；后续一次下降记录不扩展为本工具完整范围验收，见[版本与范围](../validation/README.md)。
 
 ## 2 规划与执行约束
 
@@ -57,4 +57,8 @@
 2. **复用前检查**
    - 旧脚本会管理自己的节点/控制连接；先确认没有活跃业务所有者，不能与现有节点并行争用。
    - 读取当前节点反馈参数；旧0.1/0.2s自检与当前1.0s可能不一致，不改原记录冒充新资格。
-   - 原完整历史、Home/TCP/模型/配置、声明和新输出目录应分别核对；具体参数以当前脚本源码与 `--help` 为准。
+   - 原完整历史、历史参考基准、日常Home/TCP/模型/配置、声明和新输出目录应分别核对。旧客户端可能仅有单一Home假设，必须先适配分离语义及当前运行前缀；具体参数以当前脚本源码与 `--help` 为准。
+
+## 5 两种参考来源与Home分离后的复用
+
+`tools/analysis/business_node_acceptance.py`必须明确选择互斥的`--checkpoint-file FILE`或旧`--initialize-reference-at-home`。检查点路径还要求`--no-unobserved-motion`和真实存在的文件，纯恢复不自动使能。旧选项中的Home指历史参考姿态，不是新日常返回目标；若其在commissioning日常包络外，工具拒绝启动该初始化流程，不能扩大运动包络绕过。历史参考、日常目标、原始日志和速度/继续资格分别记账；日常目标变化不重标已有绕转。
