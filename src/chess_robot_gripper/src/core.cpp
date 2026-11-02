@@ -54,8 +54,13 @@ Sample Driver::poll() {
   sample.sampled = Clock::now(); // Age includes all three sequential reads.
   sample.initialization = read(0x0200);
   sample.status = read(0x0201);
-  sample.position = read(0x0202);
-  if (sample.initialization > 2 || sample.status > 3 || sample.position > 1000)
+  // During homing the reference is being established. Do not consume the
+  // transient position register as a calibrated 0..1000 aperture. The installed
+  // AG95 reported 1074 and 1925 while initialization=2 on 2026-10-31.
+  // Keep the sentinel until a later initialized, range-checked poll.
+  if (sample.initialization != 2) sample.position = read(0x0202);
+  if (sample.initialization > 2 || sample.status > 3 ||
+      (sample.initialization != 2 && sample.position > 1000))
     throw std::runtime_error("out-of-range AG95 feedback: initialization=" +
       std::to_string(sample.initialization) + " status=" + std::to_string(sample.status) +
       " position=" + std::to_string(sample.position));
@@ -88,7 +93,8 @@ Outcome Completion::observe(const Sample &s) {
   Outcome result = Outcome::Pending;
   if (command_.operation == 0) {
     // INITIALIZE on an already initialized device is a read-confirmed no-op in the node.
-    if (s.initialization == 1) result = Outcome::Initialized;
+    if (s.initialization == 1 && s.status == 1 && s.position <= 1000)
+      result = Outcome::Initialized;
   } else if (s.initialization == 0) result = Outcome::NotInitialized;
   else if (s.initialization == 1) {
     if (s.status == 3) result = Outcome::Dropped;

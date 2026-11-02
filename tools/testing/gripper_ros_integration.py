@@ -116,7 +116,7 @@ class Session:
         self.states = []
         self.sub = self.client_node.create_subscription(GripperState, '/gripper/state', self.states.append, 10)
         self.client = ActionClient(self.client_node, MoveGripper, '/gripper/command')
-        args = ['install/chess_robot_gripper/lib/chess_robot_gripper/gripper_node', '--ros-args',
+        args = [os.environ.get('GRIPPER_EXECUTABLE', 'install/chess_robot_gripper/lib/chess_robot_gripper/gripper_node'), '--ros-args',
                 '-p', 'enable_commands:=' + str(enabled).lower(),
                 '-p', 'poll_period_ms:=50']
         if gateway:

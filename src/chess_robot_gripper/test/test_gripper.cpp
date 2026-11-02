@@ -14,6 +14,41 @@ public:
   Bytes exchange(const Bytes &) override { ++writes; throw std::runtime_error("lost write echo"); }
   void close() override { ++closes; }
 };
+class HomingFeedback : public Transport {
+public:
+  uint16_t init = 2, status = 0, position = 1925;
+  int position_reads = 0;
+  void close() override {}
+  Bytes exchange(const Bytes &q) override {
+    auto address = uint16_t(q[2] << 8 | q[3]);
+    if (address == 0x0202) ++position_reads;
+    uint16_t value = address == 0x0200 ? init : address == 0x0201 ? status : position;
+    return checked({1,3,2,uint8_t(value >> 8),uint8_t(value)});
+  }
+};
+}
+TEST(Driver, DoesNotInterpretPositionUntilHomingReferenceExists) {
+  auto transport=std::make_unique<HomingFeedback>(); auto *observer=transport.get();
+  Driver driver(std::move(transport),1);
+  auto moving=driver.poll();
+  EXPECT_EQ(moving.initialization,2); EXPECT_EQ(moving.position,65535);
+  EXPECT_EQ(observer->position_reads,0);
+  observer->init=1; observer->status=1; observer->position=1000;
+  auto finished=driver.poll();
+  EXPECT_EQ(finished.position,1000); EXPECT_EQ(observer->position_reads,1);
+  observer->position=1074;
+  EXPECT_THROW(driver.poll(),std::runtime_error); // Still strict after initialization.
+  observer->init=0;
+  EXPECT_THROW(driver.poll(),std::runtime_error); // No blanket range relaxation.
+}
+TEST(Completion, InitializationWaitsForSettledReferencedFeedback) {
+  Command goal; goal.operation=0;
+  Completion init(goal,sample(0,1,1000),5);
+  EXPECT_EQ(init.observe(sample(2,0,65535,2)),Outcome::Pending);
+  EXPECT_EQ(init.observe(sample(2,0,65535,3)),Outcome::Pending);
+  EXPECT_EQ(init.observe(sample(1,0,1000,4)),Outcome::Pending);
+  EXPECT_EQ(init.observe(sample(1,1,1000,5)),Outcome::Pending);
+  EXPECT_EQ(init.observe(sample(1,1,1000,6)),Outcome::Initialized);
 }
 TEST(Rtu, MatchesVendorInitializationExample) {
   EXPECT_EQ(request(1,6,0x100,1), (Bytes{1,6,1,0,0,1,0x49,0xf6}));

@@ -90,7 +90,7 @@ private:
     auto age = sample_.sampled == cg::Clock::time_point{} ? -1. :
       std::chrono::duration<double>(cg::Clock::now() - sample_.sampled).count();
     s.feedback_age_sec = age;
-    s.feedback_valid = connected_ && age >= 0 && age <= freshness_;
+    s.feedback_valid = connected_ && age >= 0 && age <= freshness_ && sample_.position <= 1000;
     s.initialization = s.feedback_valid ? sample_.initialization : 255;
     s.grip_status = s.feedback_valid ? sample_.status : 255;
     s.position_raw = s.feedback_valid ? sample_.position : 65535;
