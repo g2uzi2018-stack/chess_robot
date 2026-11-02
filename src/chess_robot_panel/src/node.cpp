@@ -17,6 +17,7 @@
 #include <fstream>
 #include <iomanip>
 #include <mutex>
+#include <map>
 #include <random>
 #include <regex>
 #include <sstream>
@@ -106,16 +107,14 @@ public:
       message_delay_ = published > 0 && std::isfinite(delay) && delay >= -.25 ? std::max(0., delay) : -1.;
     });
 
-    arm_state_sub_ = create_subscription<ArmState>("/arm/state", rclcpp::QoS(1), [this](ArmState::ConstSharedPtr msg) {
+    arm_state_sub_ = create_subscription<ArmState>("/arm/state", rclcpp::QoS(20), [this](ArmState::ConstSharedPtr msg) {
       std::lock_guard<std::mutex> lock(mutex_);
-      arm_state_ = *msg; arm_received_ = true; arm_received_at_ = Clock::now();
-      arm_stamp_ = msg->header.stamp;
+      receive_arm(*msg);
     });
 
-    arm_joints_sub_ = create_subscription<JointState>("/arm/joint_states", rclcpp::QoS(1), [this](JointState::ConstSharedPtr msg) {
+    arm_joints_sub_ = create_subscription<JointState>("/arm/joint_states", rclcpp::QoS(20), [this](JointState::ConstSharedPtr msg) {
       std::lock_guard<std::mutex> lock(mutex_);
-      joints_received_ = true; joints_received_at_ = Clock::now();
-      joints_valid_ = parse_joints(*msg);
+      receive_joints(*msg);
     });
 
     timer_ = create_wall_timer(std::chrono::milliseconds(100), [this] {
@@ -215,7 +214,7 @@ private:
 
   bool fresh() const { return received_ && state_.feedback_valid && age() >= 0 && age() <= freshness_; }
 
-  bool parse_joints(const JointState &msg) {
+  bool parse_joints(const JointState &msg, std::array<double,6> &output_positions, std::array<double,6> &output_velocities) {
     if (msg.header.frame_id != "base_link") return false;
     if (msg.name.size() != 6 || msg.position.size() != 6 || msg.velocity.size() != 6) {
       return false;
@@ -247,14 +246,85 @@ private:
     for (int i = 0; i < 6; ++i) {
       if (!found[i]) return false;
     }
-    joint_positions_ = positions;
-    joint_velocities_ = velocities;
-    joint_stamp_ = msg.header.stamp;
+    output_positions = positions;
+    output_velocities = velocities;
     return true;
   }
 
+  struct ArmFrame { ArmState message; Clock::time_point received; };
+  struct JointFrame {
+    builtin_interfaces::msg::Time stamp;
+    std::array<double,6> positions{}, velocities{};
+    Clock::time_point received;
+    bool valid = false;
+  };
+  static int64_t stamp_key(const builtin_interfaces::msg::Time &stamp) {
+    return int64_t(stamp.sec)*1000000000LL+stamp.nanosec;
+  }
+  bool source_stamp_valid(const builtin_interfaces::msg::Time &stamp) {
+    if(stamp.sec<0 || stamp.nanosec>=1000000000u || stamp_key(stamp)<=0) return false;
+    const double age=now().seconds()-(double(stamp.sec)+double(stamp.nanosec)*1e-9);
+    return std::isfinite(age) && age>=0. && age<=1.;
+  }
+  void invalidate_pair() {
+    // Recovery requires a new complete pair; a safe message on one channel
+    // cannot revive positions acquired before an unsafe observation.
+    have_arm_pair_=false;joints_valid_=false;recovery_required_=true;
+    recovery_source_floor_=now().nanoseconds();
+    pending_arms_.clear();pending_joints_.clear();
+  }
+  bool arm_payload_safe(const ArmState &message) const {
+    return message.header.frame_id=="base_link" && message.feedback_fresh &&
+      message.reference_valid && message.controller_mode==5 && !message.busy;
+  }
+  static bool velocities_stationary(const std::array<double,6> &speeds) {
+    for(double speed:speeds) if(!std::isfinite(speed) || std::abs(speed)>.002) return false;
+    return true;
+  }
+  void pair_frame(int64_t key) {
+    auto arm=pending_arms_.find(key);auto joints=pending_joints_.find(key);
+    if(arm==pending_arms_.end() || joints==pending_joints_.end() || key<=recovery_source_floor_ || !joints->second.valid ||
+       !arm_payload_safe(arm->second.message) || !velocities_stationary(joints->second.velocities) ||
+       (have_arm_pair_ && key<=stamp_key(arm_stamp_))) return;
+    arm_state_=arm->second.message;arm_stamp_=arm_state_.header.stamp;
+    joint_stamp_=joints->second.stamp;
+    joint_positions_=joints->second.positions;joint_velocities_=joints->second.velocities;
+    arm_received_at_=arm->second.received;joints_received_at_=joints->second.received;
+    joints_valid_=true;have_arm_pair_=true;recovery_required_=false;
+  }
+  void receive_arm(const ArmState &message) {
+    const bool had_arm=arm_received_;arm_received_=true;
+    const auto key=stamp_key(message.header.stamp);
+    latest_arm_timing_valid_=source_stamp_valid(message.header.stamp) && key>latest_arm_key_;
+    if(!latest_arm_timing_valid_) { invalidate_pair();return; }
+    const bool identity_changed=had_arm && (message.simulated!=latest_arm_state_.simulated || message.backend!=latest_arm_state_.backend);
+    latest_arm_key_=key;latest_arm_state_=message;
+    if(identity_changed) invalidate_pair();
+    if(!arm_payload_safe(message)) { invalidate_pair();return; }
+    pending_arms_[key]={message,Clock::now()};pair_frame(key);
+    while(pending_arms_.size()>32) pending_arms_.erase(pending_arms_.begin());
+  }
+  void receive_joints(const JointState &message) {
+    joints_received_=true;
+    const auto key=stamp_key(message.header.stamp);
+    latest_joints_timing_valid_=source_stamp_valid(message.header.stamp) && key>latest_joint_key_;
+    if(!latest_joints_timing_valid_) { invalidate_pair();return; }
+    latest_joint_key_=key;
+    JointFrame frame;frame.stamp=message.header.stamp;frame.received=Clock::now();
+    frame.valid=parse_joints(message,frame.positions,frame.velocities);
+    latest_joints_valid_=frame.valid;latest_joint_velocities_=frame.velocities;
+    if(!frame.valid || !velocities_stationary(frame.velocities)) { invalidate_pair();return; }
+    pending_joints_[key]=frame;pair_frame(key);
+    while(pending_joints_.size()>32) pending_joints_.erase(pending_joints_.begin());
+  }
+  bool pair_lag_valid() const {
+    // Keep the last genuine exact pair across callback ordering, but fail
+    // closed when either stream advances without a pair for more than 100ms.
+    return have_arm_pair_ && latest_arm_timing_valid_ && latest_joints_timing_valid_ && latest_joints_valid_ &&
+      std::max(latest_arm_key_,latest_joint_key_)-stamp_key(arm_stamp_)<=100000000LL;
+  }
   bool arm_stamps_match() const {
-    return arm_received_ && joints_received_ && joints_valid_ &&
+    return arm_received_ && joints_received_ && joints_valid_ && pair_lag_valid() &&
            arm_state_.header.frame_id == "base_link" &&
            arm_stamp_.sec == joint_stamp_.sec &&
            arm_stamp_.nanosec == joint_stamp_.nanosec;
@@ -266,7 +336,7 @@ private:
     if (published <= 0.0) return -1.0;
     const double current_time = const_cast<Panel*>(this)->now().seconds();
     const double age = current_time - published;
-    if (!std::isfinite(age) || age < -0.25) return -1.0;
+    if (!std::isfinite(age) || age < 0.0) return -1.0;
     const double arm_elapsed = std::chrono::duration<double>(Clock::now() - arm_received_at_).count();
     const double joints_elapsed = std::chrono::duration<double>(Clock::now() - joints_received_at_).count();
     if (arm_elapsed > 1.0 || joints_elapsed > 1.0) return -1.0;
@@ -279,9 +349,9 @@ private:
   }
 
   bool arm_stationary() const {
-    if (!joints_valid_) return false;
+    if (!joints_valid_ || !latest_joints_valid_) return false;
     for (int i = 0; i < 6; ++i) {
-      if (std::abs(joint_velocities_[i]) > 0.002) return false;
+      if (std::abs(joint_velocities_[i]) > 0.002 || std::abs(latest_joint_velocities_[i]) > 0.002) return false;
     }
     return true;
   }
@@ -290,8 +360,20 @@ private:
     if (!enabled_) return "面板控制未启用";
     if (!enable_arm_control_) return "面板机械臂控制未启用";
     if (active_) return "夹爪指令执行中，禁止操作机械臂";
-    if (received_ && state_.busy) return "夹爪忙碌，禁止操作机械臂";
+    if (received_ && (state_.busy || state_.initialization == 2 || (state_.initialization == 1 && state_.grip_status == 0))) return "夹爪忙碌，禁止操作机械臂";
     if (!arm_received_ || !joints_received_) return "等待机械臂状态及关节反馈";
+    if (!latest_arm_timing_valid_ || !latest_joints_timing_valid_) return "机械臂最新反馈时间戳无效或回退";
+    if (!latest_joints_valid_) return "机械臂关节数据无效(须含joint1..joint6)";
+    if (latest_arm_state_.header.frame_id != "base_link") return "机械臂坐标系无效";
+    if (!latest_arm_state_.feedback_fresh) return "机械臂底层反馈未刷新";
+    if (!latest_arm_state_.reference_valid) return "机械臂参考原点无效";
+    if (!latest_arm_state_.simulated && !hardware_) return "当前面板仅允许模拟设备";
+    if (latest_arm_state_.controller_mode != 5) return "机械臂控制器尚未就绪或未停稳";
+    if (latest_arm_state_.busy) return "机械臂忙碌";
+    for(double speed:latest_joint_velocities_)
+      if(std::abs(speed)>.002) return "机械臂未静止(关节速度>0.002rad/s)";
+    if (latest_arm_state_.simulated != arm_state_.simulated || latest_arm_state_.backend != arm_state_.backend) return "机械臂数据源已变化，等待同步反馈";
+    if (!pair_lag_valid()) return "机械臂状态与关节反馈尚未同步";
     if (!joints_valid_) return "机械臂关节数据无效(须含joint1..joint6)";
     if (arm_stamp_.sec != joint_stamp_.sec || arm_stamp_.nanosec != joint_stamp_.nanosec)
       return "机械臂状态与关节时间戳不匹配";
@@ -312,7 +394,8 @@ private:
   std::string blocked(bool initialize) const {
     if (!enabled_) return "面板控制未启用";
     if (arm_active_) return "机械臂指令执行中，禁止操作夹爪";
-    if (arm_received_ && arm_state_.busy) return "机械臂忙碌，禁止操作夹爪";
+    if (arm_received_ && (recovery_required_ || !latest_arm_timing_valid_)) return "机械臂反馈无效，等待新的完整安全反馈";
+    if (arm_received_ && (arm_state_.busy || latest_arm_state_.busy)) return "机械臂忙碌，禁止操作夹爪";
     if (!received_) return "等待夹爪状态";
     if (!state_.connected || !fresh()) return "夹爪断线或反馈过期";
     if (!state_.simulated && !hardware_) return "当前面板仅允许模拟设备";
@@ -355,14 +438,14 @@ private:
     o << "{\"received\":" << boolean(arm_received_ && joints_received_)
       << ",\"fresh\":" << boolean(fresh)
       << ",\"matched\":" << boolean(stamps_match)
-      << ",\"joints_valid\":" << boolean(joints_valid_)
-      << ",\"simulated\":" << boolean(arm_state_.simulated)
-      << ",\"reference_valid\":" << boolean(arm_state_.reference_valid)
-      << ",\"feedback_fresh\":" << boolean(arm_state_.feedback_fresh)
-      << ",\"controller_mode\":" << arm_state_.controller_mode
+      << ",\"joints_valid\":" << boolean(joints_valid_ && latest_joints_valid_)
+      << ",\"simulated\":" << boolean(latest_arm_state_.simulated)
+      << ",\"reference_valid\":" << boolean(have_arm_pair_ && arm_state_.reference_valid && latest_arm_state_.reference_valid)
+      << ",\"feedback_fresh\":" << boolean(have_arm_pair_ && arm_state_.feedback_fresh && latest_arm_state_.feedback_fresh)
+      << ",\"controller_mode\":" << latest_arm_state_.controller_mode
       << ",\"idle_stationary\":" << boolean(stationary)
       << ",\"feedback_age_sec\":" << age
-      << ",\"busy\":" << boolean(arm_state_.busy)
+      << ",\"busy\":" << boolean(arm_state_.busy || latest_arm_state_.busy)
       << ",\"can_move\":" << boolean(can_move)
       << ",\"action_ready\":" << boolean(arm_client_->action_server_is_ready())
       << ",\"blocked_reason\":" << quote(arm_blocked())
@@ -371,22 +454,22 @@ private:
       << ",\"positions_rad\":[";
     for (int i = 0; i < 6; ++i) {
       if (i > 0) o << ",";
-      if (joints_valid_) o << std::fixed << std::setprecision(6) << joint_positions_[i];
+      if (joints_valid_ && latest_joints_valid_) o << std::fixed << std::setprecision(6) << joint_positions_[i];
       else o << "0.0";
     }
     o << "],\"positions_deg\":[";
     for (int i = 0; i < 6; ++i) {
       if (i > 0) o << ",";
-      if (joints_valid_) o << std::fixed << std::setprecision(3) << (joint_positions_[i] * 180.0 / M_PI);
+      if (joints_valid_ && latest_joints_valid_) o << std::fixed << std::setprecision(3) << (joint_positions_[i] * 180.0 / M_PI);
       else o << "0.0";
     }
     o << "],\"velocities_rad_s\":[";
     for (int i = 0; i < 6; ++i) {
       if (i > 0) o << ",";
-      if (joints_valid_) o << std::fixed << std::setprecision(6) << joint_velocities_[i];
+      if (joints_valid_ && latest_joints_valid_) o << std::fixed << std::setprecision(6) << joint_velocities_[i];
       else o << "0.0";
     }
-    o << "],\"detail\":" << quote(arm_state_.diagnostic)
+    o << "],\"detail\":" << quote(latest_arm_state_.diagnostic)
       << "}";
     return o.str();
   }
@@ -675,6 +758,13 @@ private:
   double timeout_, freshness_, message_delay_ = -1.;
   GripperState state_;
   ArmState arm_state_;
+  // Raw safety observations are independent of the retained coherent pair.
+  ArmState latest_arm_state_;
+  bool recovery_required_=false,have_arm_pair_=false,latest_arm_timing_valid_=false,latest_joints_timing_valid_=false,latest_joints_valid_=false;
+  int64_t latest_arm_key_=0,latest_joint_key_=0,recovery_source_floor_=0;
+  std::array<double,6> latest_joint_velocities_{};
+  std::map<int64_t,ArmFrame> pending_arms_;
+  std::map<int64_t,JointFrame> pending_joints_;
   builtin_interfaces::msg::Time arm_stamp_, joint_stamp_;
   std::array<double, 6> joint_positions_{};
   std::array<double, 6> joint_velocities_{};
