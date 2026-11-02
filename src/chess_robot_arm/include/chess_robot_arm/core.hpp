@@ -31,7 +31,7 @@ enum Code : uint16_t {
   GRIPPER_FAILED = 18,
   STOP_FAILED = 19
 };
-enum class Operation : uint8_t { Pregrasp, Descend, Retreat, Sequence, Home };
+enum class Operation : uint8_t { Pregrasp, Descend, Retreat, Sequence, Home, Joint };
 struct Profile {
   std::string name;
   double speed = 0.25, acceleration = 0.5;
@@ -97,6 +97,12 @@ struct Config {
   // production TCP/ServoJ certification. It never reports certified=true.
   std::string safety_model_file;
   std::string audit_directory;
+  size_t audit_max_bytes = 64 * 1024 * 1024, audit_keep_files = 16;
+  std::string checkpoint_file;
+  double checkpoint_period = 10.0, checkpoint_dwell = 1.0,
+         checkpoint_endpoint_tolerance = .005;
+  bool checkpoint_auto_restore = false, checkpoint_no_unobserved_motion = false,
+       checkpoint_enable_after_restore = false;
   double commissioning_joint_radius = 0.1, commissioning_tcp_radius = 0.03;
   void validate() const;
   bool hardwareAllowed() const;
@@ -129,6 +135,7 @@ public:
 struct Snapshot {
   Feedback feedback;
   bool fresh = false, reference = false;
+  uint64_t reference_generation = 0;
   chess_robot_twist::Tracker tracker;
   std::string diagnostic;
   Snapshot(chess_robot_twist::Tracker t) : tracker(std::move(t)) {}
@@ -138,6 +145,8 @@ class State {
   std::shared_ptr<const chess_robot_twist::Model> model_;
   mutable std::mutex mutex_;
   chess_robot_twist::Tracker tracker_;
+  uint64_t reference_generation_ = 0;
+  void invalidateReferenceLocked();
   Feedback last_;
   bool have_ = false;
   std::optional<Clock::time_point> stationary_since_;
@@ -151,8 +160,16 @@ public:
   void
   initialize(); // Caller holds task admission lock; no active task permitted.
   std::string restore(const std::vector<std::string> &audit_files, bool no_unobserved_motion);
+  Snapshot checkpoint();
+  std::string restoreCheckpoint(const chess_robot_twist::TrackerCheckpoint &, bool no_unobserved_motion);
+  void validateRecovery(uint64_t generation, bool before_enable, double stopped_dwell);
+  // No commands: require a new, continuously stopped endpoint after an enable attempt.
+  // Failure invalidates only this generation, never a newer explicit recovery.
+  void confirmRecoveryEndpoint(uint64_t generation, const Feedback &before,
+                               Clock::time_point completed, double wait_s);
 };
 struct Goal {
+  Joints positions{}, expected_start{};
   Transform target = Transform::Identity();
   Operation operation = Operation::Pregrasp;
   std::string profile = "conservative";
@@ -231,6 +248,9 @@ public:
   View view() const;
   bool initialize(State &, std::string &);
   bool restore(State &, const std::vector<std::string> &, bool, std::string &);
+  bool restoreCheckpoint(State &, const chess_robot_twist::TrackerCheckpoint &, bool, std::string &);
+  Snapshot checkpoint(State &);
+  void persistCheckpoint(State &, const std::function<void(const Snapshot &)> &);
 };
 class Executor {
   Config config_;

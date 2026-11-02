@@ -40,6 +40,12 @@ struct TrackerOptions {
   double max_joint_step_rad = 0.1;
   double max_phase_step_rad = 1.5707963267948966;
 };
+// Complete path-dependent state, not just a scalar net/total twist.
+struct TrackerCheckpoint {
+  Joints joints{};
+  std::vector<double> previous_phase;
+  std::vector<double> local;
+};
 struct Limits {
   double net_limit_rad = 6.283185307179586;
   double total_limit_rad = 6.283185307179586;
@@ -91,6 +97,10 @@ public:
   bool valid() const noexcept;
   const Joints &lastJoints() const noexcept;
   Metrics metrics() const; // Throws while reference invalid.
+  TrackerCheckpoint checkpoint() const;
+  // Validates geometry and local winding congruence before committing.
+  // The caller additionally validates persistent model identity and live join.
+  void restoreCheckpoint(const TrackerCheckpoint &);
 private:
   std::shared_ptr<const Model> model_;
   TrackerOptions options_;

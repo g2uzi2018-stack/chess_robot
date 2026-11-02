@@ -15,6 +15,7 @@
 #include <condition_variable>
 #include <deque>
 
+
 using namespace chess_robot_arm;
 namespace {
 struct StreamFixtureState {
@@ -285,6 +286,44 @@ public:
     if (fd_ >= 0)
       close(fd_);
   }
+};
+// A feedback-only peer: sends scheduled packets without waiting for commands.
+class ScheduledFeedback {
+  int fd_=-1;
+  std::thread thread_;
+public:
+  int port=0;
+  explicit ScheduledFeedback(std::vector<std::pair<int,FeedbackFrame>> packets,
+                             int hold_ms=0) {
+    fd_=socket(AF_INET,SOCK_STREAM,0);
+    if(fd_<0) throw std::runtime_error("feedback fixture socket");
+    sockaddr_in address{};address.sin_family=AF_INET;
+    address.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
+    if(bind(fd_,reinterpret_cast<sockaddr *>(&address),sizeof(address)) || listen(fd_,1))
+      throw std::runtime_error("feedback fixture bind/listen");
+    socklen_t size=sizeof(address);
+    if(getsockname(fd_,reinterpret_cast<sockaddr *>(&address),&size))
+      throw std::runtime_error("feedback fixture getsockname");
+    port=ntohs(address.sin_port);
+    thread_=std::thread([this,packets=std::move(packets),hold_ms] {
+      pollfd incoming{fd_,POLLIN,0};if(poll(&incoming,1,2000)<=0)return;
+      const int peer=accept(fd_,nullptr,nullptr);if(peer<0)return;
+      const auto start=Clock::now();bool connected=true;
+      for(const auto &packet:packets) {
+        std::this_thread::sleep_until(start+std::chrono::milliseconds(packet.first));
+        size_t offset=0;
+        while(offset<packet.second.size()) {
+          const auto sent=send(peer,packet.second.data()+offset,packet.second.size()-offset,MSG_NOSIGNAL);
+          if(sent<=0){connected=false;break;}
+          offset+=static_cast<size_t>(sent);
+        }
+        if(!connected)break;
+      }
+      std::this_thread::sleep_until(start+std::chrono::milliseconds(hold_ms));
+      shutdown(peer,SHUT_RDWR);close(peer);
+    });
+  }
+  ~ScheduledFeedback(){if(thread_.joinable())thread_.join();if(fd_>=0)close(fd_);}
 };
 } // namespace
 TEST(Protocol, EchoErrorsAndNestedPayload) {
@@ -713,6 +752,41 @@ TEST(Geometry, RealUrdfIkAndIndependentTracker) {
   EXPECT_NEAR(metrics.total, 2 * pi, 1e-12);
   EXPECT_FALSE(chess_robot_twist::withinLimits(metrics, {pi, pi}));
 }
+TEST(Planner, ManualJointPreservesOtherAxesAndChecksEverySample) {
+  auto c=config();auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  Goal g;g.operation=Operation::Joint;g.positions=g.expected_start=c.home;g.positions[0]+=.01;
+  size_t checked=0;
+  Planner planner(c,m,k,[]{},[&](const Joints &){++checked;});
+  auto plan=planner.plan(g,s);
+  ASSERT_EQ(plan.segments.size(),1u);EXPECT_EQ(plan.segments[0].phase,"JOINT");
+  const auto &samples=plan.segments[0].samples;
+  EXPECT_EQ(checked,samples.size());
+  EXPECT_NEAR(jointDistance(samples.back().q,g.positions),0,1e-12);
+  for(const auto &x:samples)for(size_t j=1;j<6;++j)EXPECT_DOUBLE_EQ(x.q[j],c.home[j]);
+  EXPECT_FALSE(plan.wait_for_gripper);
+  EXPECT_NEAR(jointDistance(s.tracker.lastJoints(),c.home),0,1e-12);
+}
+TEST(Planner, ManualJointRejectsBadBaselineLimitsAndState) {
+  auto c=config();auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  Goal g;g.operation=Operation::Joint;g.positions=g.expected_start=c.home;g.positions[0]+=.01;
+  Planner planner(c,m,k,[]{});
+  auto bad=g;bad.positions[1]+=.01;EXPECT_THROW(planner.plan(bad,s),Failure);
+  bad=g;bad.positions[0]+=.2;EXPECT_THROW(planner.plan(bad,s),Failure);
+  bad=g;bad.expected_start[2]+=.01;EXPECT_THROW(planner.plan(bad,s),Failure);
+  bad=g;bad.positions[0]=std::numeric_limits<double>::quiet_NaN();EXPECT_THROW(planner.plan(bad,s),Failure);
+  bad=g;bad.positions=bad.expected_start;EXPECT_THROW(planner.plan(bad,s),Failure);
+  s.feedback.speed[3]=.1;EXPECT_THROW(planner.plan(g,s),Failure);s.feedback.speed[3]=0;
+  s.fresh=false;EXPECT_THROW(planner.plan(g,s),Failure);s.fresh=true;
+  s.reference=false;EXPECT_THROW(planner.plan(g,s),Failure);
+}
+TEST(Planner, ManualJointGeometryAndCancellationRemainEnforced) {
+  auto c=config();auto m=model(c);OfflineKinematics k(m);auto s=trusted(c,m);
+  Goal g;g.operation=Operation::Joint;g.positions=g.expected_start=c.home;g.positions[0]+=.01;
+  Planner blocked(c,m,k,[]{},[](const Joints &){throw Failure(PLANNING_FAILED,"collision");});
+  EXPECT_THROW(blocked.plan(g,s),Failure);
+  Planner canceled(c,m,k,[]{throw Failure(CANCELED,"cancel");});
+  EXPECT_THROW(canceled.plan(g,s),Failure);
+}
 TEST(Planner, HomeTimedCapsCancellationAndNoReference) {
   auto c = config();
   auto m = model(c);
@@ -1137,7 +1211,9 @@ TEST(Exploration, ConfiguredStageBoundsPreserveGlobalGuards) {
   c.exploration_boundaries={{"near",.08,.3,pi/6},{"wide",.7,3,pi}};
   EXPECT_NO_THROW(c.validate());EXPECT_TRUE(c.hardwareAllowed());
   c.freshness=.2;EXPECT_NO_THROW(c.validate());
-  c.freshness=.200001;EXPECT_THROW(c.validate(),Failure);
+  c.freshness=.75;EXPECT_NO_THROW(c.validate());
+  c.freshness=1.0;EXPECT_NO_THROW(c.validate());
+  c.freshness=1.000001;EXPECT_THROW(c.validate(),Failure);
   c.freshness=.1;
   auto effective=c.forProfile("wide");EXPECT_EQ(effective.commissioning_tcp_radius,.7);
   EXPECT_EQ(effective.twist_limits.total_limit_rad,pi);
@@ -1397,8 +1473,8 @@ TEST(PowerCycle, OfficialEnableIsExplicitAndNeverClearsAlarms) {
       if(cmd=="EnableRobot()")return std::string("0,{},EnableRobot();");
       throw std::runtime_error("unexpected command including ClearError");
     });});
-    if(alarm)EXPECT_THROW(d.enableAfterHistoryRestore(),Failure);
-    else EXPECT_NO_THROW(d.enableAfterHistoryRestore());
+    if(alarm)EXPECT_THROW(d.enableAfterHistoryRestore(false,[]{}),Failure);
+    else EXPECT_NO_THROW(d.enableAfterHistoryRestore(false,[]{}));
     EXPECT_EQ(calls.size(),alarm ? 1u : 2u);
     EXPECT_EQ(calls.front(),"GetErrorID()");
   }
@@ -1407,6 +1483,23 @@ TEST(PowerCycle, OfficialEnableIsExplicitAndNeverClearsAlarms) {
   EXPECT_THROW(passive.enableAfterHistoryRestore(),Failure);EXPECT_EQ(connections,0);
 }
 
+TEST(CheckpointEnable, ExplicitPolicyOrRequestAndEmptyAlarmsAreRequired) {
+  for(bool alarm:{false,true}) {
+    auto c=hardwareFixture();c.checkpoint_file="/fixture/state.save";c.checkpoint_enable_after_restore=true;
+    std::vector<std::string> calls;
+    V4Driver driver(c,[&]{return std::make_unique<ReplyTransport>([&](const std::string &command) {
+      calls.push_back(command);
+      return command=="GetErrorID()" ? (alarm ? "0,{[42]},GetErrorID();":"0,{[]},GetErrorID();") : "0,{},EnableRobot();";
+    });});
+    EXPECT_THROW(driver.enableAfterHistoryRestore(),Failure);
+    EXPECT_TRUE(calls.empty());
+    if(alarm) {EXPECT_THROW(driver.enableAfterHistoryRestore(true,[]{}),Failure);}
+    else {EXPECT_NO_THROW(driver.enableAfterHistoryRestore(true,[]{}));}
+    ASSERT_EQ(calls.size(),alarm?1u:2u);
+    EXPECT_EQ(calls[0],"GetErrorID()");
+    if(!alarm)EXPECT_EQ(calls[1],"EnableRobot()");
+  }
+}
 TEST(PowerCycle, EnableUsesDedicatedOfficialAcknowledgementBudget) {
   int listener=::socket(AF_INET,SOCK_STREAM,0);ASSERT_GE(listener,0);
   sockaddr_in addr{};addr.sin_family=AF_INET;addr.sin_addr.s_addr=htonl(INADDR_LOOPBACK);
@@ -1435,7 +1528,7 @@ TEST(PowerCycle, EnableUsesDedicatedOfficialAcknowledgementBudget) {
   });
   auto c=hardwareFixture();c.power_cycle_handoff=c.enable_after_history_restore=true;
   c.dashboard_port=ntohs(addr.sin_port);c.timeout_ms=100;c.enable_ack_timeout_ms=1200;
-  {V4Driver driver(c);EXPECT_NO_THROW(driver.enableAfterHistoryRestore());}
+  {V4Driver driver(c);EXPECT_NO_THROW(driver.enableAfterHistoryRestore(false,[]{}));}
   server.join();::close(listener);EXPECT_TRUE(server_error.empty())<<server_error;
 }
 
@@ -2109,4 +2202,51 @@ TEST(FaultRestart, FailedShaOrFaultTwistLimitDoesNotCommitExistingReference) {
     EXPECT_DOUBLE_EQ(after.tracker.metrics().total,before.tracker.metrics().total);
     EXPECT_DOUBLE_EQ(after.tracker.metrics().net,before.tracker.metrics().net);
   }
+}
+
+TEST(FeedbackWindow, SubsecondGapPreservesReferenceAtOneSecond) {
+  auto c=config();c.freshness=1.0;auto m=model(c);State state(c,m);
+  auto first=feedback(c);first.received=Clock::now()-std::chrono::milliseconds(700);
+  state.update(first);state.initialize();
+  auto next=feedback(c,2);next.q[0]+=.001;state.update(next);
+  EXPECT_TRUE(state.snapshot().fresh);EXPECT_TRUE(state.snapshot().reference);
+  EXPECT_DOUBLE_EQ(c.servo_ack_timeout,.15);
+}
+TEST(FeedbackWindow, OneSecondSilenceInvalidatesReference) {
+  auto c=config();c.freshness=1.0;auto m=model(c);State state(c,m);
+  auto first=feedback(c);first.received=Clock::now()-std::chrono::milliseconds(900);
+  state.update(first);state.initialize();
+  EXPECT_TRUE(state.snapshot().fresh);EXPECT_TRUE(state.snapshot().reference);
+  std::this_thread::sleep_for(std::chrono::milliseconds(160));
+  EXPECT_FALSE(state.snapshot().fresh);EXPECT_FALSE(state.snapshot().reference);
+  state.update(feedback(c,2));EXPECT_FALSE(state.snapshot().reference);
+}
+TEST(FeedbackTransport, SubsecondSilenceOutlivesDashboardTimeout) {
+  auto bytes=frame(42);field<uint64_t>(bytes,24,5);
+  ScheduledFeedback server({{650,bytes}});
+  auto c=config();c.ip="127.0.0.1";c.feedback_port=server.port;c.timeout_ms=100;c.freshness=1;
+  V4Driver driver(c);const auto start=Clock::now();
+  const auto result=driver.readFeedback();
+  EXPECT_EQ(result.controller_stamp,42u);
+  EXPECT_GE(std::chrono::duration<double>(Clock::now()-start).count(),.5);
+  EXPECT_EQ(c.timeout_ms,100);EXPECT_DOUBLE_EQ(c.servo_ack_timeout,.15);
+}
+TEST(FeedbackTransport, OneSecondReadDeadlineRemainsBounded) {
+  ScheduledFeedback server({},1300);
+  auto c=config();c.ip="127.0.0.1";c.feedback_port=server.port;c.timeout_ms=100;c.freshness=1;
+  V4Driver driver(c);const auto start=Clock::now();
+  EXPECT_THROW(driver.readFeedback(),std::exception);
+  const auto elapsed=std::chrono::duration<double>(Clock::now()-start).count();
+  EXPECT_GE(elapsed,.8);EXPECT_LT(elapsed,1.25);
+}
+TEST(FeedbackTransport, DuplicatePacketsDoNotRestartOneSecondDeadline) {
+  auto bytes=frame(42);field<uint64_t>(bytes,24,5);
+  std::vector<std::pair<int,FeedbackFrame>> packets{{0,bytes}};
+  for(int ms=100;ms<=1200;ms+=100)packets.push_back({ms,bytes});
+  ScheduledFeedback server(packets);
+  auto c=config();c.ip="127.0.0.1";c.feedback_port=server.port;c.timeout_ms=100;c.freshness=1;
+  V4Driver driver(c);EXPECT_EQ(driver.readFeedback().controller_stamp,42u);
+  const auto start=Clock::now();EXPECT_THROW(driver.readFeedback(),std::exception);
+  const auto elapsed=std::chrono::duration<double>(Clock::now()-start).count();
+  EXPECT_GE(elapsed,.8);EXPECT_LT(elapsed,1.25);
 }

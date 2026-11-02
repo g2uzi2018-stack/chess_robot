@@ -65,6 +65,17 @@ double maxSpeed(const Feedback &f) {
 }
 } // namespace
 void Config::validate() const {
+  require(audit_max_bytes >= 1448 && audit_max_bytes <= 1024ULL*1024*1024 &&
+              audit_keep_files>=1 && audit_keep_files<=128, "invalid audit rotation bounds");
+  require(positive(checkpoint_period) && checkpoint_period<=3600 &&
+              positive(checkpoint_dwell) && (checkpoint_file.empty() || checkpoint_dwell>=dwell) && checkpoint_dwell<=60 &&
+              positive(checkpoint_endpoint_tolerance) && checkpoint_endpoint_tolerance<=.01 &&
+              (checkpoint_file.empty() || checkpoint_endpoint_tolerance<=tracker_options.max_joint_step_rad),
+          "invalid checkpoint period/dwell/endpoint tolerance");
+  require(!checkpoint_file.empty() || (!checkpoint_auto_restore && !checkpoint_enable_after_restore),
+          "checkpoint recovery requires a persistent file");
+  require(!checkpoint_auto_restore || checkpoint_no_unobserved_motion,
+          "automatic checkpoint recovery requires explicit no-unobserved-motion policy");
   require(backend == "read_only" || backend == "hardware" ||
               backend == "commissioning" || backend == "exploration",
           "backend must be read_only, hardware or commissioning");
@@ -174,7 +185,7 @@ void Config::validate() const {
                 twist_limits.net_limit_rad <= pi / 9 &&
                 twist_limits.total_limit_rad <= pi / 9,
             "commissioning envelope/feedback/twist limits too wide");
-    require(freshness <= (backend=="exploration" ? .2 : .1),
+    require(freshness <= (backend=="exploration" ? 1.0 : .1),
             "commissioning/exploration feedback caps too wide");
     // Speed comes from the selected manufacturer limits/profile, independently
     // of commissioning geometry and measured stop/arrival tolerances.
@@ -256,6 +267,7 @@ void validateCapture(const std::string &f, double stamp, double now,
 }
 State::State(const Config &c, std::shared_ptr<const chess_robot_twist::Model> m)
     : config_(c), model_(m), tracker_(m, c.tracker_options) {}
+void State::invalidateReferenceLocked() {++reference_generation_;tracker_.invalidate();}
 void State::update(const Feedback &f) {
   std::lock_guard<std::mutex> lock(mutex_);
   try {
@@ -268,15 +280,20 @@ void State::update(const Feedback &f) {
         throw Failure(FEEDBACK_FAULT, "nonfinite feedback speed");
     if (have_ && f.received - last_.received >
                      std::chrono::duration<double>(config_.freshness)) {
-      tracker_.invalidate();
+      invalidateReferenceLocked();
       stationary_since_.reset();
       diagnostic_ = "feedback gap; explicit reference required";
     }
-    if (have_ && f.controller_stamp <= last_.controller_stamp)
-      throw Failure(FEEDBACK_FAULT, "feedback timestamp regression");
+    if (have_ && f.controller_stamp <= last_.controller_stamp) {
+      if(!tracker_.valid() && !config_.checkpoint_file.empty() &&
+          config_.checkpoint_no_unobserved_motion && f.mode==4 && maxSpeed(f)<=config_.stationary_speed) {
+        stationary_since_.reset();
+        diagnostic_="new disabled controller epoch; stopped checkpoint recovery still required";
+      } else throw Failure(FEEDBACK_FAULT, "feedback timestamp regression");
+    }
     if (tracker_.valid())
       tracker_.advance(f.q);
-    if (maxSpeed(f) <= config_.stationary_speed) {
+    if (f.mode!=7 && maxSpeed(f) <= config_.stationary_speed) {
       if (!stationary_since_)
         stationary_since_ = f.received;
     } else
@@ -284,7 +301,7 @@ void State::update(const Feedback &f) {
     last_ = f;
     have_ = true;
   } catch (...) {
-    tracker_.invalidate();
+    invalidateReferenceLocked();
     stationary_since_.reset();
     diagnostic_ = "invalid/discontinuous feedback";
     throw;
@@ -292,7 +309,7 @@ void State::update(const Feedback &f) {
 }
 void State::invalidate(const std::string &why) {
   std::lock_guard<std::mutex> lock(mutex_);
-  tracker_.invalidate();
+  invalidateReferenceLocked();
   stationary_since_.reset();
   diagnostic_ = why;
 }
@@ -302,7 +319,7 @@ Snapshot State::snapshot() {
       have_ && Clock::now() - last_.received <=
                    std::chrono::duration<double>(config_.freshness);
   if (!fresh) {
-    tracker_.invalidate();
+    invalidateReferenceLocked();
     stationary_since_.reset();
     diagnostic_ = "missing/stale feedback";
   }
@@ -310,6 +327,7 @@ Snapshot State::snapshot() {
   s.feedback = last_;
   s.fresh = fresh;
   s.reference = tracker_.valid();
+  s.reference_generation = reference_generation_;
   s.diagnostic = diagnostic_;
   return s;
 }
@@ -322,8 +340,84 @@ void State::initialize() {
       Clock::now() - *stationary_since_ <
           std::chrono::duration<double>(config_.dwell))
     throw Failure(FEEDBACK_FAULT, "reference requires fresh stationary dwell");
+  ++reference_generation_;
   tracker_.initializeAtHome(last_.q, config_.home_tolerance);
   diagnostic_ = "explicit Home reference initialized";
+}
+Snapshot State::checkpoint() {
+  std::lock_guard<std::mutex> lock(mutex_);
+  require(have_ && tracker_.valid() && (last_.mode==4 || last_.mode==5) &&
+              Clock::now()-last_.received<=std::chrono::duration<double>(config_.freshness) &&
+              stationary_since_ && Clock::now()-*stationary_since_>=std::chrono::duration<double>(config_.checkpoint_dwell) &&
+              maxSpeed(last_)<=config_.stationary_speed,
+          "checkpoint requires fresh referenced stationary idle dwell");
+  Snapshot saved(tracker_); saved.feedback=last_; saved.fresh=saved.reference=true;
+  saved.reference_generation=reference_generation_;
+  saved.diagnostic=diagnostic_; return saved;
+}
+std::string State::restoreCheckpoint(const chess_robot_twist::TrackerCheckpoint &saved, bool attested) {
+  require(attested, "checkpoint recovery requires no-unobserved-motion attestation");
+  chess_robot_twist::Tracker trial(model_,config_.tracker_options);
+  trial.restoreCheckpoint(saved);
+  require(chess_robot_twist::withinLimits(trial.metrics(),config_.twist_limits),
+          "saved checkpoint exceeds current twist limits");
+  std::lock_guard<std::mutex> lock(mutex_);
+  require(!tracker_.valid(), "checkpoint cannot replace a valid reference");
+  require(have_ && (last_.mode==4 || last_.mode==5) &&
+              Clock::now()-last_.received<=std::chrono::duration<double>(config_.freshness) &&
+              stationary_since_ && Clock::now()-*stationary_since_>=std::chrono::duration<double>(config_.checkpoint_dwell) &&
+              maxSpeed(last_)<=config_.stationary_speed && model_->withinJointBounds(last_.q),
+          "checkpoint recovery requires fresh stationary disabled/idle dwell");
+  const double delta=jointDistance(saved.joints,last_.q);
+  require(delta<=config_.checkpoint_endpoint_tolerance,
+          "live joints do not match stopped checkpoint; delta_rad="+std::to_string(delta));
+  trial.advance(last_.q);
+  require(chess_robot_twist::withinLimits(trial.metrics(),config_.twist_limits),
+          "checkpoint live join exceeds twist limits");
+  ++reference_generation_;tracker_=std::move(trial);
+  diagnostic_="stopped checkpoint restored; winding retained without zeroing; endpoint_delta_rad="+
+      std::to_string(delta)+"; no_unobserved_motion=true";
+  return diagnostic_;
+}
+void State::validateRecovery(uint64_t generation,bool before_enable,double stopped_dwell) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  require(std::isfinite(stopped_dwell) && stopped_dwell>=0,"invalid recovery dwell");
+  require(have_ && tracker_.valid() && reference_generation_==generation &&
+              Clock::now()-last_.received<=std::chrono::duration<double>(config_.freshness),
+          "recovery reference generation/freshness changed before completion");
+  require(model_->withinJointBounds(last_.q) &&
+              chess_robot_twist::withinLimits(tracker_.metrics(),config_.twist_limits),
+          "recovery measured joint/twist limits changed");
+  require(before_enable ? last_.mode==4 : (last_.mode==4 || last_.mode==5),
+          "recovery controller mode changed");
+  if(before_enable)
+    require(maxSpeed(last_)<=config_.stationary_speed && stationary_since_ &&
+                Clock::now()-*stationary_since_>=std::chrono::duration<double>(stopped_dwell),
+            "recovery lost stationary disabled dwell before enable");
+}
+void State::confirmRecoveryEndpoint(uint64_t generation, const Feedback &before,
+                                    Clock::time_point completed, double wait_s) {
+  require(std::isfinite(wait_s) && wait_s>0, "invalid recovery confirmation budget");
+  const auto deadline=Clock::now()+std::chrono::duration<double>(wait_s);
+  for (;;) {
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      require(reference_generation_==generation && tracker_.valid(),
+              "recovery reference generation lost during enable attempt");
+      const bool continuous=have_ && Clock::now()-last_.received<=std::chrono::duration<double>(config_.freshness) &&
+          (last_.mode==4 || last_.mode==5) && maxSpeed(last_)<=config_.stationary_speed &&
+          stationary_since_ && *stationary_since_<=before.received &&
+          jointDistance(last_.q,before.q)<=config_.checkpoint_endpoint_tolerance &&
+          model_->withinJointBounds(last_.q) && chess_robot_twist::withinLimits(tracker_.metrics(),config_.twist_limits);
+      if (!continuous || Clock::now()>=deadline) {
+        invalidateReferenceLocked();stationary_since_.reset();
+        diagnostic_="checkpoint enable confirmation untrusted; explicit history recovery required";
+        throw Failure(FEEDBACK_FAULT,diagnostic_);
+      }
+      if (last_.received>completed && last_.controller_stamp>before.controller_stamp) return;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+  }
 }
 std::string State::restore(const std::vector<std::string> &files, bool no_motion) {
   require(no_motion, "history handoff requires explicit no-unobserved-motion attestation");
@@ -607,7 +701,7 @@ std::string State::restore(const std::vector<std::string> &files, bool no_motion
           << historical_metrics.net << "; historical_twist_total_rad=" << historical_metrics.total
           << "; restored_twist_net_rad=" << restored_metrics.net
           << "; restored_twist_total_rad=" << restored_metrics.total;
-  tracker_=std::move(trial);
+  ++reference_generation_;tracker_=std::move(trial);
   diagnostic_=recorded_epoch_joined ? "explicit recorded power epoch replayed; winding retained without zeroing" :
       power_handoff ? "explicit power-cycle audit handoff; winding retained, controller clock epoch not joined" :
       "explicit audit history restored without zeroing twist";
@@ -747,7 +841,7 @@ Segment Planner::ptp(const std::string &phase, const Joints &a, const Joints &b,
   }
   timePath(s, p);
   for (const auto &x : s.samples)
-    check(x.q, t, phase != "HOME");
+    check(x.q, t, phase != "HOME" && phase != "JOINT");
   return s;
 }
 Segment Planner::vertical(const std::string &phase, const Joints &a,
@@ -796,7 +890,7 @@ Segment Planner::vertical(const std::string &phase, const Joints &a,
 Plan Planner::plan(const Goal &g, const Snapshot &state) {
   if ((config_.backend == "commissioning" || config_.backend == "exploration") && !safety_check_)
     throw Failure(HARDWARE_DISABLED, "commissioning geometry guard missing");
-  if (static_cast<uint8_t>(g.operation) > static_cast<uint8_t>(Operation::Home))
+  if (static_cast<uint8_t>(g.operation) > static_cast<uint8_t>(Operation::Joint))
     throw Failure(INVALID_GOAL, "unknown operation");
   if (!state.fresh)
     throw Failure(FEEDBACK_FAULT, "fresh measured state required");
@@ -805,6 +899,27 @@ Plan Planner::plan(const Goal &g, const Snapshot &state) {
   const auto &p = config_.profile(g.profile);
   auto t = state.tracker;
   const auto start = state.feedback.q;
+  if (g.operation == Operation::Joint) {
+    if (config_.home_roundtrip_precheck)
+      throw Failure(INVALID_GOAL, "manual joint move unavailable in roundtrip test mode");
+    int changed = 0;
+    for (size_t i=0; i<6; ++i) {
+      if (!std::isfinite(g.positions[i]) || !std::isfinite(g.expected_start[i]))
+        throw Failure(INVALID_GOAL, "nonfinite manual joint goal");
+      if (std::abs(start[i]-g.expected_start[i]) > config_.joint_tolerance)
+        throw Failure(INVALID_GOAL, "manual joint feedback baseline changed");
+      if (std::abs(state.feedback.speed[i]) > config_.stationary_speed)
+        throw Failure(BUSY, "manual joint move requires stopped feedback");
+      const double delta=std::abs(g.positions[i]-g.expected_start[i]);
+      if (delta>1e-9) ++changed;
+      if (delta>10*pi/180+1e-10)
+        throw Failure(INVALID_GOAL, "manual joint delta exceeds 10 degrees");
+    }
+    if (changed!=1) throw Failure(INVALID_GOAL, "manual move must change exactly one joint");
+    if (!model_->withinJointBounds(g.positions))
+      throw Failure(INVALID_GOAL, "manual joint target outside model bounds");
+    return {{ptp("JOINT", start, g.positions, t, p)}, false, {}};
+  }
   if (g.operation == Operation::Home)
     return {{ptp("HOME", start, config_.home, t, p)}, false, {}};
   if (config_.home_roundtrip_precheck && g.operation != Operation::Pregrasp)
@@ -1003,12 +1118,31 @@ bool TaskGate::restore(State &state, const std::vector<std::string> &files,
   try { detail=state.restore(files,attested); return true; }
   catch (const std::exception &e) { detail=e.what(); return false; }
 }
+bool TaskGate::restoreCheckpoint(State &state, const chess_robot_twist::TrackerCheckpoint &saved,
+                                bool attested, std::string &detail) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (busy_ || fault_latched_) { detail="checkpoint restore requires idle non-faulted admission"; return false; }
+  try { detail=state.restoreCheckpoint(saved,attested); return true; }
+  catch (const std::exception &e) { detail=e.what(); return false; }
+}
+Snapshot TaskGate::checkpoint(State &state) {
+  std::lock_guard<std::mutex> lock(mutex_);
+  require(!busy_ && !fault_latched_, "checkpoint requires idle non-faulted admission");
+  return state.checkpoint();
+}
 
 Executor::Executor(const Config &c, Driver &d, State &s, TaskGate &g,
                    std::shared_ptr<const chess_robot_twist::Model> m,
                    std::function<void(const Joints &)> safety_check)
     : config_(c), driver_(d), state_(s), gate_(g), model_(m),
       safety_check_(std::move(safety_check)) {}
+void TaskGate::persistCheckpoint(State &state,const std::function<void(const Snapshot &)> &save) {
+  // Keep admission through durable write: a subsequent motion marker cannot be
+  // overwritten by an older clean snapshot racing an action reservation.
+  std::lock_guard<std::mutex> lock(mutex_);
+  require(!busy_ && !fault_latched_, "checkpoint requires idle non-faulted admission");
+  save(state.checkpoint());
+}
 void Executor::checkpoint() {
   driver_.checkStream();
   if (gate_.canceled())

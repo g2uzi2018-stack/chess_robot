@@ -384,4 +384,29 @@ Metrics Tracker::metrics() const {
   require(valid_, "twist reference is invalid");
   return metrics_;
 }
+TrackerCheckpoint Tracker::checkpoint() const {
+  require(valid_, "cannot checkpoint invalid twist reference");
+  return {last_, previous_phase_, local_};
+}
+void Tracker::restoreCheckpoint(const TrackerCheckpoint &saved) {
+  require(model_->withinJointBounds(saved.joints), "checkpoint joint bounds");
+  const auto sample = model_->phases(saved.joints);
+  const auto &home = model_->homePhases().phase;
+  require(saved.previous_phase.size() == sample.phase.size() &&
+              saved.local.size() == sample.phase.size(), "checkpoint twist dimension");
+  for (size_t i=0; i<sample.phase.size(); ++i) {
+    require(std::isfinite(saved.previous_phase[i]) && std::isfinite(saved.local[i]),
+            "nonfinite checkpoint winding");
+    require(std::abs(saved.previous_phase[i]-sample.phase[i]) <= 1e-8,
+            "checkpoint principal phase disagrees with geometry");
+    require(std::abs(std::remainder(saved.local[i]-(sample.phase[i]-home[i]),two_pi)) <= 1e-7,
+            "checkpoint local winding disagrees with Home geometry");
+  }
+  auto metrics = metricsFromLocal(saved.local, sample.dual_length);
+  last_ = saved.joints;
+  previous_phase_ = saved.previous_phase;
+  local_ = saved.local;
+  metrics_ = std::move(metrics);
+  valid_ = true;
+}
 } // namespace chess_robot_twist

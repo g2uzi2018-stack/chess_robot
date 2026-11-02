@@ -1,6 +1,20 @@
 chess_robot_arm:
   ros__parameters:
     motion: {paused: true}
+    # Opt in on the installation with an absolute persistent path and explicit
+    # policy that no external/unobserved movement occurs while powered down.
+    checkpoint:
+      file: ""
+      period_s: 10.0
+      stopped_dwell_s: 1.0
+      endpoint_tolerance_rad: 0.005
+      auto_restore: false
+      no_unobserved_motion: false
+      enable_after_restore: false
+    audit:
+      directory: ""
+      max_file_bytes: 67108864
+      keep_files: 16
     backend: read_only
     test_fixture: false
     # Loopback is deliberate. Supply the controller IPv4 explicitly on AGX.

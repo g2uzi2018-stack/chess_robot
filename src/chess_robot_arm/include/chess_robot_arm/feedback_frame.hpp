@@ -37,6 +37,9 @@ class FeedbackSequence {
   uint64_t last_ = 0;
 
 public:
+  bool regresses(const FeedbackFrame &b) const {
+    return have_last_ && feedback_field<uint64_t>(b,32)<last_;
+  }
   bool accept(const FeedbackFrame &b) {
     validate_feedback(b);
     const auto stamp = feedback_field<uint64_t>(b, 32);

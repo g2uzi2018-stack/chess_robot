@@ -1,6 +1,7 @@
 #pragma once
 #include "chess_robot_arm/core.hpp"
 #include "chess_robot_arm/feedback_frame.hpp"
+#include "chess_robot_arm/rotating_audit.hpp"
 #include <fstream>
 #include <memory>
 #include <condition_variable>
@@ -36,12 +37,14 @@ class V4Driver final : public Driver {
   bool streaming_ = false, stream_exit_ = false, stream_broken_ = false;
   std::string stream_error_;
   std::optional<uint64_t> last_queue_id_;
-  std::ofstream send_audit_;
+  std::unique_ptr<AuditDirectory> audit_directory_;
+  std::string audit_init_error_;
+  std::unique_ptr<RotatingAudit> send_audit_;
   void replyLoop();
   void closeStream(bool stopping);
   void audit(const std::string &, const std::string &, Clock::time_point);
   void validateServoReply(const std::string &, bool ordered);
-  std::ofstream command_audit_, feedback_audit_;
+  std::unique_ptr<RotatingAudit> command_audit_, feedback_audit_;
   std::unique_ptr<Socket> feedback_socket_;
   FeedbackSequence sequence_;
   std::function<int64_t()> ros_clock_;
@@ -56,7 +59,7 @@ class V4Driver final : public Driver {
   void saveFeedbackTiming(const FeedbackTiming &);
   void flushFeedbackTimings();
   bool session_fault_ = false;
-  std::string call(const std::string &);
+  std::string call(const std::string &,const std::function<void()> &before_send = {});
 
 public:
   explicit V4Driver(const Config &, TransportFactory factory = {},
@@ -69,7 +72,10 @@ public:
   void noteFeedbackBackoff(Clock::time_point, Clock::time_point);
   void servo(const Joints &, double) override;
   void stop() override;
-  void enableAfterHistoryRestore(); // Explicit opt-in; never clears errors.
+  // Guard is mandatory, runs under command ownership immediately before send.
+  void enableAfterHistoryRestore(bool checkpoint_attested=false,
+                                const std::function<void()> &before_enable = {});
+  std::string auditStatus();
   void beginStream() override;
   void checkStream() override;
   void endStream() override;

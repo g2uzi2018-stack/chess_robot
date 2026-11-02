@@ -48,3 +48,6 @@ Thumbs.db
 /install_handeye/
 
 /log_handeye/
+
+# Durable arm state and local runtime configuration
+/.runtime/

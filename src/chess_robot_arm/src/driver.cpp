@@ -2,6 +2,7 @@
 #include "chess_robot_arm/dashboard_reply.hpp"
 #include "chess_robot_arm/net.hpp"
 #include <filesystem>
+#include <algorithm>
 #include <iomanip>
 #include <locale>
 #include <sstream>
@@ -131,20 +132,28 @@ V4Driver::V4Driver(const Config &c, TransportFactory factory, std::function<int6
     transport_ = [c]() { return std::make_unique<TcpTransport>(c); };
   if (c.feedback_trace) feedback_timings_.reserve(262144);
   if (!c.audit_directory.empty()) {
-    if (!std::filesystem::create_directory(c.audit_directory))
-      throw Failure(INVALID_GOAL, "audit directory must be new");
-    command_audit_.open(c.audit_directory + "/commands.csv");
-    feedback_audit_.open(c.audit_directory + "/feedback.bin", std::ios::binary);
-    send_audit_.open(c.audit_directory + "/servo_send.csv");
-    if (!command_audit_ || !feedback_audit_)
-      throw Failure(INVALID_GOAL, "cannot open audit files");
-    command_audit_ << "host_utc_ns,latency_s,command,reply_or_error\n";
-    send_audit_ << "host_utc_ns,send_duration_s,pending_count\n";
+    try {
+    audit_directory_=std::make_unique<AuditDirectory>(c.audit_directory);
+    command_audit_=std::make_unique<RotatingAudit>(c.audit_directory+"/commands.csv",c.audit_max_bytes,c.audit_keep_files,"host_utc_ns,latency_s,command,reply_or_error\n");
+    feedback_audit_=std::make_unique<RotatingAudit>(c.audit_directory+"/feedback.bin",c.audit_max_bytes,c.audit_keep_files);
+    send_audit_=std::make_unique<RotatingAudit>(c.audit_directory+"/servo_send.csv",c.audit_max_bytes,c.audit_keep_files,"host_utc_ns,send_duration_s,pending_count\n");
+    } catch(const Failure &e) {
+      if(e.code==BUSY)throw;
+      audit_init_error_=e.what();
+    } catch(const std::exception &e) {audit_init_error_=e.what();}
   }
 }
 V4Driver::~V4Driver() {
   try { closeStream(true); } catch (...) {}
   try { flushFeedbackTimings(); } catch (...) {}
+}
+std::string V4Driver::auditStatus() {
+  std::string status=audit_init_error_.empty()?"":"; diagnostic audit unavailable: "+audit_init_error_;
+  for(auto *log:{command_audit_.get(),feedback_audit_.get(),send_audit_.get()}) {
+    if(log && (log->dropped() || !log->error().empty()))
+      status+="; diagnostic audit dropped="+std::to_string(log->dropped())+" error="+log->error();
+  }
+  return status;
 }
 void V4Driver::saveFeedbackTiming(const FeedbackTiming &row) {
   if (!config_.feedback_trace) return;
@@ -174,17 +183,18 @@ void V4Driver::flushFeedbackTimings() {
 }
 void V4Driver::audit(const std::string &command, const std::string &value,
                      Clock::time_point start) {
-  if (!command_audit_.is_open()) return;
+  if (!command_audit_) return;
   auto escape = [](const std::string &s) {
     std::string out;
     for (char c : s) { out += c; if (c == '"') out += '"'; }
     return out;
   };
-  command_audit_ << utc_ns() << "," << std::setprecision(9)
+  std::ostringstream row;row << utc_ns() << "," << std::setprecision(9)
       << std::chrono::duration<double>(Clock::now() - start).count()
       << ",\"" << escape(command) << "\",\"" << escape(value) << "\"\n";
+  command_audit_->write(row.str());
 }
-std::string V4Driver::call(const std::string &command) {
+std::string V4Driver::call(const std::string &command,const std::function<void()> &before_send) {
   // Reuse a single ordered stream: per-command connection setup caused
   // intermittent query timeouts in the real burst test. The real controller
   // rejects a second command connection from this host, so Stop must use the
@@ -193,7 +203,7 @@ std::string V4Driver::call(const std::string &command) {
   auto query = [&](CommandTransport &transport) {
     const auto start = Clock::now();
     auto audit = [&](const std::string &value) {
-      if (!command_audit_.is_open())
+      if (!command_audit_)
         return;
       auto escape = [](const std::string &s) {
         std::string out;
@@ -207,10 +217,10 @@ std::string V4Driver::call(const std::string &command) {
       auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
                     std::chrono::system_clock::now().time_since_epoch())
                     .count();
-      command_audit_
-          << ns << "," << std::setprecision(9)
+      std::ostringstream row;row << ns << "," << std::setprecision(9)
           << std::chrono::duration<double>(Clock::now() - start).count()
           << ",\"" << escape(command) << "\",\"" << escape(value) << "\"\n";
+      command_audit_->write(row.str());
     };
     std::string raw;
     try {
@@ -234,6 +244,9 @@ std::string V4Driver::call(const std::string &command) {
     throw Failure(EXECUTION_FAILED, "ambiguous session locked; Stop only, no automatic reconnect");
   if (!command_transport_)
     command_transport_ = transport_();
+  // A guard rejection occurs before any bytes are sent and must not mark the
+  // ordered socket ambiguous. No reference lock is held during network waits.
+  if(before_send)before_send();
   try {
     return query(*command_transport_);
   } catch (const ControllerRejected &) {
@@ -269,8 +282,13 @@ Feedback V4Driver::readFeedback() {
           config_.ip, config_.feedback_port, config_.timeout_ms);
     // Overall deadline also covers duplicates. Duplicate packets do not refresh
     // host freshness.
-    auto deadline =
-        Clock::now() + std::chrono::milliseconds(config_.timeout_ms);
+    // Feedback gets its own requested freshness window. Dashboard, ServoJ ACK
+    // and Stop deadlines remain independent; a duplicate never restarts this.
+    const auto receive_window = std::max(
+        std::chrono::milliseconds(config_.timeout_ms),
+        std::chrono::ceil<std::chrono::milliseconds>(
+            std::chrono::duration<double>(config_.freshness)));
+    const auto deadline = Clock::now() + receive_window;
     while (Clock::now() < deadline) {
       FeedbackFrame b{};
       timing=FeedbackTiming{};if (config_.feedback_trace) timing.begin=steady_ns();
@@ -289,15 +307,21 @@ Feedback V4Driver::readFeedback() {
         timing.controller=feedback_field<uint64_t>(b,32);timing.mode=feedback_field<uint64_t>(b,24);
         timing.audit_begin=steady_ns();
       }
-      if (feedback_audit_.is_open()) {
+      if (feedback_audit_) {
         const int64_t ns=host_received;
-        feedback_audit_.write(reinterpret_cast<const char *>(&ns), sizeof(ns));
-        feedback_audit_.write(reinterpret_cast<const char *>(b.data()),
-                              b.size());
+        std::string record(sizeof(ns)+b.size(),'\0');
+        std::memcpy(record.data(),&ns,sizeof(ns));std::memcpy(record.data()+sizeof(ns),b.data(),b.size());
+        feedback_audit_->write(std::move(record));
       }
       if (config_.feedback_trace) timing.audit_end=steady_ns();
-      const bool accepted=sequence_.accept(b);
       auto result=decodeFeedbackFrame(b,received,ros_received);
+      // Admit a new disabled telemetry epoch only. This does NOT restore trust:
+      // State and the durable checkpoint still gate every enable/motion.
+      if(!config_.checkpoint_file.empty() && config_.checkpoint_no_unobserved_motion &&
+          result.mode==4 && sequence_.regresses(b) &&
+          std::all_of(result.speed.begin(),result.speed.end(),[&](double x){return std::abs(x)<=config_.stationary_speed;}))
+        sequence_=FeedbackSequence{};
+      const bool accepted=sequence_.accept(b);
       if (config_.feedback_trace) {
         timing.status=accepted ? 1 : 0;timing.decode_end=steady_ns();saveFeedbackTiming(timing);
       }
@@ -338,9 +362,11 @@ void V4Driver::servo(const Joints &q, double period) {
         stream_cv_.notify_all();
         throw Failure(EXECUTION_FAILED, stream_error_);
       }
-      if (send_audit_.is_open())
-        send_audit_ << utc_ns() << ',' << std::setprecision(9)
+      if (send_audit_) {
+        std::ostringstream row;row << utc_ns() << ',' << std::setprecision(9)
           << std::chrono::duration<double>(Clock::now() - sent).count() << ',' << pending_.size() << '\n';
+        send_audit_->write(row.str());
+      }
       stream_cv_.notify_all();
       return;
     }
@@ -451,14 +477,18 @@ void V4Driver::closeStream(bool stopping) {
   if (!stopping && !error.empty()) throw Failure(EXECUTION_FAILED, error);
 }
 void V4Driver::endStream() { closeStream(false); }
-void V4Driver::enableAfterHistoryRestore() {
-  if (!config_.hardwareAllowed() || !config_.power_cycle_handoff || !config_.enable_after_history_restore)
+void V4Driver::enableAfterHistoryRestore(bool checkpoint_attested,const std::function<void()> &before_enable) {
+  const bool old_recovery=config_.power_cycle_handoff && config_.enable_after_history_restore;
+  const bool checkpoint_recovery=!config_.checkpoint_file.empty() && config_.checkpoint_enable_after_restore &&
+      (config_.checkpoint_no_unobserved_motion || checkpoint_attested);
+  if (!config_.hardwareAllowed() || !(old_recovery || checkpoint_recovery))
     throw Failure(HARDWARE_DISABLED,"explicit powered recovery is not enabled");
+  if(!before_enable)throw Failure(REFERENCE_INVALID,"recovery enable requires a live state guard");
   OfficialCommand sdk;
   const auto errors=call(sdk.GetErrorID());
   if (errors.empty() || errors.find_first_not_of("[], \t\r\n")!=std::string::npos)
     throw Failure(FEEDBACK_FAULT,"recovery enable refused with active/unknown alarms: "+errors);
-  if (!call(sdk.EnableRobot()).empty())
+  if (!call(sdk.EnableRobot(),before_enable).empty())
     throw Failure(EXECUTION_FAILED,"unexpected recovery EnableRobot payload");
 }
 void V4Driver::stop() {
