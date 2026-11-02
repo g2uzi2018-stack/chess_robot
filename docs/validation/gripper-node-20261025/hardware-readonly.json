@@ -1,0 +1,100 @@
+{
+  "passed": true,
+  "host": "192.168.30.234",
+  "port": 60000,
+  "backend": "tcp_rtu",
+  "enable_commands": false,
+  "action_goals_sent": 0,
+  "samples": [
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.100005444,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.200008199,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.112896337,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.212900309,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.128672489,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.228646602,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.145175366,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.24518289,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.160730633,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    },
+    {
+      "initialization": 0,
+      "grip_status": 1,
+      "position_raw": 1000,
+      "feedback_age_sec": 0.260725567,
+      "simulated": false,
+      "connected": true,
+      "feedback_valid": true
+    }
+  ]
+}

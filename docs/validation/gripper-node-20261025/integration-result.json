@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "checks": [
+    "uninitialized MOVE rejected",
+    "initialize feedback and already-initialized no-op",
+    "invalid position, force, NaN deadline and operation rejected",
+    "mock move, busy exclusion, explicit cancellation rejection",
+    "hardware read-only mode emits zero register writes",
+    "fragmented RTU over TCP, confirmed move, empty grasp and explicit recovery",
+    "held flag invalidates on communication loss, read-only reconnect",
+    "contact: correct outcome, no automatic command replay",
+    "drop: correct outcome, no automatic command replay",
+    "bad_echo: correct outcome, no automatic command replay",
+    "stall: correct outcome, no automatic command replay",
+    "old_contact: correct outcome, no automatic command replay",
+    "bounded I/O timeout, invalid-feedback sentinels, goal rejection"
+  ]
+}

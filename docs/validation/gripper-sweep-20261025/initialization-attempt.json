@@ -1,0 +1,99 @@
+{
+  "status": "HALTED_NO_MORE_COMMANDS",
+  "execute": true,
+  "force_percent": 20,
+  "targets_raw": [
+    1000,
+    900,
+    800,
+    700,
+    600,
+    500,
+    400,
+    300,
+    200,
+    100,
+    0
+  ],
+  "goals": [
+    {
+      "operation": 0,
+      "target_raw": 1000,
+      "before": {
+        "simulated": false,
+        "connected": true,
+        "feedback_valid": true,
+        "feedback_age_sec": 0.099978094,
+        "busy": false,
+        "commands_enabled": true,
+        "initialization": 0,
+        "grip_status": 1,
+        "position_raw": 1000,
+        "object_detected": false,
+        "object_dropped": false,
+        "detail": "awaiting first feedback"
+      },
+      "status": "FAILED",
+      "code": 15,
+      "detail": "out-of-range AG95 feedback; device may still move or hold an object; inspect before restarting",
+      "command_attempted": true,
+      "after": {
+        "simulated": false,
+        "connected": false,
+        "feedback_valid": false,
+        "feedback_age_sec": 0.267507816,
+        "busy": false,
+        "commands_enabled": false,
+        "initialization": 255,
+        "grip_status": 255,
+        "position_raw": 65535,
+        "object_detected": false,
+        "object_dropped": false,
+        "detail": "FAULT LATCHED; inspect device before restart. out-of-range AG95 feedback; device may still move or hold an object; inspect before restarting"
+      },
+      "elapsed_sec": 0.8074851499986835
+    }
+  ],
+  "arm_commands_sent": 0,
+  "started_unix_ns": 1792907694560780107,
+  "source_sha256": "988224f20ac180f07cc69232ae78ab3a9ac87acb1b7a0330456758d96b4c4263",
+  "arm_envelope_sha256": "a3cf4909d9a96debc39a7d21a3deb411cadf61547362c77ea1be073dd9e5dfd3",
+  "node_command": [
+    "/home/kuang/workspace/chess_robot_gripper/install/chess_robot_gripper/lib/chess_robot_gripper/gripper_node",
+    "--ros-args",
+    "-p",
+    "backend:=tcp_rtu",
+    "-p",
+    "enable_commands:=true",
+    "-p",
+    "max_force_percent:=20",
+    "-p",
+    "host:=192.168.30.234",
+    "-p",
+    "port:=60000"
+  ],
+  "initial_gripper_state": {
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.099978094,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 0,
+    "grip_status": 1,
+    "position_raw": 1000,
+    "object_detected": false,
+    "object_dropped": false,
+    "detail": "awaiting first feedback"
+  },
+  "initial_arm_state": {
+    "backend": "exploration",
+    "mode": 5,
+    "busy": true,
+    "reference_valid": true,
+    "signed_twist_rad": 0.8043373569554645,
+    "total_twist_rad": 0.9007970939482858
+  },
+  "reason": "feedback did not confirm requested state",
+  "finished_unix_ns": 1792907700311093327
+}

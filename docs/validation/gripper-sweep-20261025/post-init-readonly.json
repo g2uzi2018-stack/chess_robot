@@ -1,0 +1,22 @@
+{
+  "host": "192.168.30.234",
+  "port": 60000,
+  "read_only": true,
+  "registers": [
+    {
+      "address": "0x200",
+      "value": 1,
+      "frame": "01030200017984"
+    },
+    {
+      "address": "0x201",
+      "value": 1,
+      "frame": "01030200017984"
+    },
+    {
+      "address": "0x202",
+      "value": 1000,
+      "frame": "01030203e8b8fa"
+    }
+  ]
+}
