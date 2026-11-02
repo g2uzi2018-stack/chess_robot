@@ -12,10 +12,8 @@ import cv2
 import numpy as np
 
 from base_geometry import BaseGeometry
-from measurement_contract import camera_measurement, encode, decode
+from measurement_contract import producer_json_value, encode
 from recognize_tracked import Experiment
-from scene_state import SceneState
-from stable_observation import FeedbackWindow
 
 
 def experiment(base, camera_only):
@@ -33,7 +31,12 @@ def main():
     p.add_argument('--cache', type=Path, default=root/'vision_acceleration_20261101_01/parity-trt')
     p.add_argument('--engine', type=Path, default=root/'perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine')
     p.add_argument('--output', type=Path, required=True)
-    a = p.parse_args(); a.output.mkdir(parents=True, exist_ok=False)
+    p.add_argument('--legacy-geometry-only', action='store_true',
+                   help='Compare old cached geometry only, without validating the new production protocol')
+    a = p.parse_args()
+    if not a.legacy_geometry_only:
+        p.error('Old single-pass caches lack same-image full-scan/ROI class evidence. Use the frozen old source for historical split replay, or --legacy-geometry-only; this script cannot validate the new production chain.')
+    a.output.mkdir(parents=True, exist_ok=False)
     with a.engine.open('rb') as stream:
         length = int.from_bytes(stream.read(4), 'little'); assert 0 < length < 1024*1024
         names = {int(k): v for k, v in json.loads(stream.read(length))['names'].items()}
@@ -54,13 +57,19 @@ def main():
                                                     if k not in ('calibration','calibration_sha256','urdf_sha256')})
         measured, _ = camera.run(color, depth, metadata, roi, draw=False, detection=camera_detection)
         t = metadata['stamp_ns']
-        m = dict(K=metadata['K'], camera_epoch='saved-one', rgbd_frame_key=['saved-one', i+1, i+1])
-        packet = camera_measurement(measured, m, 'saved-one', 0, t)
-        feedback = FeedbackWindow()
-        for ft in range(t-1_000_000_000, t+50_000_001, 50_000_000):
-            feedback.ingest(ft, metadata['arm'], metadata['joint'], ft, 'saved-controller')
-        scene = SceneState(base=base)
-        candidate = scene.process(decode(encode(packet)), t+80_000_000, feedback, True, 'saved-controller')
+        # Historical caches can still compare the unchanged geometry formula,
+        # but must not be upgraded into fabricated ROI class evidence.
+        candidate = copy.deepcopy(measured)
+        transform,error,reason = base.base_transform(metadata)
+        candidate.update(base_transform_valid=transform is not None,base_transform_reason=reason,fk_tcp_error_m=error,
+                         schema='legacy_geometry_comparison_only')
+        for d in candidate['detections']:
+            d['base_geometry_valid']=bool(d['camera_geometry_valid'] and transform is not None)
+            d['valid']=d['base_geometry_valid']
+            d['complete_center_target']=bool(d['valid'] and not d.get('touches_image_edge') and not d.get('touches_processing_edge'))
+            if d['valid']:
+                d['base_surface_center_m']=(transform@np.r_[d['camera_surface_center_m'],1])[:3].tolist()
+                d['base_surface_normal']=(transform[:3,:3]@d['camera_surface_normal']).tolist()
         assert candidate['base_transform_valid'] == reference['base_transform_valid']
         assert len(candidate['detections']) == len(reference['detections'])
         largest = 0.
@@ -74,10 +83,10 @@ def main():
         (a.output/('reference-'+str(i)+'.json')).write_text(json.dumps(reference,indent=2))
         (a.output/('split-'+str(i)+'.json')).write_text(json.dumps(candidate,indent=2))
         cases.append(dict(case=i,roi=roi,raw_targets=len(saved['predictions']),targets=len(candidate['detections']),
-                          maximum_coordinate_normal_delta=largest,payload_bytes=len(encode(packet).encode()),passed=True))
+                          maximum_coordinate_normal_delta=largest,scalar_record_bytes=len(encode(producer_json_value(candidate)).encode()),passed=True))
     result = dict(passed=True, independent_saved_scenes=1, same_cached_detector_outputs=True,
-                  pure_cpu_no_inference=True,cases=cases,physical_commands=0,
-                  limitation='Full/ROI of one saved frame, not labelled accuracy or split production FPS acceptance')
+                  pure_cpu_no_inference=True,cases=cases,physical_commands=0,production_protocol_validated=False,
+                  limitation='Historical geometry formula only; no new candidate/ROI protocol, scene lifecycle, labelled accuracy or FPS acceptance')
     (a.output/'result.json').write_text(json.dumps(result,indent=2));print(json.dumps(result))
 
 

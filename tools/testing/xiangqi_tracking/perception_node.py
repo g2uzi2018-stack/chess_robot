@@ -1,4 +1,5 @@
 """Independent RGB-D measurement node. No arm messages, audit or task state."""
+import hashlib
 import json
 import os
 import signal
@@ -39,6 +40,11 @@ def image_qualified(image, depth, info, frame):
 
 
 def main():
+    depth_config_path=None
+    if os.environ.get('XIANGQI_CANDIDATE_MODE','yolo') == 'depth_shadow':
+        if not os.environ.get('XIANGQI_DEPTH_CONFIG'):
+            raise ValueError('depth_shadow requires XIANGQI_DEPTH_CONFIG')
+        depth_config_path=Path(os.environ['XIANGQI_DEPTH_CONFIG']).resolve()
     out = Path(os.environ.get('XIANGQI_RUN_DIR', str(Path(__file__).resolve().parent)))
     out.mkdir(parents=True, exist_ok=True)
     rclpy.init()
@@ -97,8 +103,17 @@ def main():
     spin = SpinGuard(lambda: rclpy.spin(node))
 
     def publish(record, metadata):
-        nonlocal sequence, count, written
+        nonlocal sequence, count, written, config_changed
         now = node.get_clock().now().nanoseconds
+        if depth_config_path is not None and record.get('detection_valid'):
+            try:
+                loaded_sha=(record.get('identity') or {}).get('depth_config_sha256')
+                # Check the worker's loaded bytes as well as monitor history:
+                # a file change before the parent's first poll is still a
+                # configuration fault and cannot become its new baseline.
+                config_changed = config_changed or loaded_sha != hashlib.sha256(depth_config_path.read_bytes()).hexdigest()
+            except OSError:
+                config_changed=True
         try:
             packet = camera_measurement(record, metadata, source_epoch, sequence, now, not config_changed)
             wire = encode(packet)
@@ -129,9 +144,15 @@ def main():
             if time.monotonic()-config_check > 1:
                 from recognize_tracked import WEIGHTS, MODEL_ARTIFACT
                 paths = [WEIGHTS, MODEL_ARTIFACT, Path(__file__), Path(__file__).with_name('recognize_tracked.py'),
-                         Path(__file__).with_name('shared_pipeline.py'), Path(__file__).with_name('measurement_contract.py')]
+                         Path(__file__).with_name('shared_pipeline.py'), Path(__file__).with_name('measurement_contract.py'),
+                         Path(__file__).with_name('candidate_roi.py')]
+                if depth_config_path is not None:
+                    paths.append(Path(__file__).with_name('depth_candidates.py'))
+                    paths.append(depth_config_path)
                 try:
                     current = tuple((str(p), p.stat().st_mtime_ns, p.stat().st_size) for p in paths)
+                    if depth_config_path is not None:
+                        current += (('depth_config_sha256',hashlib.sha256(paths[-1].read_bytes()).hexdigest()),)
                 except OSError:
                     current = ('configuration file missing',)
                 if initial_identity is None:
@@ -204,7 +225,9 @@ def main():
             context = dict(source_epoch=source_epoch, decode_ms=(time.monotonic()-decode_start)*1000,
                            image_age_ms=(node.get_clock().now().nanoseconds-metadata['stamp_ns'])*1e-6,
                            shared_copy_ms=0.)
-            current_roi = None if detection_count % 18 == 0 else hint.roi(node.get_clock().now().nanoseconds, source_epoch)
+            # Optional hint chooses classification context only. Every submitted
+            # frame still receives its own full-image candidate scan.
+            current_roi = hint.roi(node.get_clock().now().nanoseconds, source_epoch)
             copy_start = time.monotonic()
             pipeline.submit(color, depth_array, metadata, current_roi, draw=bool(image_pub.get_subscription_count()), context=context)
             context['shared_copy_ms'] = (time.monotonic()-copy_start)*1000

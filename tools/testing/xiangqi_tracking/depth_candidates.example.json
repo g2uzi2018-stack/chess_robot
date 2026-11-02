@@ -1,0 +1,42 @@
+{
+  "qualification_mode": "shadow",
+  "view_binding": {
+    "view_id": "REPLACE_WITH_CURRENT_STATIONARY_VIEW_ID",
+    "camera_epoch": "REPLACE_WITH_CURRENT_CAPTURE_CAMERA_EPOCH",
+    "image_size": [1280, 720],
+    "K": null
+  },
+  "detector": {
+    "image_size": [1280, 720],
+    "workspace_polygon_xy": null,
+    "table_seed_polygon_xy": null,
+    "expected_piece_thickness_m": 0.008,
+    "expected_board_thickness_m": 0.010,
+    "min_object_height_m": 0.008,
+    "single_piece_diameter_m": null,
+    "min_height_m": 0.004,
+    "max_height_m": 0.080,
+    "min_depth_m": 0.020,
+    "max_depth_m": 1.500,
+    "plane_inlier_m": 0.008,
+    "max_plane_rms_m": 0.004,
+    "min_seed_inlier_fraction": 0.95,
+    "min_seed_pixels": 100,
+    "max_fit_points": 3000,
+    "ransac_iterations": 48,
+    "min_facing_cosine": 0.35,
+    "min_valid_fraction": 0.995,
+    "min_candidate_area_m2": 0.0003,
+    "max_piece_span_m": 0.095,
+    "min_board_span_m": 0.120,
+    "min_board_area_m2": 0.008,
+    "board_plane_band_m": 0.004,
+    "min_board_planar_fraction": 0.55,
+    "min_board_rectangularity": 0.90,
+    "min_component_pixels": 12,
+    "edge_margin_px": 2,
+    "max_candidates": 300,
+    "max_components": 4096,
+    "median_kernel_px": 3
+  }
+}

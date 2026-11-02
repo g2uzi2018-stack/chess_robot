@@ -1,0 +1,635 @@
+{
+  "recommended": {
+    "schema": "xiangqi_piece_candidate_model_spec/v1",
+    "status": "trained_not_integrated_or_deployed",
+    "role": "full-frame piece candidate detector only; ROI classifier remains the original 14-class segmentation model",
+    "source_image_size_wh": [
+      1280,
+      720
+    ],
+    "predict_imgsz_hw": [
+      384,
+      640
+    ],
+    "tensor_shape_nchw": [
+      1,
+      3,
+      384,
+      640
+    ],
+    "rect": true,
+    "batch": 1,
+    "class_names": {
+      "0": "piece"
+    },
+    "confidence_threshold": 0.1,
+    "candidate_dedup": {
+      "algorithm": "descending confidence; suppress IoU strictly greater than threshold",
+      "iou_threshold": 0.65
+    },
+    "max_det": 300,
+    "precision": "FP32-no-TF32",
+    "model_pt": "models/yolo26n-piece.pt",
+    "model_pt_sha256": "980551baa725bc1796d3d5ef1644224a33256cb99890f2b971b4eac93fc558b4",
+    "engine": "models/yolo26n-piece-imgsz640-fp32.engine",
+    "engine_sha256": "5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b",
+    "remote_engine": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine",
+    "remote_weights": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/runs/train/weights/best.pt",
+    "warning": "Exact TensorRT profile for full 1280x720 source and [384,640] letterboxed input. Do not replace the existing ROI segmentation model with this detect-only engine."
+  },
+  "training": {
+    "aggregate": {
+      "metrics/precision(B)": 0.9802088700661846,
+      "metrics/recall(B)": 0.9494949494949495,
+      "metrics/mAP50(B)": 0.9903611849224437,
+      "metrics/mAP50-95(B)": 0.9902500806041663,
+      "fitness": 0.9902500806041663
+    },
+    "speed_ms_per_image": {
+      "preprocess": 0.21075628393766832,
+      "inference": 5.235237878395663,
+      "loss": 0.0010970801742253254,
+      "postprocess": 0.28806922444123395
+    },
+    "epochs": 50,
+    "weights": {
+      "best": {
+        "path": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/runs/train/weights/best.pt",
+        "sha256": "980551baa725bc1796d3d5ef1644224a33256cb99890f2b971b4eac93fc558b4",
+        "bytes": 5362949
+      },
+      "last": {
+        "path": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/runs/train/weights/last.pt",
+        "sha256": "6951e276eba40d57610fab27238e441aa95e87b2d9dc2276b43ffb2b7c3feb7e",
+        "bytes": 5362949
+      }
+    },
+    "fixed_dataset_files_unchanged": 478,
+    "source_split_unchanged": true,
+    "training_precision": "FP32 AMP=false TF32=false",
+    "deployment_ready": false
+  },
+  "best_epoch_from_csv": 42,
+  "quality": {
+    "640": {
+      "confidence_threshold": 0.1,
+      "iou_match_threshold": 0.5,
+      "images": 49,
+      "ground_truth_instances": 198,
+      "true_positives": 198,
+      "false_positives": 1,
+      "misses": 0,
+      "precision": 0.9949748743718593,
+      "recall": 1.0,
+      "false_positives_per_image": 0.02040816326530612,
+      "duplicates_at_iou50": 0,
+      "duplicates_per_image": 0.0,
+      "boxes_containing_multiple_gt_centers": 0,
+      "candidate_count_per_image": {
+        "n": 49,
+        "p5": 1.0,
+        "p50": 1.0,
+        "p95": 11.0,
+        "p99": 11.0
+      },
+      "matched_box_iou": {
+        "n": 198,
+        "p5": 0.9643927017971383,
+        "p50": 0.9780279672956546,
+        "p95": 0.9902947071309264,
+        "p99": 0.9928902506059943
+      },
+      "recall_by_original_class": {
+        "red_king": {
+          "gt": 8,
+          "matched": 8,
+          "recall": 1.0
+        },
+        "red_advisor": {
+          "gt": 10,
+          "matched": 10,
+          "recall": 1.0
+        },
+        "red_elephant": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "red_horse": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "red_rook": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "red_cannon": {
+          "gt": 12,
+          "matched": 12,
+          "recall": 1.0
+        },
+        "red_pawn": {
+          "gt": 24,
+          "matched": 24,
+          "recall": 1.0
+        },
+        "black_king": {
+          "gt": 8,
+          "matched": 8,
+          "recall": 1.0
+        },
+        "black_advisor": {
+          "gt": 10,
+          "matched": 10,
+          "recall": 1.0
+        },
+        "black_elephant": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "black_horse": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "black_rook": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "black_cannon": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "black_pawn": {
+          "gt": 20,
+          "matched": 20,
+          "recall": 1.0
+        }
+      },
+      "recall_by_geometry_group": {
+        "small_at640": {
+          "gt": 0,
+          "matched": 0,
+          "recall": null
+        },
+        "adjacent": {
+          "gt": 167,
+          "matched": 167,
+          "recall": 1.0
+        },
+        "not_small_at640": {
+          "gt": 198,
+          "matched": 198,
+          "recall": 1.0
+        },
+        "not_adjacent": {
+          "gt": 31,
+          "matched": 31,
+          "recall": 1.0
+        }
+      },
+      "missed_instances": []
+    },
+    "512": {
+      "confidence_threshold": 0.1,
+      "iou_match_threshold": 0.5,
+      "images": 49,
+      "ground_truth_instances": 198,
+      "true_positives": 198,
+      "false_positives": 0,
+      "misses": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "false_positives_per_image": 0.0,
+      "duplicates_at_iou50": 0,
+      "duplicates_per_image": 0.0,
+      "boxes_containing_multiple_gt_centers": 0,
+      "candidate_count_per_image": {
+        "n": 49,
+        "p5": 1.0,
+        "p50": 1.0,
+        "p95": 11.0,
+        "p99": 11.0
+      },
+      "matched_box_iou": {
+        "n": 198,
+        "p5": 0.9563533301781997,
+        "p50": 0.9759714754255302,
+        "p95": 0.9887931664080818,
+        "p99": 0.9910852263682225
+      },
+      "recall_by_original_class": {
+        "red_king": {
+          "gt": 8,
+          "matched": 8,
+          "recall": 1.0
+        },
+        "red_advisor": {
+          "gt": 10,
+          "matched": 10,
+          "recall": 1.0
+        },
+        "red_elephant": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "red_horse": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "red_rook": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "red_cannon": {
+          "gt": 12,
+          "matched": 12,
+          "recall": 1.0
+        },
+        "red_pawn": {
+          "gt": 24,
+          "matched": 24,
+          "recall": 1.0
+        },
+        "black_king": {
+          "gt": 8,
+          "matched": 8,
+          "recall": 1.0
+        },
+        "black_advisor": {
+          "gt": 10,
+          "matched": 10,
+          "recall": 1.0
+        },
+        "black_elephant": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "black_horse": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "black_rook": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "black_cannon": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "black_pawn": {
+          "gt": 20,
+          "matched": 20,
+          "recall": 1.0
+        }
+      },
+      "recall_by_geometry_group": {
+        "small_at640": {
+          "gt": 0,
+          "matched": 0,
+          "recall": null
+        },
+        "adjacent": {
+          "gt": 167,
+          "matched": 167,
+          "recall": 1.0
+        },
+        "not_small_at640": {
+          "gt": 198,
+          "matched": 198,
+          "recall": 1.0
+        },
+        "not_adjacent": {
+          "gt": 31,
+          "matched": 31,
+          "recall": 1.0
+        }
+      },
+      "missed_instances": []
+    },
+    "416": {
+      "confidence_threshold": 0.1,
+      "iou_match_threshold": 0.5,
+      "images": 49,
+      "ground_truth_instances": 198,
+      "true_positives": 198,
+      "false_positives": 1,
+      "misses": 0,
+      "precision": 0.9949748743718593,
+      "recall": 1.0,
+      "false_positives_per_image": 0.02040816326530612,
+      "duplicates_at_iou50": 0,
+      "duplicates_per_image": 0.0,
+      "boxes_containing_multiple_gt_centers": 0,
+      "candidate_count_per_image": {
+        "n": 49,
+        "p5": 1.0,
+        "p50": 1.0,
+        "p95": 11.0,
+        "p99": 11.0
+      },
+      "matched_box_iou": {
+        "n": 198,
+        "p5": 0.9420642431216714,
+        "p50": 0.9665140755614899,
+        "p95": 0.9829325501673777,
+        "p99": 0.9892474277043166
+      },
+      "recall_by_original_class": {
+        "red_king": {
+          "gt": 8,
+          "matched": 8,
+          "recall": 1.0
+        },
+        "red_advisor": {
+          "gt": 10,
+          "matched": 10,
+          "recall": 1.0
+        },
+        "red_elephant": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "red_horse": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "red_rook": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "red_cannon": {
+          "gt": 12,
+          "matched": 12,
+          "recall": 1.0
+        },
+        "red_pawn": {
+          "gt": 24,
+          "matched": 24,
+          "recall": 1.0
+        },
+        "black_king": {
+          "gt": 8,
+          "matched": 8,
+          "recall": 1.0
+        },
+        "black_advisor": {
+          "gt": 10,
+          "matched": 10,
+          "recall": 1.0
+        },
+        "black_elephant": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "black_horse": {
+          "gt": 13,
+          "matched": 13,
+          "recall": 1.0
+        },
+        "black_rook": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "black_cannon": {
+          "gt": 18,
+          "matched": 18,
+          "recall": 1.0
+        },
+        "black_pawn": {
+          "gt": 20,
+          "matched": 20,
+          "recall": 1.0
+        }
+      },
+      "recall_by_geometry_group": {
+        "small_at640": {
+          "gt": 0,
+          "matched": 0,
+          "recall": null
+        },
+        "adjacent": {
+          "gt": 167,
+          "matched": 167,
+          "recall": 1.0
+        },
+        "not_small_at640": {
+          "gt": 198,
+          "matched": 198,
+          "recall": 1.0
+        },
+        "not_adjacent": {
+          "gt": 31,
+          "matched": 31,
+          "recall": 1.0
+        }
+      },
+      "missed_instances": []
+    }
+  },
+  "raw_api_timings": {
+    "640": {
+      "n": 100,
+      "p5": 6.912111418205313,
+      "p50": 7.1353979874402285,
+      "p95": 7.856197434011847,
+      "p99": 8.152055218815804
+    },
+    "512": {
+      "n": 100,
+      "p5": 7.312819178332575,
+      "p50": 7.5513160263653845,
+      "p95": 8.518642737180926,
+      "p99": 8.745921351364814
+    },
+    "416": {
+      "n": 100,
+      "p5": 6.053401861572638,
+      "p50": 6.255316489841789,
+      "p95": 7.155976889771409,
+      "p99": 7.290745929931291
+    }
+  },
+  "combo": [
+    {
+      "size": 640,
+      "summary": {
+        "baseline": {
+          "frames": 12,
+          "p50_ms": 48.16874797688797,
+          "p95_ms": 53.3162496460136,
+          "candidate_count_range": [
+            3,
+            4
+          ],
+          "roi_count_range": [
+            1,
+            1
+          ]
+        },
+        "lite": {
+          "frames": 12,
+          "p50_ms": 35.01758899074048,
+          "p95_ms": 36.05868640879635,
+          "candidate_count_range": [
+            4,
+            4
+          ],
+          "roi_count_range": [
+            1,
+            1
+          ],
+          "candidate_p50_ms": 7.939128001453355,
+          "candidate_p95_ms": 8.17258114402648,
+          "diagnostic_all_four_anchors_frames": 12,
+          "diagnostic_exactly_four_frames": 12
+        }
+      }
+    },
+    {
+      "size": 512,
+      "summary": {
+        "baseline": {
+          "frames": 12,
+          "p50_ms": 48.42040748917498,
+          "p95_ms": 54.12878772767726,
+          "candidate_count_range": [
+            3,
+            4
+          ],
+          "roi_count_range": [
+            1,
+            1
+          ]
+        },
+        "lite": {
+          "frames": 12,
+          "p50_ms": 35.974272032035515,
+          "p95_ms": 36.697559847380035,
+          "candidate_count_range": [
+            4,
+            4
+          ],
+          "roi_count_range": [
+            1,
+            1
+          ],
+          "candidate_p50_ms": 8.457571035251021,
+          "candidate_p95_ms": 9.304960782174021,
+          "diagnostic_all_four_anchors_frames": 12,
+          "diagnostic_exactly_four_frames": 12
+        }
+      }
+    },
+    {
+      "size": 416,
+      "summary": {
+        "baseline": {
+          "frames": 12,
+          "p50_ms": 48.13761098193936,
+          "p95_ms": 54.30486111436039,
+          "candidate_count_range": [
+            3,
+            4
+          ],
+          "roi_count_range": [
+            1,
+            1
+          ]
+        },
+        "lite": {
+          "frames": 12,
+          "p50_ms": 35.276771493954584,
+          "p95_ms": 36.49176118487958,
+          "candidate_count_range": [
+            4,
+            4
+          ],
+          "roi_count_range": [
+            1,
+            1
+          ],
+          "candidate_p50_ms": 8.072197524597868,
+          "candidate_p95_ms": 8.389015024295077,
+          "diagnostic_all_four_anchors_frames": 12,
+          "diagnostic_exactly_four_frames": 12
+        }
+      }
+    }
+  ],
+  "independent_dataset_audit": {
+    "passed": true,
+    "images": 239,
+    "objects": 983,
+    "split_counts": {
+      "train": [
+        190,
+        785
+      ],
+      "val": [
+        49,
+        198
+      ]
+    },
+    "max_polygon_to_serialized_box_error_normalized": 1.1102230246251565e-16,
+    "group_or_component_cross_split": 0,
+    "original_labels_match_manifest": true,
+    "copied_image_hashes_match": true,
+    "physical_commands": 0,
+    "gpu_used": false
+  },
+  "runtime_audit": {
+    "time_ns": 1793614101332079828,
+    "services": {
+      "chess-robot-xiangqi-preview-20261031.service": "MainPID=151475\nNRestarts=0\nActiveState=active\n",
+      "chess-robot-xiangqi-render-20261031.service": "MainPID=3608756\nNRestarts=0\nActiveState=active\n",
+      "chess_robot_preview.service": "MainPID=2991306\nNRestarts=0\nActiveState=active\n"
+    },
+    "hashes": {
+      ".runtime/arm.yaml": "956239f4a4622fb8aaf9eac38f69a246eda20bf3d6e98b46517a446d171de5ad",
+      ".runtime/arm-install-prefix": "7f2b12e034a8ea046ba50fc411be562a892f2e5ad44cc086c26c6fa6705e2156",
+      ".runtime/audit/commands.csv": "28f5c8ec74a07ee8423440fe5b26c0f441fb427af19559402e79e094d37bfc17",
+      "runs/stable_observation_20261101_01/start_visual.sh": "3c8ffff0512f6772631d80bd704017d21689c8a86162214efda99dfd07dd1a73"
+    },
+    "clock": {
+      "active": true,
+      "owner_pid": 151475,
+      "invocation_id": "25b7b322c47746d0a683b4f9e53d9024",
+      "boot_id": "fc9de482-7b4d-49ba-87a0-c68a6999152a",
+      "folder": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock-sessions/25b7b322c47746d0a683b4f9e53d9024",
+      "snapshot": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock-sessions/25b7b322c47746d0a683b4f9e53d9024/original.conf",
+      "created_at": "2026-11-02T05:46:56.162664+00:00"
+    },
+    "services_unchanged": true,
+    "protected_unchanged": true,
+    "source_unchanged": true,
+    "production_policy": "full_candidates_roi_classes/v1",
+    "production_age_s": 1.306453289,
+    "physical_commands": 0
+  },
+  "parity_gate": {
+    "640": true,
+    "512": true,
+    "416": true
+  },
+  "model_trained": true,
+  "production_integrated": false,
+  "robot_commands": 0
+}

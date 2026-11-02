@@ -164,7 +164,8 @@ def main():
                     feedback.ingest(t, arm, joint, now, audit.token)
             if time.monotonic()-config_check > 1:
                 paths = [CALIB, URDF, Path(__file__), Path(__file__).with_name('base_geometry.py'),
-                         Path(__file__).with_name('scene_state.py'), Path(__file__).with_name('stable_observation.py')]
+                         Path(__file__).with_name('scene_state.py'), Path(__file__).with_name('stable_observation.py'),
+                         Path(__file__).with_name('measurement_contract.py'), Path(__file__).with_name('candidate_roi.py')]
                 if policy_path:
                     paths.append(Path(policy_path))
                 try:

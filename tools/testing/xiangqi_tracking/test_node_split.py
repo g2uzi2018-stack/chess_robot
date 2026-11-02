@@ -14,6 +14,7 @@ from piece_tracker import PieceTracker
 from scene_state import SceneState
 from stable_observation import FeedbackWindow, StableObservation
 from test_stable_observation import T, arm, frame, joint
+from candidate_roi import POLICY
 
 
 class FixtureBase:
@@ -27,11 +28,15 @@ def packet(i=0, epoch='source-one', timestamp=None, roi=None):
     r = frame(i)
     t = r['stamp_ns'] if timestamp is None else timestamp
     r.update(stamp_ns=t, image_size=[1280, 720], inference_roi_xyxy=roi or [0, 0, 1280, 720],
-             compute=dict(inference_backend='fixture', fp16=False), detector_ms=0., geometry_ms=0., processing_s=0.)
+             compute=dict(inference_backend='fixture', fp16=False), detector_ms=0., geometry_ms=0., processing_s=0.,
+             recognition_policy=POLICY, full_scene_coverage=True, classification_complete=True,
+             candidate_scan_stamp_ns=t, full_candidate_count=4, classification_rois=[[0,0,720,720]])
     for n, d in enumerate(r['detections']):
         d.update(id=n, class_id=0, detection_valid=True, camera_geometry_valid=True, center_pixel=[280+n*120, 330],
                  box_xyxy=[250+n*120, 300, 310+n*120, 360], touches_image_edge=False,
                  touches_processing_edge=False, mask_outline_xy=[[250+n*120, 300], [310+n*120, 360]])
+        d.update(classification_valid=True, classification_source='roi', classification_stamp_ns=t,
+                 classification_roi_xyxy=[0,0,720,720])
     meta = dict(K=r['source_K'], camera_epoch=epoch, rgbd_frame_key=[epoch, i+1, i+1])
     return camera_measurement(r, meta, epoch, i, t)
 
@@ -114,7 +119,8 @@ class SplitTests(unittest.TestCase):
     def test_full_frame_required_after_collect(self):
         state = self.scene(); f = FeedbackWindow()
         for i in range(65):
-            p = packet(i, roi=[128, 0, 848, 720]); now = p['stamp_ns']+30_000_000
+            p = packet(i); p.update(full_scene_coverage=False,classification_complete=False)
+            now = p['stamp_ns']+30_000_000
             feed(f, now); state.process(p, now, f, True, 'controller-one')
         self.assertIsNone(state.observation.snapshot)
         self.assertEqual(state.observation.frames, [])

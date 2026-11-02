@@ -55,7 +55,11 @@ def detect_slot(job):
     start=time.monotonic();slot=job['slot']
     with worker_slots.locks[slot]:
         worker_slots.check(job)
-        packet=worker_experiment.detect(worker_slots.colors[slot],job['roi'])
+        if worker_experiment.camera_only:
+            packet=worker_experiment.detect_candidates(worker_slots.colors[slot],job['roi'],
+                     depth=worker_slots.depths[slot],metadata=job['metadata'])
+        else:
+            packet=worker_experiment.detect(worker_slots.colors[slot],job['roi'])
         masks=packet.pop('masks');packet['mask_shape']=None if masks is None else list(masks.shape)
         if masks is not None:
             n,h,w=masks.shape;assert n<=worker_slots.max_masks and h<=worker_slots.height and w<=worker_slots.width

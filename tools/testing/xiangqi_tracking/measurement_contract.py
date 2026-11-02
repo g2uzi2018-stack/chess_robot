@@ -4,9 +4,10 @@ import json
 import math
 import re
 from collections import deque
+from candidate_roi import POLICY, DEPTH_POLICY, MAX_CROPS
 
 CAMERA_FRAME = 'd405_color_optical_frame'
-SCHEMA = 'xiangqi_camera_measurements/v1'
+SCHEMA = 'xiangqi_camera_measurements/v2'
 HINT_SCHEMA = 'xiangqi_roi_hint/v1'
 MAX_MESSAGE_BYTES = 1024*1024
 MAX_DETECTIONS = 300
@@ -269,9 +270,66 @@ def validate(packet, now):
         raise ContractError('invalid measurement ROI')
     if not isinstance(packet.get('identity'), dict) or not isinstance(packet.get('compute'), dict):
         raise ContractError('missing model identity/compute evidence')
+    if packet.get('recognition_policy') not in (POLICY, DEPTH_POLICY):
+        raise ContractError('missing full-candidate/ROI-class policy')
+    if packet.get('candidate_scan_stamp_ns') != packet['stamp_ns'] or roi != [0, 0, 1280, 720]:
+        raise ContractError('missing same-stamp full-image candidate scan')
+    if any(type(packet.get(k)) is not bool for k in ('full_scene_coverage', 'classification_complete')):
+        raise ContractError('missing scene/classification coverage flags')
+    if not integer(packet.get('full_candidate_count')) or packet['full_candidate_count'] > MAX_DETECTIONS:
+        raise ContractError('invalid full candidate count')
+    crops = packet.get('classification_rois')
+    if not isinstance(crops, list) or len(crops) > MAX_CROPS:
+        raise ContractError('unbounded classification crops')
+    for crop in crops:
+        if not (isinstance(crop, list) and len(crop) == 4 and all(integer(x) for x in crop)
+                and 0 <= crop[0] < crop[2] <= 1280 and 0 <= crop[1] < crop[3] <= 720
+                and crop != [0, 0, 1280, 720]):
+            raise ContractError('invalid classification crop')
+    if packet['recognition_policy'] == DEPTH_POLICY:
+        scan=packet.get('depth_scan')
+        if (not isinstance(scan,dict) or scan.get('source') != 'aligned_depth_table_plane'
+                or scan.get('units') != 'm' or scan.get('stamp_ns') != packet['stamp_ns']
+                or scan.get('qualification_mode') != 'shadow'
+                or scan.get('coverage_scope') != 'configured_workspace_current_view'
+                or scan.get('pose_binding_verified') is not False
+                or not isinstance(scan.get('view_id'),str) or not 1 <= len(scan['view_id']) <= 128):
+            raise ContractError('invalid same-frame depth candidate provenance')
+        sha=scan.get('config_sha256')
+        if (not isinstance(sha,str) or re.fullmatch('[0-9a-f]{64}',sha) is None
+                or packet['identity'].get('depth_config_sha256') != sha
+                or packet['identity'].get('candidate_mode') != 'depth_shadow'
+                or packet['identity'].get('depth_qualification_mode') != 'shadow'):
+            raise ContractError('depth configuration identity mismatch')
+        if any(type(scan.get(k)) is not bool for k in ('valid','coverage_valid','view_binding_valid')):
+            raise ContractError('invalid depth quality flags')
+        if scan['coverage_valid'] and not (scan['valid'] and scan['view_binding_valid']):
+            raise ContractError('depth coverage lacks a valid bound reference')
+        if packet['full_scene_coverage'] or packet['classification_complete']:
+            raise ContractError('depth shadow cannot grant scene qualification')
+        if (scan.get('candidate_network_calls') != 0 or type(scan['candidate_network_calls']) is not int
+                or scan.get('roi_network_calls') != len(crops)
+                or type(scan['roi_network_calls']) is not int
+                or scan.get('candidate_count') != packet['full_candidate_count']
+                or type(scan['candidate_count']) is not int
+                or not integer(scan.get('board_count')) or scan['board_count'] > MAX_DETECTIONS
+                or not integer(scan.get('roi_extra_count')) or scan['roi_extra_count'] > len(detections)
+                or not number(scan.get('elapsed_ms')) or scan['elapsed_ms'] < 0):
+            raise ContractError('invalid depth scan counts/timing')
+        reasons=scan.get('reasons')
+        if (not isinstance(reasons,list) or len(reasons)>32
+                or not all(isinstance(s,str) and len(s)<=256 for s in reasons)
+                or not isinstance(scan.get('diagnostics'),dict)):
+            raise ContractError('invalid bounded depth diagnostics')
+    elif 'depth_scan' in packet:
+        raise ContractError('depth provenance mixed into model candidate policy')
+    indices = set()
     for d in detections:
         if not isinstance(d, dict) or not integer(d.get('instance_index')):
             raise ContractError('invalid frame-local instance')
+        if d['instance_index'] in indices:
+            raise ContractError('duplicate frame-local instance')
+        indices.add(d['instance_index'])
         if any(k.startswith(('base_', 'track_')) or k in ('mask', 'masks', 'color', 'depth') for k in d) or any(d.get(k, False) for k in ('motion_ready', 'grasp_ready')):
             raise ContractError('camera instance carries forbidden qualification')
         if not isinstance(d.get('class_name'), str) or not 1 <= len(d['class_name']) <= 128:
@@ -279,8 +337,36 @@ def validate(packet, now):
         confidence = d.get('confidence')
         if (not vector(d.get('box_xyxy'), 4) or not number(confidence) or not 0 < confidence <= 1):
             raise ContractError('invalid box/confidence')
+        box = d['box_xyxy']
+        if not (0 <= box[0] < box[2] <= 1280 and 0 <= box[1] < box[3] <= 720):
+            raise ContractError('box outside original image')
+        if type(d.get('classification_valid')) is not bool or d.get('classification_stamp_ns') != packet['stamp_ns']:
+            raise ContractError('missing same-image class evidence')
+        if d['classification_valid']:
+            crop = d.get('classification_roi_xyxy')
+            if d.get('classification_source') != 'roi' or crop not in crops or d['class_name'] == 'unknown':
+                raise ContractError('class did not originate in an admitted ROI')
+            if not integer(d.get('class_id')):
+                raise ContractError('invalid model class ID')
+            if not (crop[0]+2 <= box[0] and crop[1]+2 <= box[1]
+                    and box[2] <= crop[2]-2 and box[3] <= crop[3]-2):
+                raise ContractError('class evidence touches crop edge')
+        elif (d.get('classification_source') != 'unresolved' or d['class_name'] != 'unknown' or d.get('class_id') != -1
+              or d.get('classification_roi_xyxy') is not None):
+            raise ContractError('unresolved candidate carries a semantic label')
         if type(d.get('camera_geometry_valid')) is not bool or not d.get('detection_valid'):
             raise ContractError('invalid instance qualification')
+        if packet['recognition_policy'] == DEPTH_POLICY:
+            if (type(d.get('candidate_geometry_valid')) is not bool or type(d.get('roi_eligible')) is not bool
+                    or d.get('candidate_geometry_source') not in ('aligned_depth','unadmitted_roi')
+                    or not isinstance(d.get('candidate_geometry_reasons'),list)
+                    or len(d['candidate_geometry_reasons'])>32
+                    or not all(isinstance(s,str) and len(s)<=256 for s in d['candidate_geometry_reasons'])):
+                raise ContractError('invalid depth instance geometry provenance')
+            if d['camera_geometry_valid'] and not d['candidate_geometry_valid']:
+                raise ContractError('depth candidate geometry rejection was bypassed')
+            if d['classification_valid'] and (not d['roi_eligible'] or d['candidate_geometry_source']!='aligned_depth'):
+                raise ContractError('class lacks admitted depth ROI candidate')
         outline = d.get('mask_outline_xy', [])
         if not isinstance(outline, list) or len(outline) > MAX_OUTLINE_POINTS or not all(vector(v, 2) for v in outline):
             raise ContractError('unbounded/invalid display outline')
@@ -296,6 +382,11 @@ def validate(packet, now):
                 raise ContractError('unqualified surface plane')
         d['camera_complete_center_target'] = bool(d['camera_geometry_valid'] and not d.get('touches_image_edge')
                                                 and not d.get('touches_processing_edge'))
+    complete = bool(packet['full_scene_coverage'] and all(d['classification_valid'] for d in detections))
+    if packet['classification_complete'] != complete:
+        raise ContractError('inconsistent classification completeness')
+    if packet['full_scene_coverage'] and packet['full_candidate_count'] > len(detections):
+        raise ContractError('full candidates silently discarded')
     encode(packet)
     return packet
 

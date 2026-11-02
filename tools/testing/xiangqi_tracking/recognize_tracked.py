@@ -80,6 +80,13 @@ class Experiment:
         self.imgsz=imgsz
         self.half=half
         self.camera_only=bool(camera_only)
+        self.candidate_mode=os.environ.get('XIANGQI_CANDIDATE_MODE','yolo')
+        if self.candidate_mode not in ('yolo','depth_shadow'):
+            raise ValueError('XIANGQI_CANDIDATE_MODE must be yolo or depth_shadow')
+        self.depth_configuration=None
+        if self.candidate_mode=='depth_shadow':
+            from candidate_roi import load_depth_configuration
+            self.depth_configuration=load_depth_configuration(os.environ.get('XIANGQI_DEPTH_CONFIG'))
         self.X=self.robot=self.fk=None;self.base_model_reason='base transform belongs to scene node'
         base_identity={}
         if not self.camera_only:
@@ -89,6 +96,10 @@ class Experiment:
             self.base_model_reason=base.base_model_reason;base_identity=base.identity
         self.identity=dict(weights=str(WEIGHTS),weights_sha256=source_sha,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
         self.identity.update(base_identity)
+        if self.depth_configuration is not None:
+            self.identity.update(candidate_mode=self.candidate_mode,
+                                 depth_config_sha256=self.depth_configuration['config_sha256'],
+                                 depth_qualification_mode='shadow')
 
     def base_transform(self,metadata):
         from base_geometry import base_transform
@@ -112,8 +123,26 @@ class Experiment:
             compute.update(matmul_allow_tf32=bool(__import__('torch').backends.cuda.matmul.allow_tf32),cudnn_allow_tf32=bool(__import__('torch').backends.cudnn.allow_tf32))
         return dict(predictions=predictions,masks=masks,names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=time.monotonic()-start,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
 
+    def detect_candidates(self,color,hint=None,depth=None,metadata=None):
+        from candidate_roi import recognize, recognize_depth
+        if getattr(self,'candidate_mode','yolo')=='depth_shadow':
+            if depth is None or metadata is None:
+                raise ValueError('depth_shadow requires same-frame depth and acquisition metadata')
+            if self.model is None:
+                raise ValueError('ROI classification requires the model worker')
+            return recognize_depth(color,depth,metadata,self.detect,self.model.names,
+                                   self.identity,dict(inference_backend=self.inference_backend,
+                                   inference_artifact_sha256=self.artifact_sha256,
+                                   fp16=False,candidate_backend='cpu_depth'),
+                                   self.depth_configuration,hint)
+        return recognize(color,self.detect,hint)
+
     def run(self,color,depth,metadata,roi=None,draw=True,detection=None):
         if detection is None:detection=self.detect(color,roi)
+        if detection.get('recognition_policy'):
+            # In the split chain roi is only an optional classification hint;
+            # proposal coverage and all geometry are in the full image plane.
+            roi=None
         start=time.monotonic(); K=np.array(metadata['K']).reshape(3,3)
         assert color.shape[:2]==depth.shape and depth.dtype==np.float32
         transform,fk_error,base_reason=(None,None,'base transform belongs to scene node') if getattr(self,'camera_only',False) else self.base_transform(metadata);base_valid=transform is not None
@@ -126,6 +155,8 @@ class Experiment:
         roi_K=K.copy();roi_K[0,2]-=x1;roi_K[1,2]-=y1
         groups=[]
         for i in np.argsort(-conf):
+            if detection.get('recognition_policy'):
+                groups.append([int(i)]);continue
             existing=next((g for g in groups if iou(boxes[i],boxes[g[0]])>.65),None)
             if existing is None:groups.append([int(i)])
             else:existing.append(int(i))
@@ -133,6 +164,9 @@ class Experiment:
         for number,group in enumerate(groups):
             i=group[0];box=boxes[i];name=names[int(classes[i])]
             record=dict(id=number,class_id=int(classes[i]),class_name=name,confidence=float(conf[i]),box_xyxy=box.tolist(),alternatives=[dict(name=names[int(classes[k])],confidence=float(conf[k])) for k in group[1:]],touches_image_edge=bool(box[0]<2 or box[1]<2 or box[2]>color.shape[1]-2 or box[3]>color.shape[0]-2),class_verified=False)
+            if detection.get('recognition_policy'):
+                record.update(detection['classification_evidence'][i])
+                record['classification_stamp_ns']=metadata['stamp_ns']
             if masks is None:record.update(valid=False,reason='no instance mask')
             else:
                 mask=(masks[i]>.5).astype(np.uint8)
@@ -144,6 +178,12 @@ class Experiment:
                     outline=max(contours,key=cv2.contourArea);outline=cv2.approxPolyDP(outline,1.5,True)
                     record['mask_outline_xy']=(outline.reshape(-1,2)+[x1,y1]).tolist()
                 if draw:cv2.drawContours(overlay,contours,-1,(0,230,0),2,offset=(x1,y1))
+            if record.get('candidate_geometry_valid') is False:
+                # Class evidence and geometry qualification are independent:
+                # a large depth component with holes still deserves an ROI
+                # class check, but a good fitted inner surface cannot erase
+                # the candidate scanner's unresolved boundary/coverage gate.
+                record.update(valid=False,reason='depth candidate geometry incomplete')
             record['detection_valid']=True
             record['camera_geometry_valid']=bool(record.get('valid'))
             record['base_geometry_valid']=bool(record['camera_geometry_valid'] and base_valid)
@@ -170,6 +210,13 @@ class Experiment:
             cv2.putText(overlay,f'EXPERIMENT / {color.shape[1]}x{color.shape[0]} / YOLO imgsz={self.imgsz} / {len(groups)} objects / {elapsed*1000:.0f}ms',(8,20),cv2.FONT_HERSHEY_SIMPLEX,.5,(0,255,255),1)
             cv2.putText(overlay,'Classes unverified | surface XYZ only | no grasp commands',(8,40),cv2.FONT_HERSHEY_SIMPLEX,.48,(0,255,255),1)
         record=dict(stamp_ns=metadata['stamp_ns'],source_joint_position_rad=joint.get('position',[]),source_joint_names=joint.get('name',[]),frame_id='base_link',camera_frame_id='d405_color_optical_frame',base_frame_id='base_link',schema='xiangqi_measurements/v2',detection_valid=True,camera_geometry_valid=any(d['camera_geometry_valid'] for d in detections),motion_ready=False,grasp_ready=False,base_transform_reason=base_reason,identity=detection['identity'],compute=detection['compute'],image_size=[color.shape[1],color.shape[0]],inference_roi_xyxy=[x1,y1,x2,y2],detections=detections,raw_detection_count=len(boxes),deduplicated_count=len(groups),fk_tcp_error_m=fk_error,base_transform_valid=base_valid,inference_speed_ms=detection['inference_speed_ms'],geometry_ms=elapsed*1000,detector_ms=detection['detector_s']*1000,processing_s=elapsed+detection['detector_s'],full_6d_pose_estimated=False,robot_commands=0)
+        if detection.get('recognition_policy'):
+            for key in ('recognition_policy','full_scene_coverage','full_candidate_count',
+                        'classification_complete','classification_rois'):
+                record[key]=detection[key]
+            if 'depth_scan' in detection:
+                record['depth_scan']=detection['depth_scan']
+            record['candidate_scan_stamp_ns']=metadata['stamp_ns']
         return record,overlay
 
 def main():

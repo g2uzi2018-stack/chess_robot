@@ -6,6 +6,7 @@ HERE=Path(__file__).resolve().parent
 if len(sys.argv)>1 and sys.argv[1]=='--worker':
  sys.path.insert(0,str(HERE));import perception_node as live
  from recognize_tracked import surface_position
+ from candidate_roi import POLICY
  import numpy as np
  class FixturePipeline:
   def __init__(self,**kwargs):self.ready=[];self.count=0
@@ -15,6 +16,8 @@ if len(sys.argv)>1 and sys.argv[1]=='--worker':
    mask=np.zeros(depth.shape,np.uint8);mask[300:400,600:700]=1
    d=surface_position(mask,depth,np.array(metadata['K']).reshape(3,3));d.update(id=0,class_id=0,class_name='fixture',confidence=1.,box_xyxy=[600,300,700,400],detection_valid=True,camera_geometry_valid=bool(d['valid']),valid=False,camera_complete_center_target=bool(d['valid']),touches_image_edge=False,touches_processing_edge=False,grasp_ready=False,motion_ready=False)
    record=dict(stamp_ns=metadata['stamp_ns'],detections=[d],detection_valid=True,camera_geometry_valid=d['camera_geometry_valid'],base_transform_valid=False,detector_ms=0.,geometry_ms=0.,processing_s=0.,fixture=True,image_size=[1280,720],inference_roi_xyxy=roi or [0,0,1280,720],identity={'model':'deterministic-fixture'},compute={'inference_backend':'fixture','fp16':False})
+   d.update(classification_valid=True,classification_source='roi',classification_stamp_ns=metadata['stamp_ns'],classification_roi_xyxy=[320,80,960,720])
+   record.update(inference_roi_xyxy=[0,0,1280,720],recognition_policy=POLICY,full_scene_coverage=True,classification_complete=True,candidate_scan_stamp_ns=metadata['stamp_ns'],full_candidate_count=1,classification_rois=[[320,80,960,720]])
    self.ready.append((dict(metadata=metadata,context=context,started=time.monotonic(),draw=False),record,None));self.count+=1;return self.count
   def poll(self):out=self.ready;self.ready=[];return out
   def close(self):pass

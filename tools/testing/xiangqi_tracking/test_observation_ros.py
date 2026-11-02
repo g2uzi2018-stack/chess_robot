@@ -10,6 +10,7 @@ if '--worker-perception' in sys.argv or '--worker-scene' in sys.argv:
     import perception_node
     import scene_node
     from test_stable_observation import frame
+    from candidate_roi import POLICY
     class FixtureAudit:
         def __init__(self,*a):self.controller=1;self.epoch_start_ns=0;self.token='fixture-epoch';self.ok=True;self.reason='isolated fixture'
         def poll(self,now):self.host=now;return True
@@ -24,6 +25,9 @@ if '--worker-perception' in sys.argv or '--worker-scene' in sys.argv:
                 base_transform_valid=False,processing_s=.001,detector_ms=0.,geometry_ms=0.,camera_geometry_valid=True,
                 image_size=[1280,720],inference_roi_xyxy=roi or [0,0,1280,720],compute={'inference_backend':'fixture','fp16':False})
             for i,d in enumerate(r['detections']):d.update(id=i,class_id=0,detection_valid=True,center_pixel=[280+i*120,330],box_xyxy=[250+i*120,300,310+i*120,360],class_name='red_pawn',camera_geometry_valid=True,touches_image_edge=False,touches_processing_edge=False)
+            r.update(inference_roi_xyxy=[0,0,1280,720],recognition_policy=POLICY,full_scene_coverage=True,classification_complete=True,
+                     candidate_scan_stamp_ns=metadata['stamp_ns'],full_candidate_count=4,classification_rois=[[0,0,720,720]])
+            for d in r['detections']:d.update(classification_valid=True,classification_source='roi',classification_stamp_ns=metadata['stamp_ns'],classification_roi_xyxy=[0,0,720,720])
             self.ready.append((dict(metadata=metadata,context=context,started=time.monotonic(),draw=False),r,None));self.count+=1
         def poll(self):r=self.ready;self.ready=[];return r
         def close(self):pass

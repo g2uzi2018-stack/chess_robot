@@ -12,7 +12,8 @@ class PieceTracker:
             self.tracks={int(t['id']):t for t in data['tracks']};self.next_id=data['next_id']
         self.startup_ids=set(self.tracks);self.startup_frames_left=3
     def update(self,detections,stamp_ns):
-        current=[d for d in detections if d.get('valid') and d.get('complete_center_target') and 'base_surface_center_m' in d]
+        current=[d for d in detections if d.get('valid') and d.get('complete_center_target')
+                 and d.get('classification_valid',True) and 'base_surface_center_m' in d]
         active=[t for t in self.tracks.values() if 0<=(stamp_ns-t['last_ns'])*1e-9 and ((stamp_ns-t['last_ns'])*1e-9<60 or (self.startup_frames_left>0 and t['id'] in self.startup_ids))]
         costs=np.full((len(active),len(current)),1000.)
         for i,t in enumerate(active):

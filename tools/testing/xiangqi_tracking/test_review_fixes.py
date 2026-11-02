@@ -139,7 +139,7 @@ class ReviewFixTests(unittest.TestCase):
         s, f, base, now = locked(); old = s.last_measurement
         for i, delay in [(65, 100_000_000),(66, 600_000_000)]:
             t = old['stamp_ns']+delay
-            p = packet(i, timestamp=t); p.update(detections=[], camera_geometry_valid=False)
+            p = packet(i, timestamp=t); p.update(detections=[], camera_geometry_valid=False, full_candidate_count=0)
             now = t+30_000_000; feed(f, now); s.process(p, now, f, True, 'controller-one')
             hint = s.hint(now)
             if delay < 500_000_000:

@@ -233,8 +233,13 @@ class StableObservation:
         if self.snapshot and not self.revoked and not self.consumed_by and (now-self.snapshot['locked_ns'])*1e-9 > self.p.lock_lifetime_s:
             self.invalidate('snapshot lifetime exceeded')
 
-    def _scene_matches(self, record):
-        old = self.snapshot['targets']
+    def _scene_matches(self, record, snapshot=None):
+        if record.get('recognition_policy'):
+            if not (record.get('full_scene_coverage') and record.get('classification_complete')
+                    and all(d.get('classification_valid') and d.get('camera_complete_center_target')
+                            for d in record['detections'])):
+                return False
+        old = (snapshot if snapshot is not None else self.snapshot)['targets']
         current = [d for d in record['detections'] if d.get('camera_complete_center_target')]
         if len(current) != len(old) or not current: return False
         costs = np.linalg.norm(np.array([d['camera_surface_center_m'] for d in current])[:,None,:]
@@ -242,6 +247,8 @@ class StableObservation:
         rows, cols = linear_sum_assignment(costs)
         if np.max(costs[rows,cols]) > self.p.scene_distance_m: return False
         for row,col in zip(rows,cols):
+            if record.get('recognition_policy') and old[col]['class_name'] != current[row].get('class_name'):
+                return False
             if (old[col]['class_vote_fraction']>=.7 and current[row].get('confidence',0)>=.6
                     and old[col]['class_name']!=current[row].get('class_name')):return False
         # Close ties are unobservable identity, never quietly inherited.
@@ -283,7 +290,11 @@ class StableObservation:
         ids = {d['track_id'] for d in good}
         if self.frames:
             gap = (t-self.frames[-1]['stamp_ns'])*1e-9
-            if gap > self.p.max_gap_s or not ids <= set(self.frames[0]['targets']) or len(record['detections'])>self.frames[0]['detection_count']:
+            changed_classes = bool(record.get('recognition_policy') and any(
+                d['track_id'] in self.frames[0]['targets'] and
+                d['class_name'] != self.frames[0]['targets'][d['track_id']]['class_name'] for d in good))
+            if (gap > self.p.max_gap_s or not ids <= set(self.frames[0]['targets'])
+                    or len(record['detections'])>self.frames[0]['detection_count'] or changed_classes):
                 self.frames.clear();self.reason='gap or physical target set changed'
         if not self.frames and len(good)!=len(record['detections']):return
         self.frames.append(dict(stamp_ns=t,targets={d['track_id']:copy.deepcopy(d) for d in good},
@@ -348,6 +359,12 @@ class StableObservation:
                   stamp_semantics='host SDK acquisition stamp; not exposure time',
                   point_semantics='visible top surface center; not grasp TCP',
                   motion_ready=False,grasp_ready=False)
+        # A median/p95 may hide a change on the last sampling frame. A newly
+        # constructed snapshot must describe the current scene as well as the
+        # historical window, before it can become currently eligible.
+        if record.get('recognition_policy') and not self._scene_matches(record, data):
+            self.frames=[];self.pending=True;self.counts['lock_scene_mismatch']+=1
+            self.reason='current scene differs from candidate snapshot';return
         self.snapshot=copy.deepcopy(data);self.consumed_by=None;self.revoked=False;self.pending=False
         self.last_scene_ns=record['stamp_ns'];self.mismatch=0;self.requested=False;self.frames=[]
         self.state='locked';self.reason='two second immutable snapshot locked';self.counts['locked']+=1

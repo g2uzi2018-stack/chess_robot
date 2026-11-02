@@ -50,7 +50,13 @@ def main():
     assert before_error is not None
     t=metadata['stamp_ns'];m=dict(metadata,camera_epoch='scalar-replay',rgbd_frame_key=['scalar-replay',1,1])
     packet=wire.camera_measurement(record,m,'scalar-replay',0,t+30_000_000)
-    wire.validate(packet,t+40_000_000);assert non_native(packet)==[]
+    # This old cache has no same-image ROI class evidence. Scalar conversion is
+    # independently testable, but the new production scene must reject it.
+    legacy_rejection=None
+    try:wire.validate(packet,t+40_000_000)
+    except wire.ContractError as error:legacy_rejection=str(error)
+    assert legacy_rejection=='missing full-candidate/ROI-class policy',legacy_rejection
+    assert non_native(packet)==[]
     fixture=copy.deepcopy(record)
     fixture['compute'].update(fixture_bool=np.bool_(True),fixture_int=np.int64(7),fixture_float=np.float32(.25))
     normalized=wire.camera_measurement(fixture,m,'scalar-replay',0,t+30_000_000)
@@ -72,7 +78,8 @@ def main():
                 synthetic_numpy_scalar_types=['bool','int','float'],nonfinite_and_array_rejections=rejected,
                 external_validation_remains_strict=True,actual_model_constructor=True,
                 inference_backend=experiment.identity['inference_backend'],
-                inference_executed=False,cached_detector_outputs=True,physical_commands=0)
+                inference_executed=False,cached_detector_outputs=True,physical_commands=0,
+                production_protocol_validated=False,legacy_cache_protocol_rejection=legacy_rejection)
     a.output.write_text(json.dumps(result,indent=2));print(json.dumps(result))
 
 

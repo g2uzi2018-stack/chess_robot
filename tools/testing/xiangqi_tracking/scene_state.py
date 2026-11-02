@@ -149,19 +149,31 @@ class SceneState:
                       observation_frame_index=packet['sequence'], tracker_state='retired' if retire or changed else
                       ('observed' if base_valid else 'suspended'), base_rejection_counts=dict(self.rejects),
                       scene_packet_rejections=dict(self.packet_rejections), tracking_ms=tracking_ms)
-        # Collection always uses complete input frames. In-flight old ROI results
-        # may still be published/tracked, but cannot seed a newly requested sample.
-        collecting_roi = self.observation.requested and packet.get('inference_roi_xyxy') != [0, 0, 1280, 720]
+        # Every sampling AND confirmation frame requires full-image candidate
+        # coverage plus current ROI labels and geometry for the entire union.
+        # Keep unresolved detections visible; never silently sample a subset.
+        semantic_complete = bool(packet.get('full_scene_coverage') and packet.get('classification_complete')
+                                 and record['detections'] and all(d.get('classification_valid')
+                                                                 for d in record['detections']))
+        scene_complete = bool(semantic_complete and all(d.get('camera_complete_center_target')
+                                                       for d in record['detections']))
         observation_trusted = bool(safe and base_valid)
         if not packet['detection_valid']:
             # Invalid camera routing events must pause current qualification,
             # not replace the accepted model/intrinsic fingerprint with nulls.
             self.observation.tick(now, False, feedback.generation, audit_token)
-        elif not collecting_roi:
+        elif scene_complete:
             self.observation.observe(record, now, observation_trusted, feedback.generation, audit_token)
         else:
-            self.observation.tick(now, observation_trusted, feedback.generation, audit_token)
-            self.observation.reason = 'waiting for full-frame collection after ROI hint'
+            # observe() must still see this frame to pause current eligibility,
+            # count independent-frame gaps and revoke after repeated mismatch.
+            self.observation.observe(record, now, False, feedback.generation, audit_token)
+            # A semantic/coverage gap cannot be averaged into a partial scene.
+            # Pure geometry rejection retains the established gap/fraction
+            # policy: skip this frame without requiring 60 consecutive passes.
+            if not semantic_complete:
+                self.observation.frames.clear()
+            self.observation.reason = 'full-scene ROI classification or geometry incomplete'
         if self.configuration_fault or self.source_configuration_fault:
             self.tick(now, feedback, raw_good, audit_token)
         record['observation'] = self.observation.status(now)
