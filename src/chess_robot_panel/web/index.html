@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>机器人控制台 · 中国象棋机器人</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="panel-container">
+    <header class="panel-header">
+      <div class="brand-group">
+        <div class="brand-badge" aria-hidden="true">N5</div>
+        <div>
+          <h1 class="panel-title">机器人控制台</h1>
+          <p class="panel-subtitle">中国象棋机器人 · 设备控制与状态监视</p>
+        </div>
+      </div>
+      <div class="header-status-area">
+          <a class="preview-link" href="http://192.168.30.26:8088">图像预览 →</a>
+        <div class="connection-pill">
+          <span id="connection-dot" class="dot"></span>
+          <span id="connection">正在连接面板</span>
+          <span id="mode" class="badge">等待设备</span>
+        </div>
+      </div>
+    </header>
+
+    <nav class="device-tabs" role="tablist" aria-label="选择控制设备">
+      <button id="device-arm" class="device-tab is-active" role="tab" aria-selected="true" aria-controls="arm-device" type="button">机械臂 <span>Nova5 · 六关节</span></button>
+      <button id="device-gripper" class="device-tab" role="tab" aria-selected="false" aria-controls="gripper-device" type="button">夹爪 <span>AG95 · 开合控制</span></button>
+    </nav>
+
+    <main class="panel-main">
+      <section id="arm-device" role="tabpanel" aria-labelledby="device-arm" class="card arm-card">
+  <div class="card-header"><div><h2 id="arm-title" class="card-title">六关节角度控制</h2><p class="arm-subtitle">实测反馈 · 单关节微调</p></div><span id="arm-mode" class="badge neutral">等待机械臂</span></div>
+  <div class="arm-toolbar"><label for="joint-step">点击步长</label><div class="joint-step-wrap"><input id="joint-step" type="number" value="1" min="0.1" max="5" step="0.1" inputmode="decimal"><span>°</span></div><span>每次 0.1–5°</span></div>
+  <div id="arm-blocked" class="notice" role="status">等待机械臂反馈…</div>
+  <div class="joint-head"><span>关节</span><span>实测角度</span><span>目标角度 · 手动执行</span></div>
+  <div class="joint-list"><div class="joint-row" data-joint="0">
+      <span class="joint-name">J1</span><strong class="joint-measured" id="joint-measured-0">—</strong>
+      <div class="joint-adjust"><button class="button joint-minus" id="joint-minus-0" aria-label="J1 减少角度" type="button" disabled>−</button>
+      <label class="joint-input-label"><span class="sr-only">J1 目标角度</span><input id="joint-target-0" class="joint-target" type="number" step="0.1" inputmode="decimal" placeholder="目标角度" aria-label="J1 目标角度"><span>°</span></label>
+      <button class="button joint-plus" id="joint-plus-0" aria-label="J1 增加角度" type="button" disabled>＋</button>
+      <button class="button joint-execute" id="joint-execute-0" aria-label="执行 J1 目标角度" type="button" disabled>执行</button></div>
+    </div><div class="joint-row" data-joint="1">
+      <span class="joint-name">J2</span><strong class="joint-measured" id="joint-measured-1">—</strong>
+      <div class="joint-adjust"><button class="button joint-minus" id="joint-minus-1" aria-label="J2 减少角度" type="button" disabled>−</button>
+      <label class="joint-input-label"><span class="sr-only">J2 目标角度</span><input id="joint-target-1" class="joint-target" type="number" step="0.1" inputmode="decimal" placeholder="目标角度" aria-label="J2 目标角度"><span>°</span></label>
+      <button class="button joint-plus" id="joint-plus-1" aria-label="J2 增加角度" type="button" disabled>＋</button>
+      <button class="button joint-execute" id="joint-execute-1" aria-label="执行 J2 目标角度" type="button" disabled>执行</button></div>
+    </div><div class="joint-row" data-joint="2">
+      <span class="joint-name">J3</span><strong class="joint-measured" id="joint-measured-2">—</strong>
+      <div class="joint-adjust"><button class="button joint-minus" id="joint-minus-2" aria-label="J3 减少角度" type="button" disabled>−</button>
+      <label class="joint-input-label"><span class="sr-only">J3 目标角度</span><input id="joint-target-2" class="joint-target" type="number" step="0.1" inputmode="decimal" placeholder="目标角度" aria-label="J3 目标角度"><span>°</span></label>
+      <button class="button joint-plus" id="joint-plus-2" aria-label="J3 增加角度" type="button" disabled>＋</button>
+      <button class="button joint-execute" id="joint-execute-2" aria-label="执行 J3 目标角度" type="button" disabled>执行</button></div>
+    </div><div class="joint-row" data-joint="3">
+      <span class="joint-name">J4</span><strong class="joint-measured" id="joint-measured-3">—</strong>
+      <div class="joint-adjust"><button class="button joint-minus" id="joint-minus-3" aria-label="J4 减少角度" type="button" disabled>−</button>
+      <label class="joint-input-label"><span class="sr-only">J4 目标角度</span><input id="joint-target-3" class="joint-target" type="number" step="0.1" inputmode="decimal" placeholder="目标角度" aria-label="J4 目标角度"><span>°</span></label>
+      <button class="button joint-plus" id="joint-plus-3" aria-label="J4 增加角度" type="button" disabled>＋</button>
+      <button class="button joint-execute" id="joint-execute-3" aria-label="执行 J4 目标角度" type="button" disabled>执行</button></div>
+    </div><div class="joint-row" data-joint="4">
+      <span class="joint-name">J5</span><strong class="joint-measured" id="joint-measured-4">—</strong>
+      <div class="joint-adjust"><button class="button joint-minus" id="joint-minus-4" aria-label="J5 减少角度" type="button" disabled>−</button>
+      <label class="joint-input-label"><span class="sr-only">J5 目标角度</span><input id="joint-target-4" class="joint-target" type="number" step="0.1" inputmode="decimal" placeholder="目标角度" aria-label="J5 目标角度"><span>°</span></label>
+      <button class="button joint-plus" id="joint-plus-4" aria-label="J5 增加角度" type="button" disabled>＋</button>
+      <button class="button joint-execute" id="joint-execute-4" aria-label="执行 J5 目标角度" type="button" disabled>执行</button></div>
+    </div><div class="joint-row" data-joint="5">
+      <span class="joint-name">J6</span><strong class="joint-measured" id="joint-measured-5">—</strong>
+      <div class="joint-adjust"><button class="button joint-minus" id="joint-minus-5" aria-label="J6 减少角度" type="button" disabled>−</button>
+      <label class="joint-input-label"><span class="sr-only">J6 目标角度</span><input id="joint-target-5" class="joint-target" type="number" step="0.1" inputmode="decimal" placeholder="目标角度" aria-label="J6 目标角度"><span>°</span></label>
+      <button class="button joint-plus" id="joint-plus-5" aria-label="J6 增加角度" type="button" disabled>＋</button>
+      <button class="button joint-execute" id="joint-execute-5" aria-label="执行 J6 目标角度" type="button" disabled>执行</button></div>
+    </div></div>
+  <p class="arm-help">− / ＋ 根据最新实测角度走一步；输入目标角度后点击「执行」。单次调整不超过 10°，按住不会连续运动。</p>
+  <div class="arm-result-line"><span id="arm-phase" class="badge neutral">暂无指令</span><span id="arm-result" role="status">等待操作</span></div>
+  <p id="arm-request-id" class="arm-meta"></p>
+</section>
+<div id="gripper-device" role="tabpanel" aria-labelledby="device-gripper" hidden>
+    <div id="blocked" class="notice" role="status">等待夹爪反馈…</div>
+<div class="layout-grid">
+        <!-- Main Jogging and Aperture Section -->
+        <section class="card primary-card" aria-labelledby="jog-panel-title">
+          <div class="card-header">
+            <h2 id="jog-panel-title" class="card-title">开度监测与点动</h2>
+            <span class="card-badge">手动微调模式</span>
+          </div>
+
+          <!-- Aperture Readout -->
+          <div class="aperture-box">
+            <div class="aperture-meta">
+              <span class="aperture-label">当前开度</span>
+              <span class="aperture-unit-note">原始单位 (raw)</span>
+            </div>
+            <div class="aperture-display">
+              <strong id="position">—</strong>
+              <span class="raw-unit">raw</span>
+            </div>
+            <div class="position-track" aria-hidden="true">
+              <div id="position-bar"></div>
+            </div>
+            <div class="track-scale">
+              <span>0 · 闭合</span>
+              <span>250</span>
+                <span>500</span>
+              <span>750</span>
+              <span>1000 · 全开</span>
+            </div>
+          </div>
+
+          <!-- Large Jog Buttons -->
+          <div class="jog-actions">
+            <button id="close" class="button jog-button jog-close" type="button" aria-pressed="false" disabled>
+              <span class="jog-icon" aria-hidden="true">↦↤</span>
+              <span class="jog-title">收拢夹爪</span>
+              <span class="jog-caption">短按单步 · 按住连续微调</span>
+            </button>
+            <button id="open" class="button jog-button jog-open" type="button" aria-pressed="false" disabled>
+              <span class="jog-icon" aria-hidden="true">↤↦</span>
+              <span class="jog-title">张开夹爪</span>
+              <span class="jog-caption">短按单步 · 按住连续微调</span>
+            </button>
+          </div>
+
+          <!-- Jog Real-time Status -->
+          <p id="jog-status" class="jog-status" role="status">松开不再追加动作，已发出的最后一小步仍可能走完。</p>
+
+          <!-- Jog Tuning Settings -->
+          <div class="settings-strip">
+            <div class="setting-item">
+              <label for="step" class="setting-label">点动步长</label>
+              <div class="input-unit-group">
+                <input id="step" type="number" min="1" max="100" value="20" inputmode="numeric" aria-label="点动步长">
+                <span class="input-unit">raw</span>
+              </div>
+              <span class="setting-desc">1–100 raw，默认 20 raw</span>
+            </div>
+
+            <div class="setting-item">
+              <label for="force" class="setting-label">力设定</label>
+              <div class="input-unit-group">
+                <input id="force" type="number" min="20" max="30" value="20" inputmode="numeric">
+                <span class="input-unit">%</span>
+              </div>
+              <span id="force-help" class="setting-desc">范围 20–30%，不是实测力</span>
+            </div>
+          </div>
+
+          <!-- Concise Operational Safety Note -->
+          <div class="control-note">
+              开度 raw 不是毫米，力设定不是实测力。夹持效果请目视确认。
+          </div>
+
+          <!-- Advanced Target Control Collapsible -->
+          <details class="advanced-section">
+            <summary>指定目标开度（绝对位置模式）</summary>
+            <div class="advanced-body">
+              <div class="target-row">
+                <label for="target" class="target-label">目标位置</label>
+                <div class="target-input-wrap">
+                  <input id="target" type="number" min="0" max="1000" step="1" value="1000" inputmode="numeric" aria-label="目标开度">
+                  <span class="input-unit">raw</span>
+                </div>
+                <button id="send" class="button button-action" type="button" disabled>发送开度 ↗</button>
+              </div>
+              <input id="slider" class="slider" type="range" min="0" max="1000" step="1" value="1000" aria-label="调整目标开度">
+              <div class="slider-scale">
+                <span>0 · 闭合</span>
+                <span>500</span>
+                <span>1000 · 全开</span>
+              </div>
+            </div>
+          </details>
+        </section>
+
+        <!-- Right Side: Telemetry & Results -->
+        <div class="side-column">
+          <!-- Device Feedback Card -->
+          <section class="card feedback-card" aria-labelledby="feedback-title">
+            <div class="card-header">
+              <h2 id="feedback-title" class="card-title">设备实时反馈</h2>
+              <span class="card-badge pulse-badge">实时通信</span>
+            </div>
+
+            <dl class="feedback-grid">
+              <div class="feedback-item">
+                <dt>初始化状态</dt>
+                <dd id="initialization">—</dd>
+              </div>
+              <div class="feedback-item">
+                <dt>运行状态</dt>
+                <dd id="device-status">—</dd>
+              </div>
+              <div class="feedback-item">
+                <dt>接触反馈</dt>
+                <dd id="contact">—</dd>
+              </div>
+              <div class="feedback-item">
+                  <dt>反馈年龄</dt>
+                <dd id="age">—</dd>
+              </div>
+            </dl>
+
+            <div class="init-row">
+              <button id="initialize" class="button init-button" type="button" disabled>初始化夹爪</button>
+              <span class="init-tip">仅未初始化时使用，会产生机械动作</span>
+            </div>
+            <p id="device-detail" class="device-detail"></p>
+          </section>
+
+          <!-- Command Result Card -->
+          <section class="card result-card" aria-labelledby="result-title">
+            <div class="card-header">
+              <h2 id="result-title" class="card-title">最近指令执行</h2>
+              <span id="phase" class="badge neutral">暂无指令</span>
+            </div>
+
+            <div class="result-container">
+              <p id="result" class="result-text" role="status">点击按钮后，这里显示驱动接受与执行结果。</p>
+              <div id="request-id" class="request-id">等待操作</div>
+            </div>
+
+            <div class="driver-safety-tip">
+              当前驱动不支持中途取消指令。断线或关闭页面不会自动让夹爪急停；面板不会自动重发指令。
+            </div>
+          </section>
+        </div>
+      </div>
+      </div>
+    </main>
+
+    <footer class="panel-footer">
+      <span>机器人控制台 · 中国象棋机器人系统</span>
+      <span id="update-time">尚未收到状态</span>
+    </footer>
+  </div>
+</body>
+</html>

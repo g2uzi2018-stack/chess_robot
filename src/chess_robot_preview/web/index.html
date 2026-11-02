@@ -2,7 +2,7 @@
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>相机预览</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
 <body>
-<header class="app-header"><div class="brand-mark" aria-hidden="true">◉</div><div><h1>相机预览</h1><p>CHESS ROBOT · LIVE VIEW</p></div><span class="connection" id="connection">连接中</span></header>
+<header class="app-header"><div class="brand-mark" aria-hidden="true">◉</div><div><h1>相机预览</h1><p>CHESS ROBOT · LIVE VIEW</p></div><a class="panel-link" href="http://192.168.30.26:8089">机器人控制台 →</a><span class="connection" id="connection">连接中</span></header>
 <div class="workspace">
   <aside><div class="list-heading"><h2>图像列表</h2><span id="channel-count">—</span></div><p class="list-hint">选择一路，开始查看</p><nav id="channels" aria-label="可选图像"></nav><div class="sidebar-note"><span class="dot"></span>未选中的图像不加载</div></aside>
   <main><div class="viewer-toolbar"><div><h2 id="view-title">选择图像</h2><p id="view-description">点击左侧任意图像，放大查看</p></div><div class="actions"><button id="pause" disabled>暂停</button><button id="fullscreen" title="全屏查看" disabled>全屏</button></div></div>
