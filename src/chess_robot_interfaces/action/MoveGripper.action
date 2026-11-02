@@ -1,0 +1,27 @@
+# Raw device units until the installed fingers and aperture are calibrated.
+uint8 INITIALIZE=0
+uint8 MOVE=1
+uint8 operation
+uint16 position_raw
+uint8 force_percent
+bool require_contact
+float64 timeout_sec
+---
+uint16 INITIALIZED=0
+uint16 REACHED=1
+uint16 GRASPED=2
+uint16 NOT_INITIALIZED=10
+uint16 EMPTY_GRASP=11
+uint16 UNEXPECTED_CONTACT=12
+uint16 DROPPED=13
+uint16 TIMEOUT=14
+uint16 COMMUNICATION_ERROR=15
+uint16 SHUTDOWN=16
+uint16 code
+string detail
+# True when a write may have reached the device, even if its reply was lost.
+bool command_attempted
+bool simulated
+chess_robot_interfaces/GripperState final_state
+---
+chess_robot_interfaces/GripperState state

@@ -7,8 +7,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "action/MoveArm.action" "msg/ArmState.msg"
-  "srv/ConfirmGrasp.srv" "srv/InitializeReference.srv" "srv/RestoreReference.srv"
+  "action/MoveArm.action" "action/MoveJoints.action" "msg/ArmState.msg"
+  "action/MoveGripper.action" "msg/GripperState.msg"
+  "srv/ConfirmGrasp.srv" "srv/InitializeReference.srv" "srv/RestoreReference.srv" "srv/RestoreCheckpoint.srv"
   DEPENDENCIES geometry_msgs std_msgs trajectory_msgs)
 ament_export_dependencies(rosidl_default_runtime)
 ament_package()
