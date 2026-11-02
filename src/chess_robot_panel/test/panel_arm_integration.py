@@ -64,7 +64,7 @@ def wait(pred,timeout=8):
             if pred():return
         except (OSError,KeyError):pass
         time.sleep(.05)
-    raise AssertionError('condition timeout')
+    raise AssertionError('condition timeout; last panel state='+json.dumps(snapshot()))
 def payload(index=2,target=None):return dict(request_id=uuid.uuid4().hex,server_id=snapshot()['server_id'],joint_index=index,target_deg=math.degrees(q[index])+.5 if target is None else target)
 try:
     wait(can);assert not goals
