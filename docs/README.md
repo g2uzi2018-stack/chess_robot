@@ -7,6 +7,7 @@
    - 图像 → `preview_node` → 浏览器：按需订阅、缩放、深度伪彩色与 JPEG；不做棋子检测。
    - RGB-D → `xiangqi_perception` → 相机测量JSON → `xiangqi_scene`：后者维护基座变换、跨帧ID和两秒快照；缺机械臂时相机检测可继续。
    - `tracking_preview`：独立叠加绘制；视频帧率不代表识别完成率。
+   - xiangqi_scan_controller：按需编排Home→17个停点→Home，复用arm Action与scene；[运行说明](../tools/scan_table/README.md)、[限定验证](validation/xiangqi-table-scan-20261103.md)。
    - 目标 → `/arm/move` → Planner → FK/IK、扭转与几何检查 → Executor → Nova5 ServoJ。
    - 实测关节 → `chess_robot_twist` 连续历史 → `/arm/state` 与停稳存档。
    - `handeye_node` 使用现有运动与视觉接口，完成停稳采样、PARK 求解和留出验证；不发布生产 TF。

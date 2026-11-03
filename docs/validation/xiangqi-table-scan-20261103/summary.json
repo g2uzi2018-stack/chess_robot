@@ -1,0 +1,112 @@
+{
+  "schema": "xiangqi_scan_limited_validation/v1",
+  "date": "2026-11-03",
+  "scan_id": "4d6c5e1c03924b6887c579381c40619d",
+  "base_revision": "4a9612d6e796c2a683d54abb0012214218fdab83",
+  "camera_table_distance_m": 0.2,
+  "design_window_ls_m": [
+    [
+      -0.4,
+      0.12
+    ],
+    [
+      0.4,
+      0.8
+    ]
+  ],
+  "executed_actions": 19,
+  "all_actions_completed": true,
+  "view_count": 17,
+  "frames_per_view": [
+    {
+      "view_id": "p1",
+      "frames": 8,
+      "stop_s": 1.0018680859939195
+    },
+    {
+      "view_id": "p2",
+      "frames": 11,
+      "stop_s": 1.0009712259634398
+    },
+    {
+      "view_id": "p3",
+      "frames": 7,
+      "stop_s": 1.0032375170267187
+    },
+    {
+      "view_id": "p4",
+      "frames": 8,
+      "stop_s": 1.0047429100377485
+    },
+    {
+      "view_id": "p5",
+      "frames": 9,
+      "stop_s": 1.0004357629804872
+    },
+    {
+      "view_id": "p6",
+      "frames": 8,
+      "stop_s": 1.0018932820530608
+    },
+    {
+      "view_id": "p7",
+      "frames": 8,
+      "stop_s": 1.0022935490123928
+    },
+    {
+      "view_id": "p8",
+      "frames": 8,
+      "stop_s": 1.007157134998124
+    },
+    {
+      "view_id": "p9",
+      "frames": 7,
+      "stop_s": 1.0022994569735602
+    },
+    {
+      "view_id": "p10",
+      "frames": 8,
+      "stop_s": 1.0009818580001593
+    },
+    {
+      "view_id": "p11b",
+      "frames": 5,
+      "stop_s": 1.0005761350039393
+    },
+    {
+      "view_id": "p11a",
+      "frames": 5,
+      "stop_s": 1.0018221699865535
+    },
+    {
+      "view_id": "p12",
+      "frames": 3,
+      "stop_s": 1.0034984750091098
+    },
+    {
+      "view_id": "p13",
+      "frames": 4,
+      "stop_s": 1.00181943399366
+    },
+    {
+      "view_id": "p14a",
+      "frames": 5,
+      "stop_s": 1.0030442380229943
+    },
+    {
+      "view_id": "p14b",
+      "frames": 3,
+      "stop_s": 1.001931375998538
+    },
+    {
+      "view_id": "p15",
+      "frames": 8,
+      "stop_s": 1.0032945610000752
+    }
+  ],
+  "returned_home": true,
+  "physical_stop_confirmed": true,
+  "scene_result": "PARTIAL",
+  "raw_run_directory": "runs/scan_20cm_20261103_demo02",
+  "unique_physical_target_count": null
+}
