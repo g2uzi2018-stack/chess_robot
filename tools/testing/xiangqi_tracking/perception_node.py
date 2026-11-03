@@ -146,6 +146,8 @@ def main():
                 paths = [WEIGHTS, MODEL_ARTIFACT, Path(__file__), Path(__file__).with_name('recognize_tracked.py'),
                          Path(__file__).with_name('shared_pipeline.py'), Path(__file__).with_name('measurement_contract.py'),
                          Path(__file__).with_name('candidate_roi.py')]
+                if os.environ.get('XIANGQI_CANDIDATE_MODE')=='lite':
+                    paths.append(Path(os.environ['XIANGQI_CANDIDATE_ARTIFACT']))
                 if depth_config_path is not None:
                     paths.append(Path(__file__).with_name('depth_candidates.py'))
                     paths.append(depth_config_path)

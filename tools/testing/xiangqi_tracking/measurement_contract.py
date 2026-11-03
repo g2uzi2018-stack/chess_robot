@@ -4,7 +4,7 @@ import json
 import math
 import re
 from collections import deque
-from candidate_roi import POLICY, DEPTH_POLICY, MAX_CROPS
+from candidate_roi import POLICY, DEPTH_POLICY, LITE_POLICY, MAX_CROPS
 
 CAMERA_FRAME = 'd405_color_optical_frame'
 SCHEMA = 'xiangqi_camera_measurements/v2'
@@ -270,7 +270,7 @@ def validate(packet, now):
         raise ContractError('invalid measurement ROI')
     if not isinstance(packet.get('identity'), dict) or not isinstance(packet.get('compute'), dict):
         raise ContractError('missing model identity/compute evidence')
-    if packet.get('recognition_policy') not in (POLICY, DEPTH_POLICY):
+    if packet.get('recognition_policy') not in (POLICY, DEPTH_POLICY, LITE_POLICY):
         raise ContractError('missing full-candidate/ROI-class policy')
     if packet.get('candidate_scan_stamp_ns') != packet['stamp_ns'] or roi != [0, 0, 1280, 720]:
         raise ContractError('missing same-stamp full-image candidate scan')
@@ -323,6 +323,15 @@ def validate(packet, now):
             raise ContractError('invalid bounded depth diagnostics')
     elif 'depth_scan' in packet:
         raise ContractError('depth provenance mixed into model candidate policy')
+    if packet['recognition_policy'] == LITE_POLICY:
+        identity=packet['identity'];compute=packet['compute']
+        sha=identity.get('candidate_artifact_sha256')
+        if (identity.get('candidate_mode')!='lite' or not isinstance(sha,str)
+                or re.fullmatch('[0-9a-f]{64}',sha) is None
+                or compute.get('candidate_artifact_sha256')!=sha
+                or compute.get('candidate_network_calls')!=1
+                or compute.get('roi_network_calls')!=len(crops)):
+            raise ContractError('missing lite candidate engine provenance')
     indices = set()
     for d in detections:
         if not isinstance(d, dict) or not integer(d.get('instance_index')):
@@ -356,6 +365,21 @@ def validate(packet, now):
             raise ContractError('unresolved candidate carries a semantic label')
         if type(d.get('camera_geometry_valid')) is not bool or not d.get('detection_valid'):
             raise ContractError('invalid instance qualification')
+        if packet['recognition_policy'] == LITE_POLICY:
+            source=d.get('geometry_source');mask_crop=d.get('geometry_roi_xyxy')
+            if source not in ('same_frame_roi_mask','missing_roi_mask'):
+                raise ContractError('missing lite geometry provenance')
+            if source=='same_frame_roi_mask':
+                if mask_crop not in crops:raise ContractError('geometry mask lacks same-frame ROI')
+            elif d['camera_geometry_valid'] or mask_crop is not None:
+                raise ContractError('candidate rectangle cannot qualify surface geometry')
+            candidate_box=d.get('candidate_box_xyxy')
+            if candidate_box is not None and candidate_box!=box:
+                raise ContractError('lite candidate position guard changed')
+            if candidate_box is not None and source=='same_frame_roi_mask' and not (
+                    mask_crop[0]+2 <= box[0] and mask_crop[1]+2 <= box[1]
+                    and box[2] <= mask_crop[2]-2 and box[3] <= mask_crop[3]-2):
+                raise ContractError('ROI geometry crop does not cover lite candidate')
         if packet['recognition_policy'] == DEPTH_POLICY:
             if (type(d.get('candidate_geometry_valid')) is not bool or type(d.get('roi_eligible')) is not bool
                     or d.get('candidate_geometry_source') not in ('aligned_depth','unadmitted_roi')

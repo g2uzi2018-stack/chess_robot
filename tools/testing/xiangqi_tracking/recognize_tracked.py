@@ -81,8 +81,19 @@ class Experiment:
         self.half=half
         self.camera_only=bool(camera_only)
         self.candidate_mode=os.environ.get('XIANGQI_CANDIDATE_MODE','yolo')
-        if self.candidate_mode not in ('yolo','depth_shadow'):
-            raise ValueError('XIANGQI_CANDIDATE_MODE must be yolo or depth_shadow')
+        if self.candidate_mode not in ('yolo','depth_shadow','lite'):
+            raise ValueError('XIANGQI_CANDIDATE_MODE must be yolo, depth_shadow or lite')
+        self.candidate_model=None
+        if self.candidate_mode=='lite':
+            self.candidate_artifact=Path(os.environ['XIANGQI_CANDIDATE_ARTIFACT'])
+            self.candidate_sha256=hashlib.sha256(self.candidate_artifact.read_bytes()).hexdigest()
+            if self.candidate_sha256!=os.environ['XIANGQI_CANDIDATE_ARTIFACT_SHA256']:
+                raise ValueError('Candidate engine SHA256 mismatch')
+            if self.candidate_artifact.suffix!='.engine' or half:
+                raise ValueError('Lite candidate deployment requires the validated FP32 engine')
+            self.candidate_conf=float(os.environ.get('XIANGQI_CANDIDATE_CONF','0.1'))
+            if not 0 < self.candidate_conf < 1:raise ValueError('Invalid candidate confidence')
+            if not geometry_only:self.candidate_model=YOLO(str(self.candidate_artifact),task='detect')
         self.depth_configuration=None
         if self.candidate_mode=='depth_shadow':
             from candidate_roi import load_depth_configuration
@@ -96,6 +107,11 @@ class Experiment:
             self.base_model_reason=base.base_model_reason;base_identity=base.identity
         self.identity=dict(weights=str(WEIGHTS),weights_sha256=source_sha,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
         self.identity.update(base_identity)
+        if self.candidate_mode=='lite':
+            self.identity.update(candidate_mode='lite',candidate_artifact=str(self.candidate_artifact),
+                                 candidate_artifact_sha256=self.candidate_sha256,
+                                 candidate_input_hw=[384,640],candidate_conf=self.candidate_conf,
+                                 candidate_dedup_iou=.65)
         if self.depth_configuration is not None:
             self.identity.update(candidate_mode=self.candidate_mode,
                                  depth_config_sha256=self.depth_configuration['config_sha256'],
@@ -123,8 +139,23 @@ class Experiment:
             compute.update(matmul_allow_tf32=bool(__import__('torch').backends.cuda.matmul.allow_tf32),cudnn_allow_tf32=bool(__import__('torch').backends.cudnn.allow_tf32))
         return dict(predictions=predictions,masks=masks,names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=time.monotonic()-start,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
 
+    def detect_lite(self,color):
+        if color.shape[:2]!=(720,1280):raise ValueError('Candidate engine requires 1280x720 source images')
+        start=time.monotonic()
+        result=self.candidate_model.predict(color,device=0,imgsz=[384,640],rect=True,
+                   conf=self.candidate_conf,verbose=False,half=False)[0]
+        if dict(result.names)!={0:'piece'}:raise ValueError('Candidate engine class map differs from delivery')
+        if self.candidate_model.predictor.model.fp16:raise ValueError('Candidate engine is not FP32')
+        return dict(predictions=result.boxes.data.cpu().numpy(),masks=None,names=dict(result.names),
+                    compute=dict(candidate_artifact_sha256=self.candidate_sha256,
+                                 candidate_backend='tensorrt',candidate_fp16=False),
+                    identity=self.identity,inference_speed_ms=result.speed,
+                    detector_s=time.monotonic()-start,roi_xyxy=[0,0,1280,720],image_size=[1280,720])
+
     def detect_candidates(self,color,hint=None,depth=None,metadata=None):
-        from candidate_roi import recognize, recognize_depth
+        from candidate_roi import recognize, recognize_depth, recognize_lite
+        if getattr(self,'candidate_mode','yolo')=='lite':
+            return recognize_lite(color,self.detect_lite,self.detect,self.model.names,hint)
         if getattr(self,'candidate_mode','yolo')=='depth_shadow':
             if depth is None or metadata is None:
                 raise ValueError('depth_shadow requires same-frame depth and acquisition metadata')

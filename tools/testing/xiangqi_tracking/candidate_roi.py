@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 
 POLICY = 'full_candidates_roi_classes/v1'
+LITE_POLICY = 'lite_candidates_roi_classes/v1'
 DEPTH_POLICY = 'depth_candidates_roi_classes/shadow-v1'
 MAX_CROPS = 8
 MAX_INSTANCES = 300
@@ -135,13 +136,28 @@ def recognize(color, detect, hint=None):
     return _recognize_candidates(color, detect, full, candidates, hint, started)
 
 
+def recognize_lite(color, candidate_detect, roi_detect, names, hint=None):
+    """Single-class proposals; same-image ROI masks supply surface geometry.
+
+    Candidate boxes remain the full-scene position guard. An unmatched proposal
+    stays unknown with no mask; a rectangle is never used as a surface mask.
+    """
+    started = time.monotonic()
+    full = candidate_detect(color)
+    candidates = items(full, 'full_candidate')
+    full = dict(full, names=dict(names))
+    return _recognize_candidates(color, roi_detect, full, candidates, hint,
+                                 started, policy=LITE_POLICY)
+
+
 def _recognize_candidates(color, detect, full, candidates, hint, started,
                           policy=POLICY, scan_complete=True):
     """Shared ROI fusion; candidate geometry always belongs to this frame."""
     height, width = color.shape[:2]
-    classifiable = candidates if policy == POLICY else [d for d in candidates if d.get('roi_eligible')]
+    model_scan = policy in (POLICY, LITE_POLICY)
+    classifiable = candidates if model_scan else [d for d in candidates if d.get('roi_eligible')]
     planned = plan_crops([d['box'] for d in classifiable], width, height,
-                         hint if classifiable or policy == POLICY else None)
+                         hint if classifiable or model_scan else None)
     crops = planned[:MAX_CROPS]
     observations = []
     packets = [full]
@@ -161,7 +177,7 @@ def _recognize_candidates(color, detect, full, candidates, hint, started,
     # Link proposals one-to-one by overlap. Ambiguous links are unresolved,
     # rather than inheriting a full-image class or dropping a candidate.
     links = [[j for j, r in enumerate(classified) if overlap(c['box'], r['box']) > .3]
-             if policy == POLICY or c.get('roi_eligible') else []
+             if model_scan or c.get('roi_eligible') else []
              for c in candidates]
     used = set()
     output = []
@@ -169,14 +185,19 @@ def _recognize_candidates(color, detect, full, candidates, hint, started,
         unique = len(choices) == 1 and sum(choices[0] in row for row in links) == 1
         if unique:
             j = choices[0]; used.add(j)
-            # The full pass guards scene position. Taking the ROI box/mask
-            # here could hide a full-image movement behind a stale-looking
-            # overlapping ROI prediction. Only semantic evidence is borrowed.
+            # Keep the current full-scan box as a position guard. The original
+            # segmentation policy also retains its full mask; the lite policy
+            # has boxes only and needs the uniquely associated same-frame ROI
+            # mask to measure a surface. Missing masks never become rectangles.
             r=classified[j]
             b=c['box']
             compatible=[v for v in r['views'] if v['crop'][0]+2 <= b[0]
                         and v['crop'][1]+2 <= b[1] and b[2] <= v['crop'][2]-2
                         and b[3] <= v['crop'][3]-2]
+            if (policy == LITE_POLICY and compatible and r['complete']
+                    and r['mask_roi'][0]+2 <= b[0] and r['mask_roi'][1]+2 <= b[1]
+                    and b[2] <= r['mask_roi'][2]-2 and b[3] <= r['mask_roi'][3]-2):
+                c = dict(c, mask=r['mask'], mask_roi=r['mask_roi'])
             if r['valid'] and compatible:
                 view=min(compatible,key=lambda v:(-v['confidence'],tuple(v['crop']),v['class_id']))
                 output.append(dict(c,name=view['name'],class_id=view['class_id'],
@@ -216,6 +237,10 @@ def _recognize_candidates(color, detect, full, candidates, hint, started,
         evidence.append(dict(classification_valid=d['valid'],
                              classification_source='roi' if d['valid'] else 'unresolved',
                              classification_roi_xyxy=d['crop'] if d['valid'] else None))
+        if policy == LITE_POLICY:
+            evidence[-1].update(geometry_source='same_frame_roi_mask' if d['mask'] is not None else 'missing_roi_mask',
+                                geometry_roi_xyxy=d['mask_roi'] if d['mask'] is not None else None,
+                                candidate_box_xyxy=d['box'].tolist() if d['source']=='full_candidate' else None)
         if policy == DEPTH_POLICY:
             evidence[-1].update(candidate_geometry_valid=bool(d.get('candidate_complete',False)),
                                 candidate_geometry_source='aligned_depth' if d['source']=='depth_candidate' else 'unadmitted_roi',
@@ -228,6 +253,10 @@ def _recognize_candidates(color, detect, full, candidates, hint, started,
         for key, value in packet['inference_speed_ms'].items():
             timings[key] = timings.get(key, 0.)+value
     compute=full['compute']
+    if policy == LITE_POLICY:
+        compute=dict(packets[-1]['compute'], **full['compute'],
+                     candidate_network_calls=1,roi_network_calls=len(crops),
+                     candidate_ms=full['detector_s']*1000)
     if policy == DEPTH_POLICY:
         compute=dict(compute, network_executed=len(packets)>1)
         if len(packets)>1:

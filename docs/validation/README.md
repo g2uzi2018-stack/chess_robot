@@ -13,7 +13,8 @@
    - 后续 `runs/lower5cm_feedback_20261101_01/delivery/summary.json`记录ROS状态发布约100Hz、原始反馈约122Hz、20/100Hz回环，以及一次约下降0.05033m的执行。位移来自关节和URDF FK，不是独立外部计量，也不扩展为完整运动范围验收。
    - 当前加载版本、Home目标与历史基准的关系以[日常操作](../operations/arm-quickstart.md)和实际运行配置为准；历史PID和安装前缀不作为新部署入口。
 2. **象棋识别**
-   - [候选/ROI与轻量模型记录](xiangqi-precheck-20261102/README.md)：同帧全图候选＋ROI类别已部署，四子窗口约17.2fps；轻量候选模型未上线，深度仅shadow。
+   - [小模型候选上线记录](xiangqi-lite-deploy-20261103/README.md)：YOLO26n全图候选＋原模型ROI分类/分割已部署，当前四子实测23.63fps；类别与截图一致99.22%、四枚深度几何同时通过93.94%，两者不等于总吞吐。
+   - [11月2日候选/ROI与训练记录](xiangqi-precheck-20261102/README.md)保留旧方案约17.2fps及小模型离线训练阶段，深度预检测仍仅shadow。
    - 约35ms为保存四子数据的候选＋ROI阶段耗时，不是完整实时FPS；满棋盘、真实移动/遮挡和自动抓取尚未验收。
    - [节点拆分](xiangqi-node-split-20261101/README.md)、[严格FP32加速](xiangqi-acceleration-20261101/README.md)、[两秒稳定观测](../../tools/testing/xiangqi_tracking/STABLE_OBSERVATION.md)各有独立版本与范围。旧拓扑29.31fps不能当作当前双阶段策略结果。
 3. **控制台、夹爪与标定**

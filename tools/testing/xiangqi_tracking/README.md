@@ -1,5 +1,21 @@
 # 棋子跟随编号与平滑预览试验
 
+## 2026-11-03 当前生产：小模型候选＋原模型 ROI 分割
+
+生产启动器显式选择 `XIANGQI_CANDIDATE_MODE=lite`，policy 为 `lite_candidates_roi_classes/v1`。每帧由 YOLO26n 单类 detect 扫描全图，再由原 YOLO26s-seg 输出同帧 ROI 的14类与实例轮廓；相机、scene、三槽流水线和原质量门限保留。
+
+候选工件为外部 `yolo26n-piece-imgsz640-fp32.engine`，SHA256 `5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b`。原图1280×720，TRT profile `[1,3,384,640]`，`rect=True`、conf=0.10，按分数降序 IoU>0.65 去重。该引擎不能用于任意正方形ROI，也不能替换原14类分割工件；两者均FP32、TF32关闭。
+
+候选框保留在原图平面。只有唯一关联、且ROI完整覆盖候选框时，才能借用该同帧ROI掩膜做深度表面定位。无匹配掩膜的候选保持未知/几何无效，矩形框不能作为表面掩膜。冲突、裁剪边界、未关联候选、ROI额外目标和预算限制沿用原规则。消息附候选模型身份、调用计数与几何来源，候选模型不提供棋种标签。
+
+配置：`XIANGQI_CANDIDATE_ARTIFACT` 为上述engine绝对路径，`XIANGQI_CANDIDATE_ARTIFACT_SHA256` 与工件一致，`XIANGQI_CANDIDATE_CONF` 默认0.1。源码兼容模式仍默认`yolo`；生产显式选择`lite`，不更换原`XIANGQI_MODEL_ARTIFACT`。
+
+冻结源码、启动器备份和测量记录在 `runs/xiangqi_lite_deploy_20261103_01/`；项目发布启动器 `runs/project_release_20261102_01/deployment/start_visual.sh` 已切换。只重启视觉服务，沿用其时钟租约，不改相机、绘制或机械臂服务。perception与scene必须配套部署。
+
+首次120秒聚拢四子实测：2838个唯一完成帧，23.65fps，两段一分钟分别23.63/23.67fps；每帧4个候选及4个输出、1个ROI。GPU阶段p50 35.53ms，其中候选7.84ms；SDK主机时间戳到发布延迟p50 120.40ms、p95 139.55ms。此窗口早于最后的多ROI掩膜覆盖检查修正，最终重启后60秒为23.63fps、1418帧，类别符合当前截图99.22%、四枚几何同时通过93.94%，完整配置/指标及回退见[小模型上线记录](../../../docs/validation/xiangqi-lite-deploy-20261103/README.md)。
+
+当前摆放已与此前直线四子不同；类别符合截图、几何通过率与总吞吐分别统计，不能把23.65fps解释为每帧全部正确或完整验收。满棋盘、遮挡、绝对定位与抓取尚未验收；`motion_ready`、`grasp_ready`仍为false。以下11月2日段落为旧方案记录。
+
 ## 2026-11-01 当前节点拓扑
 
 旧 `/xiangqi_readonly_experiment` 已拆为 `/xiangqi_perception` 与 `/xiangqi_scene` 两个独立进程。前者只输出相机系类别/几何和帧内实例序号到 `/perception/xiangqi/measurements`；后者维护基座变换、跨帧ID与两秒快照，继续输出原 `/pose/xiangqi/detections` 及 observation 接口。识别无需arm或scene也可启动，编号不下放到无状态视觉前端。
@@ -10,7 +26,7 @@
 
 2026-10-31现场：相机1280×720、请求30Hz、手动25000μs/增益16。用户要求编号跟随棋子移动，不绑定固定槽位。
 
-## 2026-11-02 当前识别状态
+## 2026-11-02 阶段记录
 
 - 同帧全图候选＋ROI类别策略已部署，静止四子窗口约17.2fps；此前类别/几何及快照结果仅限该场景。
 - 深度预检测仅为显式`depth_shadow`实验，真实数据有噪声/未决区域，未替换生产，见[深度配置](DEPTH_CANDIDATES.md)。
