@@ -23,14 +23,24 @@ T transform(const YAML::Node &n) {
   return t;
 }
 } // namespace
+void validateTableContactGoal(const Goal &goal, const Transform &start, const Config &c) {
+  if (goal.operation != Operation::Descend && goal.operation != Operation::Retreat)
+    throw Failure(INVALID_GOAL, "table_contact only permits vertical DESCEND/RETREAT");
+  const double z = goal.target.translation().z() +
+      (goal.operation == Operation::Retreat ? c.clearance : 0);
+  if (std::abs(z - start.translation().z()) > .15)
+    throw Failure(INVALID_GOAL, "table_contact vertical travel exceeds 150mm");
+}
 struct GeometryGuard::Impl {
   Config c;
   std::shared_ptr<const chess_robot_twist::Model> model;
   T origins[6], tcp;
   V axes[6];
-  double floor, L;
+  double floor, contact_floor = 0, contact_radius = 0, L;
+  bool contact_configured = false;
   struct Hull {
     int link;
+    bool contact_finger = false;
     std::vector<V> vertices;
     std::shared_ptr<fcl::CollisionObjectd> object;
   };
@@ -49,6 +59,15 @@ struct GeometryGuard::Impl {
     if (!std::isfinite(floor) || !std::isfinite(L) || L <= 0 ||
         !std::isfinite(clearance) || clearance < .02)
       throw Failure(INVALID_GOAL, "guard floor/normalization invalid");
+    if (y["table_contact"]) {
+      const double gap = y["table_contact"]["finger_clearance_m"].as<double>();
+      contact_radius = y["table_contact"]["target_radius_m"].as<double>();
+      if (!std::isfinite(gap) || gap < .003 || gap > clearance ||
+          !std::isfinite(contact_radius) || contact_radius < .02 || contact_radius > .10)
+        throw Failure(INVALID_GOAL, "invalid target-local fingertip clearance");
+      contact_floor = ground + gap;
+      contact_configured = true;
+    }
     for (int i = 0; i < 6; ++i) {
       origins[i] = transform(y["joint_origins"][i]);
       axes[i] = V(y["axes"][i][0].as<double>(), y["axes"][i][1].as<double>(),
@@ -61,12 +80,22 @@ struct GeometryGuard::Impl {
         throw Failure(INVALID_GOAL, "guard joint limits disagree with URDF");
     }
     bool seen[7] = {};
+    bool left_pad = false, right_pad = false;
     for (const auto &n : y["hulls"]) {
       Hull h;
       h.link = n["link"].as<int>();
       if (h.link < 0 || h.link > 6)
         throw Failure(INVALID_GOAL, "guard hull link invalid");
       seen[h.link] = true;
+      if (n["role"] && n["role"].as<std::string>() == "finger_assembly") {
+        const auto name = n["name"].as<std::string>();
+        if (h.link != 6 || (name != "left_finger_assembly_21_state_union" &&
+                            name != "right_finger_assembly_21_state_union"))
+          throw Failure(INVALID_GOAL, "contact eligibility is restricted to both moving finger assemblies");
+        h.contact_finger = true;
+        if (name == "left_finger_assembly_21_state_union") left_pad = true;
+        else right_pad = true;
+      }
       for (const auto &v : n["vertices"]) {
         V point(v[0].as<double>(), v[1].as<double>(), v[2].as<double>());
         if (!point.allFinite())
@@ -101,10 +130,14 @@ struct GeometryGuard::Impl {
     // The arm hull and fixed camera/gripper envelope must both be present.
     if (hulls.size() < 8)
       throw Failure(INVALID_GOAL, "missing tool guard hull");
+    if (contact_configured && !(left_pad && right_pad))
+      throw Failure(INVALID_GOAL, "table contact requires separate left/right moving finger hulls");
     check(c.home);
   }
-  void check(const Joints &q) {
+  void check(const Joints &q, const Eigen::Vector2d *target_xy = nullptr) {
     std::lock_guard<std::mutex> lock(mutex);
+    if (target_xy && (!contact_configured || !target_xy->allFinite()))
+      throw Failure(INVALID_GOAL, "target-local table contact is not configured");
     if (!model->withinJointBounds(q, 5 * pi / 180))
       throw Failure(PLANNING_FAILED, "guard joint limit margin");
     T frames[7];
@@ -137,9 +170,13 @@ struct GeometryGuard::Impl {
       throw Failure(PLANNING_FAILED, "guard singularity threshold");
     for (auto &h : hulls) {
       if (h.link != 0)
-        for (const auto &v : h.vertices)
-          if ((frames[h.link] * v).z() < floor)
+        for (const auto &v : h.vertices) {
+          const V point = frames[h.link] * v;
+          if (point.z() >= floor) continue;
+          if (!(target_xy && h.contact_finger && point.z() >= contact_floor &&
+                (point.head<2>() - *target_xy).norm() <= contact_radius))
             throw Failure(PLANNING_FAILED, "guard table clearance");
+        }
       h.object->setTransform(frames[h.link]);
       h.object->computeAABB();
     }
@@ -169,4 +206,7 @@ GeometryGuard::GeometryGuard(const Config &c,
                              std::shared_ptr<const chess_robot_twist::Model> m)
     : impl_(std::make_shared<Impl>(c, std::move(m))) {}
 void GeometryGuard::check(const Joints &q) const { impl_->check(q); }
+void GeometryGuard::checkTableContact(const Joints &q, const Eigen::Vector2d &xy) const {
+  impl_->check(q, &xy);
+}
 } // namespace chess_robot_arm

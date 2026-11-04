@@ -62,6 +62,52 @@ def plan_crops(boxes, width, height, hint=None):
     return crops
 
 
+def plan_grouped_crops(boxes, width, height, hint=None, max_size=640):
+    """Keep the single-view policy; pack a wide scene into shared ROI groups.
+
+    Sorted input and geometric tie-breaking make the result independent of
+    detector score/order. The size limit bounds only newly enlarged crops:
+    existing single-object crops and the established combined/hint view keep
+    their original context. This is a greedy cover, not a global optimum.
+    """
+    original = plan_crops(boxes, width, height, hint)
+    if len(original) <= 1:
+        return original
+    groups = []
+    ordered = sorted(set(tuple(float(v) for v in b) for b in boxes))
+    for box in ordered:
+        choices = []
+        for index, (bounds, crop) in enumerate(groups):
+            merged = [min(bounds[0],box[0]), min(bounds[1],box[1]),
+                      max(bounds[2],box[2]), max(bounds[3],box[3])]
+            if crop[0] <= box[0] and crop[1] <= box[1] and box[2] <= crop[2] and box[3] <= crop[3]:
+                choices.append((0,crop[2]-crop[0],tuple(crop),index,merged))
+                continue
+            first = max(480, int(math.ceil((max(merged[2]-merged[0],merged[3]-merged[1])+160)/32))*32)
+            for size in range(first,min(max_size,width,height)+1,32):
+                cx,cy = (round((merged[i]+merged[i+2])/2/32)*32 for i in (0,1))
+                x=max(0,min(width-size,int(cx-size/2)))
+                y=max(0,min(height-size,int(cy-size/2)))
+                proposal=[x,y,x+size,y+size]
+                # Enlarging a group must not create edge fragments of another
+                # candidate: those can make strict ROI association ambiguous.
+                cuts = any(x < b[2] and b[0] < x+size and y < b[3] and b[1] < y+size
+                           and not (x <= b[0] and y <= b[1] and b[2] <= x+size and b[3] <= y+size)
+                           for b in ordered)
+                if not cuts:
+                    choices.append((size*size-(crop[2]-crop[0])**2,size,
+                                    tuple(proposal),index,merged))
+                    break
+        if choices:
+            _,_,crop,index,bounds=min(choices)
+            groups[index]=(bounds,list(crop))
+        else:
+            crop=crop_for([box],width,height)
+            if crop is not None:groups.append((list(box),crop))
+    grouped = [list(crop) for crop in sorted({tuple(crop) for _,crop in groups})]
+    return grouped if len(grouped) < len(original) else sorted(original)
+
+
 def items(packet, source, crop=None):
     """Return geometry in the original image plane; do not expand full masks yet."""
     offset = np.array(packet['roi_xyxy'][:2]*2)
@@ -136,7 +182,7 @@ def recognize(color, detect, hint=None):
     return _recognize_candidates(color, detect, full, candidates, hint, started)
 
 
-def recognize_lite(color, candidate_detect, roi_detect, names, hint=None):
+def recognize_lite(color, candidate_detect, roi_detect, names, hint=None, detect_many=None, planner=None):
     """Single-class proposals; same-image ROI masks supply surface geometry.
 
     Candidate boxes remain the full-scene position guard. An unmatched proposal
@@ -147,22 +193,25 @@ def recognize_lite(color, candidate_detect, roi_detect, names, hint=None):
     candidates = items(full, 'full_candidate')
     full = dict(full, names=dict(names))
     return _recognize_candidates(color, roi_detect, full, candidates, hint,
-                                 started, policy=LITE_POLICY)
+                                 started, policy=LITE_POLICY, detect_many=detect_many, planner=planner)
 
 
 def _recognize_candidates(color, detect, full, candidates, hint, started,
-                          policy=POLICY, scan_complete=True):
+                          policy=POLICY, scan_complete=True, detect_many=None, planner=None):
     """Shared ROI fusion; candidate geometry always belongs to this frame."""
     height, width = color.shape[:2]
     model_scan = policy in (POLICY, LITE_POLICY)
     classifiable = candidates if model_scan else [d for d in candidates if d.get('roi_eligible')]
-    planned = plan_crops([d['box'] for d in classifiable], width, height,
+    planned = (planner or plan_crops)([d['box'] for d in classifiable], width, height,
                          hint if classifiable or model_scan else None)
     crops = planned[:MAX_CROPS]
     observations = []
     packets = [full]
-    for crop in crops:
-        packet = detect(color, crop)
+    roi_packets = ([detect(color,crop) for crop in crops] if detect_many is None
+                   else detect_many(color,crops))
+    if len(roi_packets)!=len(crops):raise ValueError('Incomplete same-frame ROI batch')
+    for crop,packet in zip(crops,roi_packets):
+        if packet['roi_xyxy']!=crop:raise ValueError('ROI batch crop ownership mismatch')
         if packet['names'] != full['names']:
             raise ValueError('ROI/full model class mapping changed within one frame')
         packets.append(packet)
@@ -254,8 +303,12 @@ def _recognize_candidates(color, detect, full, candidates, hint, started,
             timings[key] = timings.get(key, 0.)+value
     compute=full['compute']
     if policy == LITE_POLICY:
+        batch_sizes = ([1]*len(crops) if detect_many is None else
+                       [p['roi_batch_size'] for i,p in enumerate(roi_packets)
+                        if p['roi_batch_id'] not in {q['roi_batch_id'] for q in roi_packets[:i]}])
         compute=dict(packets[-1]['compute'], **full['compute'],
-                     candidate_network_calls=1,roi_network_calls=len(crops),
+                     candidate_network_calls=1,roi_network_calls=len(batch_sizes),
+                     roi_count=len(crops),roi_batch_sizes=batch_sizes,
                      candidate_ms=full['detector_s']*1000)
     if policy == DEPTH_POLICY:
         compute=dict(compute, network_executed=len(packets)>1)

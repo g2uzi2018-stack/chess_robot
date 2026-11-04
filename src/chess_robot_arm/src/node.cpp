@@ -76,13 +76,19 @@ class ArmNode final : public rclcpp::Node {
   bool checkpoint_motion_observed_=false;
   std::unique_ptr<GeometryGuard> geometry_guard_;
   std::map<std::string,std::shared_ptr<GeometryGuard>> exploration_guards_;
-  std::function<void(const Joints &)> safetyCheck(const std::string &profile="") {
+  std::function<void(const Joints &)> safetyCheck(const std::string &profile="", const Goal *goal=nullptr) {
+    const bool contact=(profile.empty() ? config_.default_profile : profile)=="table_contact";
+    if(contact && !goal)throw Failure(INVALID_GOAL,"table contact requires an explicit vertical goal");
     if (config_.backend=="exploration") {
       auto guard=exploration_guards_.at(profile.empty() ? config_.default_profile : profile);
+      if(contact)return [guard,goal](const Joints &q) { guard->checkTableContact(q,goal->target.translation().head<2>()); };
       return [guard](const Joints &q) { guard->check(q); };
     }
-    if (!geometry_guard_)
+    if (!geometry_guard_) {
+      if(contact)throw Failure(HARDWARE_DISABLED,"table contact requires a geometry guard");
       return {};
+    }
+    if(contact)return [this,goal](const Joints &q) { geometry_guard_->checkTableContact(q,goal->target.translation().head<2>()); };
     return [this](const Joints &q) { geometry_guard_->check(q); };
   }
   TaskGate gate_;
@@ -364,12 +370,17 @@ class ArmNode final : public rclcpp::Node {
     auto result = std::make_shared<typename Action::Result>();
     bool success = false;
     const auto effective=config_.forProfile(h->get_goal()->profile);
-    auto safety=safetyCheck(h->get_goal()->profile);
+    Goal goal;
+    auto safety=safetyCheck(h->get_goal()->profile,&goal);
     Executor executor(effective, *driver_, *state_, gate_, model_, safety);
     try {
       if (shutdown_ || gate_.canceled())
         throw Failure(CANCELED, "canceled before planning");
-      const auto goal = decode(*h->get_goal());
+      goal = decode(*h->get_goal());
+      if ((h->get_goal()->profile.empty() ? config_.default_profile : h->get_goal()->profile)=="table_contact") {
+        auto s=state_->snapshot();
+        validateTableContactGoal(goal,model_->tcp(s.feedback.q),effective);
+      }
       auto planning_deadline = Clock::now() + std::chrono::duration<double>(
                                                   config_.planning_timeout);
       Planner planner(

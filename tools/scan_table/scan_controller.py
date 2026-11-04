@@ -66,8 +66,8 @@ class ScanLedger:
         return dict(view_id=view['id'],independent_frames=len(frames),targets=summaries,unlocated_observations=unlocated,coverage_state='SEEN_UNRESOLVED' if unlocated or any(t['class_name']=='unknown' or t['position_state']!='stable_repeatability_only' for t in summaries) else 'OBSERVED_VALID_CANDIDATES_ONLY',all_physical_objects_confirmed=False)
 
 class Controller:
-    def __init__(self,config,out,execute):
-        self.c=config;self.out=out;self.execute=execute;self.n=rclpy.create_node('xiangqi_scan_controller')
+    def __init__(self,config,out,execute,node_name='xiangqi_scan_controller'):
+        self.c=config;self.out=out;self.execute=execute;self.n=rclpy.create_node(node_name)
         self.arm={};self.joint={};self.scene=deque(maxlen=300);self.goal=None;self.pending=None;self.terminal=None;self.abort=False
         self.subs=[self.n.create_subscription(ArmState,'/arm/state',lambda m:self.receive('arm',m),100),self.n.create_subscription(JointState,'/arm/joint_states',lambda m:self.receive('joint',m),100),self.n.create_subscription(String,'/pose/xiangqi/detections',self.receive_scene,10)]
         self.client=ActionClient(self.n,MoveArm,'/arm/move')
@@ -233,7 +233,8 @@ class Controller:
                 self.spin()
                 if self.scene and self.scene[-1].get('base_transform_valid') and 0<=(self.now()-self.scene[-1]['stamp_ns'])*1e-9<=.5:break
             else:raise RuntimeError('fresh qualified scene unavailable')
-            for v in [dict(id='home')]+self.c['views']:
+            initial=[dict(id='home')] if self.c.get('initial_home',True) else []
+            for v in initial+self.c['views']:
                 self.action(v,True)
                 if self.execute:
                     self.action(v,False)
@@ -257,7 +258,7 @@ class Controller:
             self.report.update(ended_ns=self.now(),target_hypotheses=self.ledger.targets,unique_physical_target_count=None,physical_coverage_fraction=None)
             write(self.out/'scan-result.json',self.report)
             self.result_pub.publish(String(data=json.dumps(dict(scan_id=self.report['scan_id'],status=self.report['status'],result_file=str(self.out/'scan-result.json'),motion_ready=False,grasp_ready=False))))
-            self.events.close();self.n.destroy_node()
+            self.events.close();self.client.destroy();self.n.destroy_node()
         return self.report['status']!='FAULT'
 
 def main():

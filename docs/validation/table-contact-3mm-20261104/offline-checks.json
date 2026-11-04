@@ -1,0 +1,123 @@
+{
+  "checks": [
+    {
+      "case": "recorded_ordinary_observation_pose",
+      "accepted": true,
+      "expected_accepted": true,
+      "passed": true,
+      "detail": "accepted"
+    },
+    {
+      "case": "ordinary_profile_keeps_20mm",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "guard table clearance"
+    },
+    {
+      "case": "target_local_3mm_accepts_representative_pick_plane",
+      "accepted": true,
+      "expected_accepted": true,
+      "passed": true,
+      "detail": "accepted"
+    },
+    {
+      "case": "less_than_3mm_rejected",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "guard table clearance"
+    },
+    {
+      "case": "low_fingers_outside_target_rejected",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "guard table clearance"
+    },
+    {
+      "case": "vertical_descend_scope",
+      "accepted": true,
+      "expected_accepted": true,
+      "passed": true,
+      "detail": "accepted"
+    },
+    {
+      "case": "nonvertical_operation_4",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "table_contact only permits vertical DESCEND/RETREAT"
+    },
+    {
+      "case": "nonvertical_operation_0",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "table_contact only permits vertical DESCEND/RETREAT"
+    },
+    {
+      "case": "nonvertical_operation_3",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "table_contact only permits vertical DESCEND/RETREAT"
+    },
+    {
+      "case": "nonvertical_operation_5",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "table_contact only permits vertical DESCEND/RETREAT"
+    },
+    {
+      "case": "over_150mm_vertical_travel_rejected",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "table_contact vertical travel exceeds 150mm"
+    },
+    {
+      "case": "global_3mm_still_rejected",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "guard floor/normalization invalid"
+    },
+    {
+      "case": "legacy_model_has_no_implicit_exception",
+      "accepted": false,
+      "expected_accepted": false,
+      "passed": true,
+      "detail": "target-local table contact is not configured"
+    },
+    {
+      "case": "production_planner_vertical_path_with_numeric_ik",
+      "accepted": true,
+      "expected_accepted": true,
+      "passed": true,
+      "detail": "accepted"
+    },
+    {
+      "case": "contact_stage_vertical_retreat_to_ordinary_safe_height",
+      "accepted": true,
+      "expected_accepted": true,
+      "passed": true,
+      "detail": "accepted"
+    }
+  ],
+  "passed": true,
+  "robot_commands_sent": 0,
+  "sdk_ik_used": false,
+  "synthetic_winding_for_offline_only": true,
+  "real_world_3mm_clearance_validated": false,
+  "planned_samples": 101,
+  "planned_duration_s": 3,
+  "planned_final_tcp_z_m": -0.003910000006867448,
+  "minimum_moving_finger_model_clearance_m": 0.0052665629454302,
+  "minimum_other_model_clearance_m": 0.07145952679956648,
+  "candidate_loaded": true,
+  "production_robot_commands_sent": 1,
+  "build_success": true,
+  "independent_install_prefix": "/home/kuang/workspace/chess_robot/runs/table_contact_20261104_review/install"
+}

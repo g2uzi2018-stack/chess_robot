@@ -1,0 +1,7 @@
+# Candidate only: align nominal TCP workspace minimum with confirmed bare table.
+# This does not change ground_z_m, clearance_m, TCP, reference or collision hulls.
+# Not loaded into the currently running controller.
+chess_robot_arm:
+  ros__parameters:
+    workspace:
+      min_m: [-0.8, -0.8, -0.010]

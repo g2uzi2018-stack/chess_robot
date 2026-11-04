@@ -1,0 +1,13 @@
+# Not loaded. Candidate for the separately built table-contact controller.
+chess_robot_arm:
+  ros__parameters:
+    workspace:
+      min_m: [-0.8, -0.8, -0.010]
+    safety:
+      model_file: /home/kuang/workspace/chess_robot/src/chess_robot_arm/config/nova5_ag95_table_contact.candidate.yaml
+    profiles:
+      names: [roundtrip_low, roundtrip_high, alignment, table_contact]
+      table_contact: {speed_rad_s: 0.05, acceleration_rad_s2: 0.10}
+    exploration:
+      stages: [roundtrip_low, roundtrip_high, alignment, table_contact]
+      table_contact: {joint_radius_rad: 6.0, tcp_radius_m: 1.1, twist_limit_rad: 6.283185307179586}

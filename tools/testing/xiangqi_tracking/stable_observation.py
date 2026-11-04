@@ -171,13 +171,16 @@ class AuditEpoch:
                         self.token=uuid.uuid4().hex;self.epoch_start_ns=host
                     if not self.epoch_start_ns:self.epoch_start_ns=host
                     if controller==self.controller:continue
-                    previous_q=self.q;previous_host=self.host
+                    previous_q=self.q;previous_controller=self.controller
                     self.controller=controller;self.host=host
                     self.q=np.radians(struct.unpack_from('<6d',frame,432))
                     speed=np.radians(struct.unpack_from('<6d',frame,480));mode=struct.unpack_from('<Q',frame,24)[0]
                     good=bool(mode in (4,5) and np.isfinite(self.q).all() and np.isfinite(speed).all() and max(abs(speed))<=.002)
-                    if previous_q is not None and host>previous_host:
-                        good=good and max(abs(self.q-previous_q))/((host-previous_host)*1e-9)<=.002
+                    if previous_q is not None and previous_controller is not None:
+                        # Controller TimeStamp is milliseconds. Host receive gaps
+                        # include network batching and cannot measure joint speed.
+                        dt=(controller-previous_controller)*1e-3
+                        good=good and 0 < dt <= .2 and max(abs(self.q-previous_q))/dt<=.002
                     if self.ok and not good:
                         self.token=uuid.uuid4().hex;self.epoch_start_ns=host
                     self.ok=bool(good)

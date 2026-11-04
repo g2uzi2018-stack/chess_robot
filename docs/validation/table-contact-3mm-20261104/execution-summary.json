@@ -1,0 +1,26 @@
+{
+  "status": "HOLD_FOR_OPERATOR_OBSERVATION",
+  "physical_stop_confirmed": true,
+  "sdk_plan_passed": true,
+  "executed": true,
+  "arrival_detail": "measured arrival verified",
+  "start_tcp_m": [
+    0.0091712796581064,
+    -0.4658041480467656,
+    0.019673658111174636
+  ],
+  "final_tcp_m": {
+    "x": 0.00917529955272765,
+    "y": -0.46579631049336895,
+    "z": -0.004243465651177253
+  },
+  "vertical_descent_mm": 23.91712376235189,
+  "gripper_commands_sent": 0,
+  "grasp_executed": false,
+  "active_service": "chess-robot-table-contact-observe-20261104-02.service",
+  "original_service_running": false,
+  "checkpoint_identity_preserved": true,
+  "build_type": "Release",
+  "operator_measurement_pending": true,
+  "restore_original_only_after_retreat": true
+}

@@ -1,0 +1,407 @@
+{
+  "schema": "xiangqi_pick_stack_ros_contract_validation/v1",
+  "date": "2026-11-04",
+  "ros_domain_id": 194,
+  "localhost_only": true,
+  "synthetic": true,
+  "production_hardware_actions_sent": 0,
+  "physical_safety_or_IK_validated": false,
+  "cases": [
+    {
+      "mode": "success",
+      "error": null,
+      "layers": 1,
+      "object_state": "empty",
+      "arm_calls": [
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 1,
+          "plan": true
+        },
+        {
+          "op": 1,
+          "plan": false
+        },
+        {
+          "op": 2,
+          "plan": true
+        },
+        {
+          "op": 2,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 1,
+          "plan": true
+        },
+        {
+          "op": 1,
+          "plan": false
+        },
+        {
+          "op": 2,
+          "plan": true
+        },
+        {
+          "op": 2,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        }
+      ],
+      "gripper_calls": [
+        {
+          "operation": 1,
+          "contact": false,
+          "raw": 1000
+        },
+        {
+          "operation": 1,
+          "contact": true,
+          "raw": 0
+        },
+        {
+          "operation": 1,
+          "contact": false,
+          "raw": 1000
+        }
+      ],
+      "confirmation_kinds": [
+        "WORKSPACE",
+        "SEGMENT",
+        "SEGMENT",
+        "SEGMENT",
+        "SEGMENT",
+        "SUPPORT",
+        "STABLE"
+      ],
+      "cancelled": 0
+    },
+    {
+      "mode": "reject_descent",
+      "error": "injected planner refusal",
+      "layers": 0,
+      "object_state": "empty",
+      "arm_calls": [
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 1,
+          "plan": true
+        }
+      ],
+      "gripper_calls": [
+        {
+          "operation": 1,
+          "contact": false,
+          "raw": 1000
+        }
+      ],
+      "confirmation_kinds": [
+        "WORKSPACE"
+      ],
+      "cancelled": 0
+    },
+    {
+      "mode": "drop",
+      "error": "fresh real initialized gripper feedback unavailable / dropped",
+      "layers": 0,
+      "object_state": "held",
+      "arm_calls": [
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 1,
+          "plan": true
+        },
+        {
+          "op": 1,
+          "plan": false
+        },
+        {
+          "op": 2,
+          "plan": true
+        },
+        {
+          "op": 2,
+          "plan": false
+        }
+      ],
+      "gripper_calls": [
+        {
+          "operation": 1,
+          "contact": false,
+          "raw": 1000
+        },
+        {
+          "operation": 1,
+          "contact": true,
+          "raw": 0
+        }
+      ],
+      "confirmation_kinds": [
+        "WORKSPACE",
+        "SEGMENT",
+        "SEGMENT"
+      ],
+      "cancelled": 1
+    },
+    {
+      "mode": "release_fail",
+      "error": "new real gripper completion not established: injected release failure",
+      "layers": 0,
+      "object_state": "unknown",
+      "arm_calls": [
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 4,
+          "plan": true
+        },
+        {
+          "op": 4,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 1,
+          "plan": true
+        },
+        {
+          "op": 1,
+          "plan": false
+        },
+        {
+          "op": 2,
+          "plan": true
+        },
+        {
+          "op": 2,
+          "plan": false
+        },
+        {
+          "op": 0,
+          "plan": true
+        },
+        {
+          "op": 0,
+          "plan": false
+        },
+        {
+          "op": 1,
+          "plan": true
+        },
+        {
+          "op": 1,
+          "plan": false
+        }
+      ],
+      "gripper_calls": [
+        {
+          "operation": 1,
+          "contact": false,
+          "raw": 1000
+        },
+        {
+          "operation": 1,
+          "contact": true,
+          "raw": 0
+        },
+        {
+          "operation": 1,
+          "contact": false,
+          "raw": 1000
+        }
+      ],
+      "confirmation_kinds": [
+        "WORKSPACE",
+        "SEGMENT",
+        "SEGMENT",
+        "SEGMENT",
+        "SEGMENT",
+        "SUPPORT"
+      ],
+      "cancelled": 0
+    },
+    {
+      "mode": "wrong_ack",
+      "error": "operator confirmation timed out: WORKSPACE",
+      "layers": 0,
+      "object_state": "empty",
+      "arm_calls": [],
+      "gripper_calls": [],
+      "confirmation_kinds": [
+        "WORKSPACE"
+      ],
+      "cancelled": 0
+    }
+  ],
+  "passed": true,
+  "temporary_fixture_removed_on_exit": true
+}

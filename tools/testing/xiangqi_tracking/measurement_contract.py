@@ -330,8 +330,23 @@ def validate(packet, now):
                 or re.fullmatch('[0-9a-f]{64}',sha) is None
                 or compute.get('candidate_artifact_sha256')!=sha
                 or compute.get('candidate_network_calls')!=1
-                or compute.get('roi_network_calls')!=len(crops)):
+                or not integer(compute.get('roi_network_calls'))):
             raise ContractError('missing lite candidate engine provenance')
+        sizes=compute.get('roi_batch_sizes')
+        declared=identity.get('roi_batch_size')
+        if declared is not None:
+            if type(declared) is not int or declared not in (1,2,4) or sizes is None:
+                raise ContractError('missing declared ROI batch provenance')
+        elif sizes is not None:
+            raise ContractError('missing ROI batch configuration identity')
+        if sizes is None:
+            if compute['roi_network_calls']!=len(crops):
+                raise ContractError('missing ROI batch provenance')
+        elif (not isinstance(sizes,list) or len(sizes)!=compute['roi_network_calls']
+              or compute.get('roi_count')!=len(crops)
+              or any(type(size) is not int or not 1 <= size <= declared for size in sizes)
+              or sum(sizes)!=len(crops)):
+            raise ContractError('incomplete ROI batch provenance')
     indices = set()
     for d in detections:
         if not isinstance(d, dict) or not integer(d.get('instance_index')):

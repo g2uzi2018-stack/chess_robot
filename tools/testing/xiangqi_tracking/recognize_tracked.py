@@ -79,6 +79,14 @@ class Experiment:
         if self.model is not None:assert self.model.task=='segment'
         self.imgsz=imgsz
         self.half=half
+        self.roi_batch_size=int(os.environ.get('XIANGQI_ROI_BATCH_SIZE','1'))
+        if self.roi_batch_size not in (1,2,4):raise ValueError('ROI batch size must be 1, 2 or 4')
+        self.roi_planner_mode=os.environ.get('XIANGQI_ROI_PLANNER','legacy')
+        self.roi_group_max_size=int(os.environ.get('XIANGQI_ROI_GROUP_MAX_SIZE','640'))
+        if self.roi_planner_mode not in ('legacy','grouped'):
+            raise ValueError('ROI planner must be legacy or grouped')
+        if not 480 <= self.roi_group_max_size <= 704 or self.roi_group_max_size%32:
+            raise ValueError('ROI group maximum must be stride-aligned within 480..704')
         self.camera_only=bool(camera_only)
         self.candidate_mode=os.environ.get('XIANGQI_CANDIDATE_MODE','yolo')
         if self.candidate_mode not in ('yolo','depth_shadow','lite'):
@@ -111,7 +119,8 @@ class Experiment:
             self.identity.update(candidate_mode='lite',candidate_artifact=str(self.candidate_artifact),
                                  candidate_artifact_sha256=self.candidate_sha256,
                                  candidate_input_hw=[384,640],candidate_conf=self.candidate_conf,
-                                 candidate_dedup_iou=.65)
+                                 candidate_dedup_iou=.65,roi_batch_size=self.roi_batch_size,
+                                 roi_planner=self.roi_planner_mode,roi_group_max_size=self.roi_group_max_size)
         if self.depth_configuration is not None:
             self.identity.update(candidate_mode=self.candidate_mode,
                                  depth_config_sha256=self.depth_configuration['config_sha256'],
@@ -125,7 +134,12 @@ class Experiment:
         assert self.model is not None
         start=time.monotonic()
         x1,y1,x2,y2=roi if roi is not None else (0,0,color.shape[1],color.shape[0])
-        result=self.model.predict(color[y1:y2,x1:x2],device=0,imgsz=self.imgsz,conf=.25,verbose=False,retina_masks=True,half=self.half)[0]
+        result=self.model.predict(color[y1:y2,x1:x2],device=0,imgsz=self.imgsz,conf=.25,verbose=False,retina_masks=True,half=self.half,rect=True,batch=1)[0]
+        return self._detection_packet(result,color,[x1,y1,x2,y2],time.monotonic()-start)
+
+    def _detection_packet(self,result,color,roi,detector_s):
+        conversion_started=time.monotonic()
+        x1,y1,x2,y2=roi
         predictions=result.boxes.data.cpu().numpy()
         masks=(result.masks.data.cpu().numpy()>.5).astype(np.uint8) if result.masks is not None else None
         parameter_device=None
@@ -137,7 +151,32 @@ class Experiment:
         compute=dict(predictor_device=str(self.model.predictor.device),model_parameter_device=parameter_device,boxes_device=str(result.boxes.data.device),masks_device=str(result.masks.data.device) if result.masks is not None else None,fp16=fp16,inference_backend=self.inference_backend,inference_artifact_sha256=self.artifact_sha256)
         if self.inference_backend=='tensorrt':
             compute.update(matmul_allow_tf32=bool(__import__('torch').backends.cuda.matmul.allow_tf32),cudnn_allow_tf32=bool(__import__('torch').backends.cudnn.allow_tf32))
-        return dict(predictions=predictions,masks=masks,names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=time.monotonic()-start,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
+        return dict(predictions=predictions,masks=masks,names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=detector_s+time.monotonic()-conversion_started,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
+
+    def detect_rois(self,color,crops):
+        from roi_batch import roi_batches
+        packets=[None]*len(crops)
+        for batch_id,indices in enumerate(roi_batches(crops,self.roi_batch_size)):
+            images=[color[crops[i][1]:crops[i][3],crops[i][0]:crops[i][2]] for i in indices]
+            start=time.monotonic()
+            # Mixed-size square inputs still letterbox to exactly the same
+            # square as independent rect=True calls. Rectangles retain their
+            # exact native-shape group and therefore serial rect=True padding.
+            square=images[0].shape[0]==images[0].shape[1]
+            results=self.model.predict(images,device=0,imgsz=self.imgsz,conf=.25,
+                verbose=False,retina_masks=True,half=self.half,rect=not square,
+                batch=len(indices))
+            elapsed=time.monotonic()-start
+            if len(results)!=len(indices):raise ValueError('ROI batch result count mismatch')
+            for i,result in zip(indices,results):
+                crop=crops[i]
+                if result.orig_shape!=(crop[3]-crop[1],crop[2]-crop[0]):
+                    raise ValueError('ROI batch result image ownership mismatch')
+                packet=self._detection_packet(result,color,crop,elapsed/len(indices))
+                packet['roi_batch_id']=batch_id
+                packet['roi_batch_size']=len(indices)
+                packets[i]=packet
+        return packets
 
     def detect_lite(self,color):
         if color.shape[:2]!=(720,1280):raise ValueError('Candidate engine requires 1280x720 source images')
@@ -155,7 +194,14 @@ class Experiment:
     def detect_candidates(self,color,hint=None,depth=None,metadata=None):
         from candidate_roi import recognize, recognize_depth, recognize_lite
         if getattr(self,'candidate_mode','yolo')=='lite':
-            return recognize_lite(color,self.detect_lite,self.detect,self.model.names,hint)
+            planner=None
+            if self.roi_planner_mode=='grouped':
+                from functools import partial
+                from candidate_roi import plan_grouped_crops
+                planner=partial(plan_grouped_crops,max_size=self.roi_group_max_size)
+            return recognize_lite(color,self.detect_lite,self.detect,self.model.names,hint,
+                                  detect_many=self.detect_rois if self.roi_batch_size>1 else None,
+                                  planner=planner)
         if getattr(self,'candidate_mode','yolo')=='depth_shadow':
             if depth is None or metadata is None:
                 raise ValueError('depth_shadow requires same-frame depth and acquisition metadata')
