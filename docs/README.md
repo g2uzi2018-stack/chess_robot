@@ -8,6 +8,7 @@
    - RGB-D → `xiangqi_perception` → 相机测量JSON → `xiangqi_scene`：后者维护基座变换、跨帧ID和两秒快照；缺机械臂时相机检测可继续。
    - `tracking_preview`：独立叠加绘制；视频帧率不代表识别完成率。
    - xiangqi_scan_controller：按需编排Home→17个停点→Home，复用arm Action与scene；[运行说明](../tools/scan_table/README.md)、[限定验证](validation/xiangqi-table-scan-20261103.md)。
+   - 抓取/叠放主控与独立单枚试抓：[运行与接口](../tools/pick_stack/README.md)、[红卒抓取及20mm抬升验证](validation/xiangqi-pick-trial-20261104.md)；叠放尚未验收。
    - 目标 → `/arm/move` → Planner → FK/IK、扭转与几何检查 → Executor → Nova5 ServoJ。
    - 实测关节 → `chess_robot_twist` 连续历史 → `/arm/state` 与停稳存档。
    - `handeye_node` 使用现有运动与视觉接口，完成停稳采样、PARK 求解和留出验证；不发布生产 TF。

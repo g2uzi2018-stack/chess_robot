@@ -1,0 +1,13 @@
+{
+  "old": {
+    "real_replayed_records": 1000,
+    "bad_frames": 7,
+    "tokens": 8
+  },
+  "new": {
+    "real_replayed_records": 1000,
+    "bad_frames": 0,
+    "tokens": 1
+  },
+  "injected_movement_rejected": true
+}

@@ -1,0 +1,103 @@
+{
+  "status": "GRASPED_LIFTED_20MM_HOLD",
+  "scan_status": "PARTIAL",
+  "scanned_views": 17,
+  "scan_returned_home": true,
+  "target_candidates": 8,
+  "picked_class": "red_pawn",
+  "original_removed_position_excluded": true,
+  "nominal_pick_tcp_z_m": -0.005235731876821386,
+  "observed_top_radius_m": 0.018997340213287077,
+  "physical_stop_confirmed": true,
+  "held": true,
+  "gripper_final": {
+    "header": {
+      "stamp": {
+        "sec": 1793776967,
+        "nanosec": 139601064
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.32526489,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 1,
+    "grip_status": 2,
+    "position_raw": 322,
+    "object_detected": true,
+    "object_dropped": false,
+    "detail": "confirmed by fresh device feedback"
+  },
+  "arm_final": {
+    "header": {
+      "stamp": {
+        "sec": 1793776967,
+        "nanosec": 132215533
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": true,
+    "reference_valid": true,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 5,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 1793776967,
+          "nanosec": 132215533
+        },
+        "frame_id": "base_link"
+      },
+      "pose": {
+        "position": {
+          "x": 0.2663337693708581,
+          "y": -0.7152801499512204,
+          "z": 0.014134940296530563
+        },
+        "orientation": {
+          "x": 0.4829845525942257,
+          "y": 0.5185512263213337,
+          "z": -0.48022887539586406,
+          "w": 0.5169243415356074
+        }
+      }
+    },
+    "signed_twist_rad": 0.3503777718302683,
+    "total_twist_rad": 0.7146647883200383,
+    "twist_energy_rad2_per_m": 0.6620420490624375,
+    "diagnostic": "stopped checkpoint restored; winding retained without zeroing; endpoint_delta_rad=0.000030; no_unobserved_motion=true; checkpoint=durable stopped save ready; actuator=not requested; history alone grants no motion readiness"
+  },
+  "gripper_actions": [
+    {
+      "code": 1,
+      "detail": "confirmed by fresh device feedback",
+      "raw": 1000,
+      "grip_status": 1
+    },
+    {
+      "code": 2,
+      "detail": "confirmed by fresh device feedback",
+      "raw": 322,
+      "grip_status": 2
+    }
+  ],
+  "stacked": false,
+  "returned_home_after_pick": false,
+  "operator_visual_confirmation_pending": false,
+  "operator_visual_confirmation": {
+    "date": "2026-11-04",
+    "source": "user visual confirmation",
+    "statement": "非常好,非常稳定的抓取了",
+    "piece_lifted_confirmed": true,
+    "grip_stable_confirmed": true,
+    "scope": "this red pawn at this location and fixed orientation; no broader calibration claim"
+  }
+}
