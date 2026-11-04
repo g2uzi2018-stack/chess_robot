@@ -15,7 +15,7 @@ Nova5＋AG95＋D405 的 ROS 2 Humble 工程。目标为识别、定位与夹取�
 轻量YOLO26n单类候选模型已接入生产；ROI分组和batch仍为未部署实验；深度预检测只在 `depth_shadow` 实验中使用。
 四子候选＋ROI约35ms是离线阶段耗时，不是完整ROS实时帧率。自动运动/抓取资格不能由检测或快照成功推导。
 
-单颗试抓结果、候选高度与叠放前待办见[2026-11-04抓取记录](docs/validation/xiangqi-pick-trial-20261104.md)；[受监督流程入口](tools/pick_stack/README.md)保留完整抓放的缺测前检。
+单颗试抓结果、候选高度与叠放前待办见[2026-11-04抓取记录](docs/validation/xiangqi-pick-trial-20261104.md)；[受监督流程入口](tools/pick_stack/README.md)执行入口先张爪并回Home，再做完整抓放前检；高度量测见[汇总记录](docs/validation/xiangqi-height-measurements-20261104.md)。
 
 ## 2 从这里查阅
 

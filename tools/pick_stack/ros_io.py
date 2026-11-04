@@ -84,6 +84,7 @@ class RealIO(PlanInspector):
         self.grip_pending = self.grip_goal = self.grip_terminal = None
         self.held = False
         self.prechecked = False
+        self.commissioned = False
         self.at_home = False
         self.layers = 0
         self.last_placement_stamp = 0
@@ -158,13 +159,30 @@ class RealIO(PlanInspector):
                 return reply
         raise TimeoutError('operator confirmation timed out: '+kind)
 
+    def startup_precheck(self, config):
+        # Device readiness is independent of the later grasp/stack calibration.
+        if not __debug__:
+            raise RuntimeError('do not run physical controller with Python assertions disabled')
+        self.stopped()
+        self.check_parameters()
+        if not self.client.wait_for_server(timeout_sec=5) or not self.grip_client.wait_for_server(timeout_sec=5):
+            raise RuntimeError('existing arm/gripper Action unavailable')
+        self.report['startup_gripper_before'] = convert(self.gripper_state(idle=True))
+        self.prechecked = True
+
+    def open_startup(self):
+        # This is the intentional startup release, including a previously held piece.
+        self.held = False
+        self.gripper_move(self.demo['startup_open_raw'], False)
+        self.report['startup_open_completed'] = True
+
     def precheck(self, config):
+        if not self.prechecked or not self.at_home:
+            raise RuntimeError('startup open and formal Home must complete before pick precheck')
         from demo import execution_blockers, calibration_fingerprint
         blockers = execution_blockers(config)
         if blockers:
             raise RuntimeError('; '.join(blockers))
-        if not __debug__:
-            raise RuntimeError('do not run physical controller with Python assertions disabled')
         # Review is bound to the exact measured parameters and unchanged models.
         review = json.loads(Path(config['commissioning_review_file']).read_text())
         if not (review['calibration_sha256'] == calibration_fingerprint(config) and
@@ -183,11 +201,11 @@ class RealIO(PlanInspector):
             raise RuntimeError('initial gripper object state is not empty')
         self.confirm('WORKSPACE', stack_xy_m=config['stack_xy_m'],
                      requirements='exclusive control; empty bare-table support; source and stack envelopes/exit clear')
-        self.prechecked=True
+        self.commissioned=True
 
     def scan(self):
-        if not self.prechecked:
-            raise RuntimeError('physical scan requires completed precheck')
+        if not self.commissioned:
+            raise RuntimeError('physical scan requires completed pick precheck')
         if not self.at_home:
             raise RuntimeError('workflow must reach formal Home before scanning')
         directory = self.out/'scan'

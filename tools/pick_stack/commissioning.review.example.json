@@ -1,7 +1,7 @@
 {
   "calibration_sha256": null,
   "source_sha256": null,
-  "max_pieces": 1,
+  "max_pieces": 3,
   "reviewer": null,
   "contact_policy_evidence": {"path": null, "sha256": null},
   "payload_stack_evidence": {"path": null, "sha256": null}

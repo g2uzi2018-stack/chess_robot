@@ -1,6 +1,6 @@
 # 扫描后逐枚抓取、Home下方裸桌叠放 demo
 
-2026-11-04：真实 ROS 执行适配已接入，默认一枚。独立受监督试抓已完成：另一位置红卒在候选名义TCP基座Z=-0.005235732m处抓取、竖直抬升约20mm并停稳，用户目视确认稳定。尚未松爪或叠放；完整抓放配置中的未量测值仍为null，缺测时在动作前退出。详见[单颗试抓记录与证据](../../docs/validation/xiangqi-pick-trial-20261104.md)。
+2026-11-04：真实 ROS 执行适配已接入，默认三枚。独立受监督试抓已完成：另一位置红卒在候选名义TCP基座Z=-0.005235732m处抓取、竖直抬升约20mm并停稳，用户目视确认稳定。尚未松爪或叠放；完整抓放配置中的未量测值仍为null，缺测时在启动张爪、回Home完成后的抓放前检退出，尚不进入扫描或抓放。详见[单颗试抓记录与证据](../../docs/validation/xiangqi-pick-trial-20261104.md)。
 
 `grasp_trial.py`是独立的受监督单枚抓取工具，结束于持物抬升保持；`observe_contact_point.py`和`observe_vertical_step.py`用于候选接近/竖直观察。它们使用现场候选安装与独立参数，不表示默认`run_once.sh`已能完成整套叠放。候选高度只经该位置单次验证，不能当作所有棋子的TCP标定。
 
@@ -16,22 +16,22 @@
 | `/pick_stack/confirmation_request` | 当前人工观察请求，String JSON，transient-local |
 | `/pick_stack/confirmation` | 人工确认回复，String JSON；必须匹配task/request/kind/layer |
 
-流程：前检→人工确认控制权/裸桌空位→现有扫描→正式Home并证明停稳→选搜索种子→观察位重观→预抓对齐→再次重观→抓取下降→新夹持→抬升→固定Home投影预放→下降→确认承托→释放→撤离→观察堆顶→确认放稳→提交层数/退役源位置→下一枚→正常正式Home。
+流程：设备前检→启动张爪并确认张开→正式Home并证明停稳→抓放前检/人工确认控制权与裸桌空位→现有扫描→正式Home并证明停稳→选搜索种子→观察位重观→预抓对齐→再次重观→抓取下降→新夹持→抬升→固定Home投影预放→下降→确认承托→释放→撤离→观察堆顶→确认放稳→提交层数/退役源位置→下一枚→正常正式Home。
 
 `scan_controller.Controller`只增加可选node_name参数，原独立扫描行为不变。demo不创建驱动、RS485或SDK连接，不启动/重启服务，不改参考、碰撞门限、手眼或生产视觉。源代码修改不等于部署。
 
 ## 运行入口
 
-整套业务现在使用一个入口 `bash tools/pick_stack/run_once.sh`，由`Demo.run(RealIO)`连续调度。显式阶段为`HOME_START → SCAN → 抓取/叠放循环 → RETURN_HOME`。主控先实测回Home，内部扫描器跳过重复的起始Home，但仍保留扫完回Home；独立扫描器默认行为不变。维护用的参考恢复/受控使能不混入正常业务循环，也不会在运行途中自动重启驱动。
+整套业务现在使用一个入口 `bash tools/pick_stack/run_once.sh`，由`Demo.run(RealIO)`连续调度。显式阶段为`STARTUP_PRECHECK → STARTUP_OPEN → HOME_START → PRECHECK → SCAN → 抓取/叠放循环 → RETURN_HOME`。启动张爪使用独立的`startup_open_raw=1000`，允许释放原有夹持物，核对真实张开反馈后才实测回Home。启动设备前检与完整抓放标定前检分开，后者缺项不会跳过启动张爪和Home。内部扫描器跳过重复的起始Home，但仍保留扫完回Home；独立扫描器默认行为不变。维护用的参考恢复/受控使能不混入正常业务循环，也不会在运行途中自动重启驱动。
 
 ```bash
-# 一次调用整套；当前生产配置缺测时会在PRECHECK退出，不发实体动作。
+# 实体业务启动会先张爪、回Home；当前抓放配置缺测时随后在PRECHECK退出。
 bash tools/pick_stack/run_once.sh \
   --execute --authorization '本聊天已授权单枚整套尝试' \
   --output runs/pick_stack_NEW_FULL
 ```
 
-输出`workflow.json`记录整套顺序和唯一调度器，`run-result.json`记录完成或具体阻塞阶段。默认一枚；真实接触/支承数据齐备后由代码逐段执行，不需要代理逐个调用机械臂或夹爪接口。首轮的人工承托/放稳确认仍按下述协议处理，不能把它称为已验收的无人值守堆叠。
+输出`workflow.json`记录整套顺序和唯一调度器，`run-result.json`记录完成或具体阻塞阶段。默认三枚；真实接触/支承数据齐备后由代码逐段执行，不需要代理逐个调用机械臂或夹爪接口。首轮的人工承托/放稳确认仍按下述协议处理，不能把它称为已验收的无人值守堆叠。
 
 从仓库根目录运行；每次使用新输出目录。普通审查/演练不导入ROS。
 
@@ -50,11 +50,21 @@ PYTHONDONTWRITEBYTECODE=1 python3 tools/pick_stack/demo.py \
 
 `--plan-current`配合历史`--scan-result`保留当前起点的独立端点检查，全为plan_only=true，不表示完整连续抓放路径已通过。
 
-真实运行入口为 `--execute --authorization '本轮明确授权记录' --output runs/NEW`。它始终重新扫描，拒绝同时传入历史`--scan-result`；默认不执行。当前配置尚不能用于实体运行，首次单枚仍须在本聊天明确协调授权和现场条件。
+真实运行入口为 `--execute --authorization '本轮明确授权记录' --output runs/NEW`。它始终重新扫描，拒绝同时传入历史`--scan-result`；默认不执行。当前配置仍缺完整抓放量测；设备前检通过后会执行启动张爪及Home，然后在抓放前检中退出。`--preflight`、审查、演练及只规划模式保持无实体执行，创建同名检查节点不会自动触发启动动作。
+
+本轮启动顺序和三颗行为验证见[调度变更记录](../../docs/validation/xiangqi-startup-stack-three-20261104.md)。
+
+## 启动与业务方法
+
+`Demo.prepare_startup()`编排设备前检、启动张爪与起始Home；`Demo.return_home()`统一起始和结束Home；`Demo.scan_workspace()`调用扫描并核对结束Home/停稳。`Demo.grasp_piece()`完成单枚重观、对齐、下降、夹持与抬升；`Demo.place_piece()`完成转移、承托、释放、撤离及放稳核对；`Demo.stack_pieces()`循环编排并累积层数。`RealIO`负责现有Action及反馈，业务方法不自建驱动。
+
+已有夹持物也按本次启动规则先松开。反馈失效、故障、未初始化或未停稳仍会退出；Home先只规划，若当前位置（例如低位）不满足普通Home几何规则，则停止，不自动强行回Home或追加未经标定的撤离路径。启动、只规划和故障退出互相区分。
 
 ## 校准与接触/持物边界
 
 台面base_z=-.010 m，棋厚.013 m，棋盘厚.014 m。裸桌第k层理论顶面 `-.010+.013*k`，1层.003 m，8层.094 m，绝不加棋盘厚。固定XY来自原日常Home模型FK投影，不用当前停靠姿态重定义Home。抓取处是否有棋盘不作假设，使用新测棋面与实测工具偏移。
+
+多次用户量测已集中保存在[高度量测记录](../../docs/validation/xiangqi-height-measurements-20261104.md)：张爪约130/53/30mm、完全闭爪约5mm及红卒单点候选高度。开合状态与参照假设分别保留。
 
 “TCP偏移”是软件假定的抓取点与两指实际夹住棋子的位置之间的距离。当前URDF的`grasp_link_offset=.20m`在description文档里明确是“旧抓取参考点，待定义/标定”，不是现场量测。不能直接把20cm填成实测参数。标定需要确定真实夹持中心和最低指尖相对于安装面的位置，再换算成代码参数。
 
@@ -97,6 +107,6 @@ bash tools/pick_stack/run_once.sh --observe-alignment \
 
 机械臂分别核对Action结果、有效实测TCP、位置/朝向与连续停稳；正式Home还核对日常关节。夹爪核对真实新GRASPED、指令后变化、释放到位和反馈时效，拒绝旧held。已验证的Action最终样本进入单调反馈缓存，避免较旧topic消息倒灌。持物时持续检测掉落。
 
-异常只取消本节点拥有的机械臂Action，再单独证明停稳；取消回执不等于停稳。夹爪不发取消，因为不能保证物理停止；只等待已提交结果并记录未知状态。不自动Home、开爪、初始化、重连、清错、使能、恢复参考或重放。层数只在承托、释放、撤离、堆顶观测与人工放稳全部通过后递增。
+异常只取消本节点拥有的机械臂Action，再单独证明停稳；取消回执不等于停稳。夹爪不发取消，因为不能保证物理停止；只等待已提交结果并记录未知状态。故障处理不自动Home、开爪、初始化、重连、清错、使能、恢复参考或重放；正常执行入口的首次张爪/Home属于显式启动业务。层数只在承托、释放、撤离、堆顶观测与人工放稳全部通过后递增。
 
 隔离ROS接口验证与本次限制见[接入验证记录](../../docs/validation/xiangqi-pick-stack-ros-integration-20261104.md)；先前静态几何与断链记录见[2026-11-03记录](../../docs/validation/xiangqi-pick-stack-20261103.md)。

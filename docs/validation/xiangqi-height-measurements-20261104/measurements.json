@@ -1,0 +1,65 @@
+{
+  "schema": "xiangqi_height_measurement_history/v1",
+  "date": "2026-11-04",
+  "source_thread_id": "01a1a525-ca7a-7132-b253-8b1dfbe57ba5",
+  "table_base_z_m": -0.01,
+  "piece_thickness_m": 0.013,
+  "support": "bare table; user explicitly confirmed no board",
+  "records": [
+    {
+      "id": "open_hover_130mm",
+      "source_message_id": "01a1a4d3-a73f-73b0-86c1-b446d3fec1e8",
+      "operator_statement": "是对准棋子中心点,夹爪张开,距离桌面约13cm",
+      "gripper_state": "open",
+      "reported_tip_to_table_m": 0.13,
+      "quality": "approximate; uncertainty not quantified",
+      "nominal_tcp_base_z_m": 0.09649326644174591,
+      "nominal_pose_source": "runs/pick_stack_alignment_20261104_01/alignment-result.json: nominal_hover_tcp_m (commanded hover)"
+    },
+    {
+      "id": "open_closer_53mm",
+      "source_message_id": "01a1a4e0-e868-7293-a17b-769b3f41f542",
+      "operator_statement": "距离桌面5.3cm另外当前没有任何棋盘放在上面,仍然对准中心,夹取工作守卫是啥你要解释一下",
+      "gripper_state": "open",
+      "reported_tip_to_table_m": 0.053,
+      "quality": "operator measurement; uncertainty not quantified",
+      "nominal_tcp_base_z_m": 0.019670188602212646,
+      "nominal_pose_source": "runs/pick_stack_closer_observation_20261104_01/opening-geometry.json: recorded_nominal_tcp_z_m"
+    },
+    {
+      "id": "open_contact_30mm",
+      "source_message_id": "01a1a523-a40b-7f13-8e76-041f44cd8980",
+      "operator_statement": "3cm左右",
+      "gripper_state": "open",
+      "reported_tip_to_table_m": 0.03,
+      "quality": "approximate observation; uncertainty not quantified",
+      "reference_assumption": "lowest fingertip to bare table, from question context",
+      "nominal_tcp_base_z_m": -0.004243465651177253,
+      "nominal_pose_source": "docs/validation/table-contact-3mm-20261104/execution-summary.json"
+    },
+    {
+      "id": "closed_5mm",
+      "source_message_id": "01a1a52c-b9e0-7b10-8031-4fd6a3f5615e",
+      "operator_statement": "那根据我们目前实际的测量夹爪完全合并高度只有约5mm",
+      "gripper_state": "fully closed, operator reported",
+      "reported_tip_to_table_m": 0.005,
+      "quality": "approximate; uncertainty not quantified",
+      "reference_assumption": "tip to bare table at preceding arm pose; assistant asked for clarification, no separate explicit confirmation found",
+      "nominal_tcp_base_z_m": null,
+      "raw_position": null
+    },
+    {
+      "id": "red_pawn_validated_pick",
+      "source_message_id": "01a1a537-3623-7162-b001-754ee68244f4",
+      "operator_statement": "第一个棋子的抓取高度,就先定为当前高度的低1mm",
+      "nominal_tcp_base_z_m": -0.005235731876821386,
+      "validation": "real red-pawn grasp and approximately 20mm vertical lift; user visually confirmed stable",
+      "confirmation_message_id": "01a1a578-28fe-7193-af23-013bd20c0c7c",
+      "gripper_final_raw": 322,
+      "gripper_final_status": 2,
+      "scope": "single piece, location and orientation; not a general surface-to-TCP transform"
+    }
+  ],
+  "conclusion": "Opening-dependent fingertip height must be distinguished from fixed nominal TCP and actual grasp center. No constant 23/24mm correction inferred.",
+  "full_grasp_tcp_calibration_complete": false
+}

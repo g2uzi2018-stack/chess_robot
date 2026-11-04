@@ -142,85 +142,108 @@ class Demo:
         self.emit = emit
         self.layers = 0
         self.retired = []
-        self.object_state = 'empty'
+        self.object_state = 'unknown'
 
     def phase(self, name, **data):
         self.emit(dict(phase=name, layers=self.layers, object_state=self.object_state, **data))
 
+    def return_home(self, io, phase='RETURN_HOME'):
+        self.phase(phase)
+        io.home()
+
+    def prepare_startup(self, io):
+        self.phase('STARTUP_PRECHECK')
+        io.startup_precheck(self.c)
+        self.phase('STARTUP_OPEN')
+        # Startup deliberately releases a previous grip before any Home motion.
+        io.open_startup()
+        self.object_state = 'empty'
+        self.return_home(io, 'HOME_START')
+
+    def scan_workspace(self, io):
+        self.phase('SCAN')
+        scan = io.scan()
+        if not (scan['returned_home'] and scan['physical_stop_confirmed']):
+            raise RuntimeError('scan did not return Home and prove measured stop')
+        return scan['target_hypotheses']
+
+    def grasp_piece(self, io, candidates):
+        seed = select_target(self.c, candidates, self.retired)
+        self.phase('SELECT', search_seed=seed['scan_target_id'])
+        # Coarse point used only for the calibrated observation pose.
+        observe = target_poses(self.c, seed, self.layers)['observe']
+        io.move('PREGRASP', observe, 'empty')
+        self.phase('REOBSERVE')
+        measured = None
+        for attempt in range(2):
+            try:
+                measured = qualified_target(self.c, seed, io.observe())
+                break
+            except RuntimeError as e:
+                self.phase('OBSERVATION_REJECTED', attempt=attempt+1, reason=str(e))
+        if measured is None:
+            raise RuntimeError('bounded fresh reobservation failed')
+        p = measured['base_surface_center_m']
+        if distance(p[:2], self.c['stack_xy_m']) <= self.c['stack_exclusion_radius_m'] or any(
+                distance(p[:2], q[:2]) <= self.c['retired_radius_m'] for q in self.retired):
+            raise RuntimeError('fresh target lies in stack/retired exclusion zone')
+        poses = target_poses(self.c, measured, self.layers)
+        self.phase('PREGRASP', fresh_measurement=measured)
+        io.open_empty()
+        io.move('PREGRASP', poses['pregrasp'], 'empty')
+        # Reassociation after this last alignment is mandatory too;
+        # otherwise a second move/occlusion could stale the descent XY.
+        check = qualified_target(self.c, measured | dict(class_name=seed['class_name']), io.observe())
+        if check['scene_identity'][1:] != measured['scene_identity'][1:]:
+            raise RuntimeError('camera/scene/reference identity changed after alignment')
+        if distance(check['base_surface_center_m'], p) > self.c['descent_tolerance_m']:
+            raise RuntimeError('target changed after pregrasp alignment')
+        io.check_descent_age(check['last_stamp_ns'])
+        self.phase('DESCEND_PICK')
+        io.move('DESCEND', poses['grasp'], 'empty')
+        self.object_state = 'unknown'  # Any attempted write can change physical state.
+        self.phase('GRIP')
+        io.grasp()
+        self.object_state = 'held'
+        self.phase('LIFT')
+        io.move('RETREAT', poses['pregrasp'], 'held')
+        return p, poses
+
+    def place_piece(self, io, source_position, poses):
+        self.phase('TRANSFER_HOME_XY')
+        io.move('PREGRASP', poses['preplace'], 'held')
+        self.phase('DESCEND_PLACE', support_top_z_m=top_z(self.c, self.layers))
+        io.move('DESCEND', poses['place'], 'held')
+        # Existing gripper has no independent support sensor. Explicit
+        # operator evidence is required while still holding the piece.
+        io.confirm_support(self.layers+1)
+        self.object_state = 'unknown'
+        self.phase('RELEASE')
+        io.release()
+        self.object_state = 'released_unverified'
+        self.phase('WITHDRAW')
+        io.move('RETREAT', poses['preplace'], 'released_unverified')
+        io.confirm_placement(self.layers+1, top_z(self.c, self.layers+1))
+        # Only support + release feedback + post-withdraw stability
+        # evidence can commit a layer and retire the original location.
+        self.layers += 1
+        self.retired.append(source_position)
+        self.object_state = 'empty'
+        self.phase('PLACED', expected_top_z_m=top_z(self.c, self.layers))
+
+    def stack_pieces(self, io, candidates):
+        for _ in range(self.c['max_pieces']):
+            source_position, poses = self.grasp_piece(io, candidates)
+            self.place_piece(io, source_position, poses)
+
     def run(self, io):
         try:
+            self.prepare_startup(io)
             self.phase('PRECHECK')
-            io.precheck(self.c)  # Must fail before scan motion if commissioning is incomplete.
-            self.phase('HOME_START')
-            io.home()
-            self.phase('SCAN')
-            scan = io.scan()
-            if not (scan['returned_home'] and scan['physical_stop_confirmed']):
-                raise RuntimeError('scan did not return Home and prove measured stop')
-            # Scan's normal endpoint is formal Home. Never redefine stack XY.
-            candidates = scan['target_hypotheses']
-            for _ in range(self.c['max_pieces']):
-                seed = select_target(self.c, candidates, self.retired)
-                self.phase('SELECT', search_seed=seed['scan_target_id'])
-                # Coarse point used only for the calibrated observation pose.
-                observe = target_poses(self.c, seed, self.layers)['observe']
-                io.move('PREGRASP', observe, 'empty')
-                self.phase('REOBSERVE')
-                measured = None
-                for attempt in range(2):
-                    try:
-                        measured = qualified_target(self.c, seed, io.observe())
-                        break
-                    except RuntimeError as e:
-                        self.phase('OBSERVATION_REJECTED', attempt=attempt+1, reason=str(e))
-                if measured is None:
-                    raise RuntimeError('bounded fresh reobservation failed')
-                p = measured['base_surface_center_m']
-                if distance(p[:2], self.c['stack_xy_m']) <= self.c['stack_exclusion_radius_m'] or any(
-                        distance(p[:2], q[:2]) <= self.c['retired_radius_m'] for q in self.retired):
-                    raise RuntimeError('fresh target lies in stack/retired exclusion zone')
-                poses = target_poses(self.c, measured, self.layers)
-                self.phase('PREGRASP', fresh_measurement=measured)
-                io.open_empty()
-                io.move('PREGRASP', poses['pregrasp'], 'empty')
-                # Reassociation after this last alignment is mandatory too;
-                # otherwise a second move/occlusion could stale the descent XY.
-                check = qualified_target(self.c, measured | dict(class_name=seed['class_name']), io.observe())
-                if check['scene_identity'][1:] != measured['scene_identity'][1:]:
-                    raise RuntimeError('camera/scene/reference identity changed after alignment')
-                if distance(check['base_surface_center_m'], p) > self.c['descent_tolerance_m']:
-                    raise RuntimeError('target changed after pregrasp alignment')
-                io.check_descent_age(check['last_stamp_ns'])
-                self.phase('DESCEND_PICK')
-                io.move('DESCEND', poses['grasp'], 'empty')
-                self.object_state = 'unknown'  # Any attempted write can change physical state.
-                self.phase('GRIP')
-                io.grasp()
-                self.object_state = 'held'
-                self.phase('LIFT')
-                io.move('RETREAT', poses['pregrasp'], 'held')
-                self.phase('TRANSFER_HOME_XY')
-                io.move('PREGRASP', poses['preplace'], 'held')
-                self.phase('DESCEND_PLACE', support_top_z_m=top_z(self.c, self.layers))
-                io.move('DESCEND', poses['place'], 'held')
-                # Existing gripper has no independent support sensor. Explicit
-                # operator evidence is required while still holding the piece.
-                io.confirm_support(self.layers+1)
-                self.object_state = 'unknown'
-                self.phase('RELEASE')
-                io.release()
-                self.object_state = 'released_unverified'
-                self.phase('WITHDRAW')
-                io.move('RETREAT', poses['preplace'], 'released_unverified')
-                io.confirm_placement(self.layers+1, top_z(self.c, self.layers+1))
-                # Only support + release feedback + post-withdraw stability
-                # evidence can commit a layer and retire the original location.
-                self.layers += 1
-                self.retired.append(p)
-                self.object_state = 'empty'
-                self.phase('PLACED', expected_top_z_m=top_z(self.c, self.layers))
-            self.phase('RETURN_HOME')
-            io.home()
+            io.precheck(self.c)
+            candidates = self.scan_workspace(io)
+            self.stack_pieces(io, candidates)
+            self.return_home(io)
             self.phase('COMPLETE')
         except BaseException as e:
             self.phase('FAULT', reason=str(e))
@@ -258,6 +281,12 @@ def rehearse(config, scan):
     events = []
 
     class SyntheticIO:
+        def startup_precheck(self, _):
+            pass
+
+        def open_startup(self):
+            events.append(dict(kind='synthetic_startup_open'))
+
         def precheck(self, _):
             pass
 
@@ -347,19 +376,13 @@ def main():
         (out/'workflow.json').write_text(json.dumps(dict(
             schema='xiangqi_pick_stack_workflow/v1',max_pieces=config['max_pieces'],
             authorization=args.authorization,
-            sequence=['PRECHECK','HOME_START','SCAN','REOBSERVE','PREGRASP','DESCEND_PICK',
+            sequence=['STARTUP_PRECHECK','STARTUP_OPEN','HOME_START','PRECHECK','SCAN','REOBSERVE','PREGRASP','DESCEND_PICK',
                       'GRIP','LIFT','TRANSFER_HOME_XY','DESCEND_PLACE','RELEASE','WITHDRAW',
                       'VERIFY_PLACEMENT','RETURN_HOME'],
             dispatcher='Demo.run(RealIO)',manual_action_dispatch=False),ensure_ascii=False,indent=2))
     if args.rehearse:
         (out/'rehearsal.json').write_text(json.dumps(rehearse(config, scan), ensure_ascii=False, indent=2))
     if args.execute:
-        blockers=execution_blockers(config)
-        if blockers:
-            (out/'run-result.json').write_text(json.dumps(dict(status='BLOCKED_PRECHECK',
-                blockers=blockers,physical_arm_actions=0,gripper_commands_sent=0,
-                last_phase='PRECHECK',authorization=args.authorization),ensure_ascii=False,indent=2))
-            raise SystemExit('PRECHECK BLOCKED before ROS commands: '+'; '.join(blockers))
         from ros_io import execute
         result=execute(config,out,args.authorization)
         print(json.dumps(dict(status=result['status'],layers=result['layers'],
