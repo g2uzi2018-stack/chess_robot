@@ -17,6 +17,8 @@ Nova5＋AG95＋D405 的 ROS 2 Humble 工程。目标为识别、定位与夹取�
 
 单颗试抓结果、候选高度与叠放前待办见[2026-11-04抓取记录](docs/validation/xiangqi-pick-trial-20261104.md)；[受监督流程入口](tools/pick_stack/README.md)执行入口先张爪并回Home，再做完整抓放前检；高度量测见[汇总记录](docs/validation/xiangqi-height-measurements-20261104.md)。
 
+最新实机结果见[2026-11-05 裸桌排一行](docs/validation/xiangqi-row-live-20261105.md)：已独立验证摆好 1 颗；第二颗起抬失去夹持后停止，空爪已撤离并回 Home。此前两层叠放及七点激光观察的事实与限制一并记录。
+
 ## 2 从这里查阅
 
 1. **使用和诊断**

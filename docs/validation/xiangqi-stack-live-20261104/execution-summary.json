@@ -1,0 +1,122 @@
+{
+  "schema": "xiangqi_live_three_piece_attempt/v1",
+  "date": "2026-11-04",
+  "status": "WAITING_FOR_OPERATOR_SUPPORT_LAYER_2",
+  "confirmed_layers": 1,
+  "first_piece": "black_king",
+  "first_piece_stable_confirmed_by_user": true,
+  "second_piece": "red_pawn",
+  "second_piece_state": "held at second-layer placement; not released",
+  "third_piece_attempted": false,
+  "held_feedback": {
+    "header": {
+      "stamp": {
+        "sec": 1793794214,
+        "nanosec": 137703348
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.319771297,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 1,
+    "grip_status": 2,
+    "position_raw": 323,
+    "object_detected": true,
+    "object_dropped": false,
+    "detail": "confirmed by fresh device feedback"
+  },
+  "arm_stop_confirmed": true,
+  "last_result_file": "runs/stack_three_20261104_01/execute12/run-result.json",
+  "attempts": {
+    "execute": {
+      "status": "FAULT",
+      "error": "fresh real initialized gripper feedback unavailable / dropped",
+      "layers": 0,
+      "object_state": "unknown",
+      "physical_arm_moves": 0
+    },
+    "execute02": {
+      "status": "FAULT",
+      "error": "table_contact only permits vertical DESCEND/RETREAT",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 2
+    },
+    "execute03": {
+      "status": "FAULT",
+      "error": "scan fault; no automatic Home recovery or pick",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 2
+    },
+    "execute04": {
+      "status": "FAULT",
+      "error": "scan fault; no automatic Home recovery or pick",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 2
+    },
+    "execute05": {
+      "status": "FAULT",
+      "error": "scan fault; no automatic Home recovery or pick",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 2
+    },
+    "execute06": {
+      "status": "FAULT",
+      "error": "scan fault; no automatic Home recovery or pick",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 2
+    },
+    "execute07": {
+      "status": "FAULT",
+      "error": "bounded fresh reobservation failed",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 2
+    },
+    "execute08": {
+      "status": "FAULT",
+      "error": "target label unresolved/changed",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 5
+    },
+    "execute09": {
+      "status": "FAULT",
+      "error": "camera/scene/reference identity changed after alignment",
+      "layers": 0,
+      "object_state": "empty",
+      "physical_arm_moves": 6
+    },
+    "execute10": {
+      "status": "FAULT",
+      "error": "neighbor/unknown too close for reviewed finger envelope",
+      "layers": 0,
+      "object_state": "released_unverified",
+      "physical_arm_moves": 12
+    },
+    "execute11": {
+      "status": "FAULT",
+      "error": "target label unresolved/changed",
+      "layers": 0,
+      "object_state": "released_unverified",
+      "physical_arm_moves": 1
+    },
+    "execute12": {
+      "status": "FAULT",
+      "error": "operator confirmation timed out: SUPPORT",
+      "layers": 1,
+      "object_state": "held",
+      "physical_arm_moves": 10
+    }
+  },
+  "workspace_confirmation": "user confirmed empty daily-Home support within 6cm, hands/ruler clear",
+  "review_scope": "supervised empirical fixed-table business, not general TCP calibration or automatic stacking acceptance"
+}

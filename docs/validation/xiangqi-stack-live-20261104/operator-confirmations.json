@@ -1,0 +1,42 @@
+[
+  {
+    "request": {
+      "task_id": "fdf29a1e0bbb4154bcb89e2b164c0e01",
+      "request_id": "5c975180b6444628840a5359bf7f9f36",
+      "issued_ns": 1793793116712828162,
+      "kind": "SUPPORT",
+      "layer": 1,
+      "requirements": "piece supported at the intended layer, still held; not suspended"
+    },
+    "reply": {
+      "task_id": "fdf29a1e0bbb4154bcb89e2b164c0e01",
+      "request_id": "5c975180b6444628840a5359bf7f9f36",
+      "kind": "SUPPORT",
+      "layer": 1,
+      "decision": "confirmed",
+      "operator": "user via current chat",
+      "observation": "用户现场确认：已接触桌面并被支撑，手已离开，可以松爪"
+    },
+    "received_ns": 1793793347282766346
+  },
+  {
+    "request": {
+      "task_id": "002ec78276254033a395d1c26761584d",
+      "request_id": "66cd1f589ad24a38a572c950ca5c019f",
+      "issued_ns": 1793793554616712632,
+      "kind": "STABLE",
+      "layer": 1,
+      "requirements": "piece released, fingers clear; visually confirm supported and stable tower"
+    },
+    "reply": {
+      "task_id": "002ec78276254033a395d1c26761584d",
+      "request_id": "66cd1f589ad24a38a572c950ca5c019f",
+      "kind": "STABLE",
+      "layer": 1,
+      "decision": "confirmed",
+      "operator": "user via current chat",
+      "observation": "用户确认：第一颗平稳，可以继续第二颗"
+    },
+    "received_ns": 1793793678678379422
+  }
+]

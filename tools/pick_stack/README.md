@@ -1,6 +1,6 @@
 # 扫描后逐枚抓取、Home下方裸桌叠放 demo
 
-2026-11-04：真实 ROS 执行适配已接入，默认三枚。独立受监督试抓已完成：另一位置红卒在候选名义TCP基座Z=-0.005235732m处抓取、竖直抬升约20mm并停稳，用户目视确认稳定。尚未松爪或叠放；完整抓放配置中的未量测值仍为null，缺测时在启动张爪、回Home完成后的抓放前检退出，尚不进入扫描或抓放。详见[单颗试抓记录与证据](../../docs/validation/xiangqi-pick-trial-20261104.md)。
+2026-11-04：真实 ROS 执行适配已接入，默认三枚。新增`supervised_flat_table`现场模式：复用已成功试抓的固定名义高度，按13mm逐层增高；保留承托与放稳人工确认。独立受监督试抓已完成：另一位置红卒在候选名义TCP基座Z=-0.005235732m处抓取、竖直抬升约20mm并停稳，用户目视确认稳定。尚未松爪或叠放；旧通用标定字段仍保留；现场模式使用独立的经验高度、开合指令和当前运行的空桌确认，不把旧字段自动填成伪标定。详见[单颗试抓记录与证据](../../docs/validation/xiangqi-pick-trial-20261104.md)。
 
 `grasp_trial.py`是独立的受监督单枚抓取工具，结束于持物抬升保持；`observe_contact_point.py`和`observe_vertical_step.py`用于候选接近/竖直观察。它们使用现场候选安装与独立参数，不表示默认`run_once.sh`已能完成整套叠放。候选高度只经该位置单次验证，不能当作所有棋子的TCP标定。
 
@@ -22,10 +22,10 @@
 
 ## 运行入口
 
-整套业务现在使用一个入口 `bash tools/pick_stack/run_once.sh`，由`Demo.run(RealIO)`连续调度。显式阶段为`STARTUP_PRECHECK → STARTUP_OPEN → HOME_START → PRECHECK → SCAN → 抓取/叠放循环 → RETURN_HOME`。启动张爪使用独立的`startup_open_raw=1000`，允许释放原有夹持物，核对真实张开反馈后才实测回Home。启动设备前检与完整抓放标定前检分开，后者缺项不会跳过启动张爪和Home。内部扫描器跳过重复的起始Home，但仍保留扫完回Home；独立扫描器默认行为不变。维护用的参考恢复/受控使能不混入正常业务循环，也不会在运行途中自动重启驱动。
+整套业务现在使用一个入口 `bash tools/pick_stack/run_once.sh`，由`Demo.run(RealIO)`连续调度。显式阶段为`STARTUP_PRECHECK → STARTUP_OPEN → HOME_START → PRECHECK → SCAN → 抓取/叠放循环 → RETURN_HOME`。启动张爪使用独立的`startup_open_raw=1000`，允许释放原有夹持物，核对真实张开反馈后才实测回Home。启动设备前检与抓放前检分开。当前现场模式采用已有单点实抓高度，不要求通用标定审查文件。内部扫描器跳过重复的起始Home，但仍保留扫完回Home；独立扫描器默认行为不变。维护用的参考恢复/受控使能不混入正常业务循环，也不会在运行途中自动重启驱动。
 
 ```bash
-# 实体业务启动会先张爪、回Home；当前抓放配置缺测时随后在PRECHECK退出。
+# 实体业务启动会先张爪、回Home；运行配置须有本轮空桌确认。
 bash tools/pick_stack/run_once.sh \
   --execute --authorization '本聊天已授权单枚整套尝试' \
   --output runs/pick_stack_NEW_FULL
@@ -50,7 +50,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 tools/pick_stack/demo.py \
 
 `--plan-current`配合历史`--scan-result`保留当前起点的独立端点检查，全为plan_only=true，不表示完整连续抓放路径已通过。
 
-真实运行入口为 `--execute --authorization '本轮明确授权记录' --output runs/NEW`。它始终重新扫描，拒绝同时传入历史`--scan-result`；默认不执行。当前配置仍缺完整抓放量测；设备前检通过后会执行启动张爪及Home，然后在抓放前检中退出。`--preflight`、审查、演练及只规划模式保持无实体执行，创建同名检查节点不会自动触发启动动作。
+真实运行入口为 `--execute --authorization '本轮明确授权记录' --output runs/NEW`。它始终重新扫描，拒绝同时传入历史`--scan-result`；默认不执行。现场模式须绑定当前运行的`workspace_observation`空桌确认，前检核对真实驱动/反馈和经验参数；通用标定模式仍保留完整标定前检。`--preflight`、审查、演练及只规划模式保持无实体执行，创建同名检查节点不会自动触发启动动作。
 
 本轮启动顺序和三颗行为验证见[调度变更记录](../../docs/validation/xiangqi-startup-stack-three-20261104.md)。
 
@@ -58,7 +58,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 tools/pick_stack/demo.py \
 
 `Demo.prepare_startup()`编排设备前检、启动张爪与起始Home；`Demo.return_home()`统一起始和结束Home；`Demo.scan_workspace()`调用扫描并核对结束Home/停稳。`Demo.grasp_piece()`完成单枚重观、对齐、下降、夹持与抬升；`Demo.place_piece()`完成转移、承托、释放、撤离及放稳核对；`Demo.stack_pieces()`循环编排并累积层数。`RealIO`负责现有Action及反馈，业务方法不自建驱动。
 
-已有夹持物也按本次启动规则先松开。反馈失效、故障、未初始化或未停稳仍会退出；Home先只规划，若当前位置（例如低位）不满足普通Home几何规则，则停止，不自动强行回Home或追加未经标定的撤离路径。启动、只规划和故障退出互相区分。
+已有夹持物按启动规则先处理。本轮若仍在上次红卒的原位抬升状态，使用已记录源位置先低速放回，再张爪；低位张爪后先受检竖直撤回观察高度，再Home。反馈失效、故障、未初始化或未停稳仍会退出；Home先只规划，若当前位置（例如低位）不满足普通Home几何规则，则停止，不自动强行回Home或追加未经标定的撤离路径。启动、只规划和故障退出互相区分。
 
 ## 校准与接触/持物边界
 
@@ -110,3 +110,55 @@ bash tools/pick_stack/run_once.sh --observe-alignment \
 异常只取消本节点拥有的机械臂Action，再单独证明停稳；取消回执不等于停稳。夹爪不发取消，因为不能保证物理停止；只等待已提交结果并记录未知状态。故障处理不自动Home、开爪、初始化、重连、清错、使能、恢复参考或重放；正常执行入口的首次张爪/Home属于显式启动业务。层数只在承托、释放、撤离、堆顶观测与人工放稳全部通过后递增。
 
 隔离ROS接口验证与本次限制见[接入验证记录](../../docs/validation/xiangqi-pick-stack-ros-integration-20261104.md)；先前静态几何与断链记录见[2026-11-03记录](../../docs/validation/xiangqi-pick-stack-20261103.md)。
+
+
+## 裸桌三颗现场模式
+
+`calibration_mode=supervised_flat_table`明确限定同一裸桌、固定朝向与最多三颗。名义首层抓/放TCP Z=-0.005235731876821386m，后续放置每层加0.013m；这是已有实抓经验值，不是通用表面到TCP变换。观察高度0.100m，高位搬运高度0.120m。普通Home/扫描/高位PTP使用`roundtrip_low`，竖直DESCEND/RETREAT才用`table_contact`，原驱动关节、几何、绕转、方向及行程检查保留。
+
+夹取raw=0并要求新接触，张开raw=1000；最终持物raw由真实反馈决定，不把322当作闭合指令。邻近源目标保留110mm隔离要求；下降XY以实际停稳位置为准，且与目标对齐误差须≤3mm。
+
+搬运前以TCP周围25mm包络球检查真实只规划轨迹，要求包络高于当前堆顶20mm，并在执行中监测同一高度界限。该检查补充所持棋子净空，不替代原臂段/工具守卫，也不是完整碰撞认证。
+
+放置下降后由现场人员确认已承托才释放；释放后撤离、独立重观当前堆顶并人工确认放稳。相机绝对Z存在已记录偏差，现场模式使用第一颗实际放置后的相机顶面作为相对基准，第二、三层检验13mm增量；不再用未经修正的相机绝对Z和理论桌面强行比较。层数仅在上述步骤全部通过后提交。确认请求仍须匹配当前task/request/kind/layer，不自动代答。
+
+
+## 激光逐点中心对位观察（2026-11-05）
+
+入口为 `--observe-centers`，与抓放 `--execute` 互斥。先重新排布棋子，将激光笔竖直夹稳并开启，确认当前高度有间隙、手已离开。模式在启动时读取当前实测名义TCP高度与朝向，夹爪只读，既不张爪也不合爪，结束或停止都不自动Home。
+
+```bash
+bash tools/pick_stack/run_once.sh --observe-centers \\
+  --authorization '本轮棋子已排布、激光笔竖直夹稳开启、手已离开' \\
+  --output runs/laser_centers_NEW
+```
+
+不传历史清单时，按现有17个观察位的XY重新扫描，但所有目标均使用当前高度与朝向；不使用原扫描器的Home动作。原臂段/关节/绕转/桌面守卫仍生效，另外检查预览轨迹不得低于固定高度的位置容差或偏转超过原方向容差，并在实际移动中监测。路径不满足时停止，不自动改变高度绕过检查。激光笔的安装偏心/倾斜不等于视觉误差，夹具本身仍须由现场核对。
+
+本轮扫描完成后冻结有效的识别中心，按30mm距离去掉重复搜索提示，最多32个目标。逐点移动到冻结中心上方，再由人员观察激光点偏差；不在到位后重新识别、自动精修正，以免把要测的偏差修掉或受光斑掩膜干扰。这里只做非接触对位，不据此授予抓取资格。
+
+每点发布`ALIGNMENT`确认请求，携带序号、总数、参考中心及实际TCP；回复必须匹配task/request/kind/layer。可记录“基本居中”“偏视频左侧约3mm”等原话；仅说“下一个”只表示继续，不自动记作居中。停止会取消本节点拥有的机械臂动作并核对停稳，不打开夹爪。
+
+`center-search-inventory.json`保存本轮冻结中心；`center-observations.json`逐点保存人工记录，`center-alignment-result.json`保存终态、轨迹检查及末端反馈。可用`--scan-result 本轮的center-search-inventory.json`继续核对这组冻结点；程序会核对原高度，不累计降低高度。
+
+
+## 裸桌排一行（2026-11-05）
+
+使用独立 `RowDemo`：启动张爪回 Home → 新扫描 → 到位独立重观/抓取 → 高位搬运 → 清空槽位检查 → 裸桌标定高度释放 → 撤离后视觉复核。配置 `demo.row.current.json`，`business_mode="row"`、`row_slots_m`、`row_slot_clearance_xy_m`；本次八槽 X=.045 m、Y=-.675..-.325 m、间距 .050 m，抓放均使用实测裸桌 TCP Z=-.005235731876821386 m，不增加层高。
+
+行模式依用户授权自动释放和复核，不调用叠放的人工 SUPPORT/STABLE，也不生成替代人工回答。检测区域覆盖、独立两秒窗口、夹持保持、夹爪为空、落位位置/相对顶面高度检查均通过后才计数；没有独立支撑传感器。失败停止，不自动重新夹取。
+
+跨视角重复/unknown 候选只作为去高位重观的搜索提示；行模式不要求文字类别，真正夹取仍要求新帧确认完整唯一几何中心和真实邻居。扫描缺帧、未定位目标及未处理候选写入结果。`search_inventory_processed` 只表示当前搜索清单处理情况，不能证明全桌物理计数；行结果保留 PARTIAL，具体实机数量看 placements。
+
+`pred` 是预览未显示基座稳定跟踪编号的检测标记。机械臂运动时可以出现，不等于已证明分类失败；主控不用预览字样作为夹取授权。
+
+
+行业务配置入口（目标槽位必须先清空，当前已放第一颗的现场不能直接从零重跑）：
+
+```bash
+bash tools/pick_stack/run_once.sh --config tools/pick_stack/demo.row.current.json \
+  --execute --workspace-clear --authorization 'explicit authorization for this new row batch' \
+  --output runs/row_NEW
+```
+
+本次结果及抓取余量见[实机记录](../../docs/validation/xiangqi-row-live-20261105.md)：1 颗落位验证通过，第二颗起抬失去夹持后停止；显式空爪撤离并回 Home。配置中的高位最终为 140 mm，裸桌抓取 Z、20% 力度和原守卫未改变。旧持物续接已经失效，不可重放。

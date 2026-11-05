@@ -1,0 +1,410 @@
+{
+  "schema": "xiangqi_pick_stack_run/v2",
+  "scan_id": "d5d5d5143fe64cde86aae5b8f760a001",
+  "status": "FAULT",
+  "error": "carried piece no longer held",
+  "layers": 1,
+  "object_state": "held",
+  "business_mode": "row",
+  "physical_stop_confirmed": true,
+  "all_physical_pieces_confirmed": false,
+  "retired": [
+    [
+      -0.08437416774507481,
+      -0.6047434866695438,
+      -0.00338305369102578
+    ]
+  ],
+  "unresolved": [
+    {
+      "search_seed": "candidate-3",
+      "class_name": "unknown",
+      "position_m": [
+        0.16175104194849266,
+        -0.42921201211526355,
+        -0.0053356537727863584
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-4",
+      "class_name": "unknown",
+      "position_m": [
+        0.2975978369528731,
+        -0.4344790544104965,
+        -0.002867071616434319
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-5",
+      "class_name": "unknown",
+      "position_m": [
+        0.29759374415097595,
+        -0.43448271555234036,
+        -0.002869390634731739
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-6",
+      "class_name": "red_king",
+      "position_m": [
+        0.1617236937657761,
+        -0.4292067253362874,
+        -0.005329153271679127
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-7",
+      "class_name": "red_king",
+      "position_m": [
+        0.1569882401531491,
+        -0.4303465968789507,
+        -0.0037264864554573535
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-8",
+      "class_name": "black_king",
+      "position_m": [
+        -0.04920650991713127,
+        -0.3818592613655396,
+        -0.004770233378536548
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-9",
+      "class_name": "red_king",
+      "position_m": [
+        -0.23316863209900124,
+        -0.4751869055339567,
+        -0.0029875584241910724
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-10",
+      "class_name": "black_king",
+      "position_m": [
+        -0.05424659826822657,
+        -0.3780162440950352,
+        -0.00319425528863497
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-11",
+      "class_name": "black_advisor",
+      "position_m": [
+        0.2783507643174973,
+        -0.2261193654110973,
+        -0.004553646949839202
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-12",
+      "class_name": "red_rook",
+      "position_m": [
+        0.05822177494638554,
+        -0.22815552619146767,
+        -0.004165805524999983
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-13",
+      "class_name": "unknown",
+      "position_m": [
+        0.05779798957200495,
+        -0.2146275247480497,
+        -0.0042614752481616724
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-14",
+      "class_name": "red_rook",
+      "position_m": [
+        0.05823308494444408,
+        -0.22816483581424463,
+        -0.004116488050997291
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-15",
+      "class_name": "unknown",
+      "position_m": [
+        0.057830510864190235,
+        -0.21461148598562513,
+        -0.004326826558254324
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-16",
+      "class_name": "black_king",
+      "position_m": [
+        -0.05121037500925078,
+        -0.3762070663632078,
+        -0.005201593943349181
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-17",
+      "class_name": "black_king",
+      "position_m": [
+        -0.05120128731132667,
+        -0.37621524493290004,
+        -0.005228016919787776
+      ],
+      "reason": "not independently picked and verified in row"
+    },
+    {
+      "search_seed": "candidate-18",
+      "class_name": "unknown",
+      "position_m": [
+        -0.25249228335677143,
+        -0.22598838125552365,
+        -0.004197099793183154
+      ],
+      "reason": "not independently picked and verified in row"
+    }
+  ],
+  "gripper_latest": {
+    "header": {
+      "stamp": {
+        "sec": 1793858994,
+        "nanosec": 390817613
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.381862726,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 1,
+    "grip_status": 3,
+    "position_raw": 0,
+    "object_detected": false,
+    "object_dropped": true,
+    "detail": "confirmed by fresh device feedback"
+  },
+  "arm_latest": {
+    "header": {
+      "stamp": {
+        "sec": 1793858994,
+        "nanosec": 407934350
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": true,
+    "reference_valid": true,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 5,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 1793858994,
+          "nanosec": 407934350
+        },
+        "frame_id": "base_link"
+      },
+      "pose": {
+        "position": {
+          "x": -0.0501063337941165,
+          "y": -0.3817303716654516,
+          "z": -0.0031756114883011166
+        },
+        "orientation": {
+          "x": 0.4830017349073417,
+          "y": 0.5185148008724157,
+          "z": -0.48021330792338324,
+          "w": 0.516959286836033
+        }
+      }
+    },
+    "signed_twist_rad": -0.37663224684747615,
+    "total_twist_rad": 1.7627052383839281,
+    "twist_energy_rad2_per_m": 3.5697078438549923,
+    "diagnostic": "stopped checkpoint restored; winding retained without zeroing; endpoint_delta_rad=0.000001; no_unobserved_motion=true; checkpoint=waiting for fresh stopped dwell; actuator=enabled; independently confirmed; no motion sent"
+  },
+  "demo_config": {
+    "schema": "xiangqi_pick_stack_config/v1",
+    "scan_config": "tools/pick_stack/scan.table_contact.json",
+    "home_config": "config/arm/home.yaml",
+    "commissioning_review_file": null,
+    "confirmation_timeout_s": 300.0,
+    "observation_timeout_s": 6.0,
+    "home_joint_tolerance_rad": 0.0005,
+    "max_pieces": 8,
+    "startup_open_raw": 1000,
+    "table_z_m": -0.01,
+    "piece_thickness_m": 0.013,
+    "board_thickness_m": 0.014,
+    "board_thickness_use": "reference only; never added to bare-table stack height or substituted for measured source depth",
+    "stack_xy_m": [
+      0.00023669097092491665,
+      -0.5767915924856896
+    ],
+    "stack_xy_basis": "fixed daily Home model FK projection from unchanged Home joints and guard chain; physical empty bare support not yet verified",
+    "orientation_xyzw": [
+      0.48299238089943397,
+      0.5185547459906317,
+      -0.48022726217308936,
+      0.5169149950131322
+    ],
+    "orientation_basis": "existing p1 downward observation orientation, candidate only; gripper installation/contact geometry unmeasured",
+    "stack_exclusion_radius_m": 0.06,
+    "retired_radius_m": 0.03,
+    "neighbor_clearance_m": 0.11,
+    "reassociate_radius_m": 0.012,
+    "descent_tolerance_m": 0.003,
+    "vertical_clearance_m": 0.1,
+    "force_percent": 20,
+    "threshold_basis": "conservative search/rehearsal bounds only, not physical collision or metrology acceptance",
+    "measured": {
+      "surface_to_nominal_tcp_base_m": null,
+      "surface_to_observation_tcp_base_m": null,
+      "finger_lowest_point_and_contact_envelope": null,
+      "piece_radius_m": 0.02,
+      "open_raw": 1000,
+      "close_raw": 0,
+      "empty_bare_support_and_exit_clearance": null,
+      "grip_retention_and_release_evidence": null,
+      "stack_stability_observation_pose": null
+    },
+    "calibration_mode": "supervised_flat_table",
+    "nominal_pick_tcp_base_z_m": -0.005235731876821386,
+    "hover_tcp_base_z_m": 0.14,
+    "transfer_tcp_base_z_m": 0.14,
+    "business_mode": "row",
+    "row_slots_m": [
+      [
+        0.045,
+        -0.675
+      ],
+      [
+        0.045,
+        -0.625
+      ],
+      [
+        0.045,
+        -0.575
+      ],
+      [
+        0.045,
+        -0.525
+      ],
+      [
+        0.045,
+        -0.475
+      ],
+      [
+        0.045,
+        -0.425
+      ],
+      [
+        0.045,
+        -0.375
+      ],
+      [
+        0.045,
+        -0.325
+      ]
+    ],
+    "row_slot_clearance_xy_m": [
+      0.084,
+      0.039
+    ],
+    "excluded_pick_positions_m": [],
+    "workspace_observation": "Operator explicitly authorized autonomous tabletop row placement while observing, 2026-11-05",
+    "completed_scan_file": "runs/row_20261105_01/execute02/scan/scan-result.json",
+    "resume_row_result_file": "runs/row_20261105_01/execute04/run-result.json"
+  },
+  "run_result_file": "runs/row_20261105_01/execute05/run-result.json",
+  "physical_gripper_state_at_fault": "DROPPED",
+  "state_machine_object_state_is_last_business_state": true,
+  "scan_unresolved_count": 41,
+  "final_recovery_result_file": "runs/row_20261105_01/drop02-empty-recovery/recovery-result.json",
+  "final_recovery_status": "EMPTY_RETRACTED_HOME",
+  "final_arm": {
+    "header": {
+      "stamp": {
+        "sec": 1793859335,
+        "nanosec": 515389782
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": true,
+    "reference_valid": true,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 5,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 1793859335,
+          "nanosec": 515389782
+        },
+        "frame_id": "base_link"
+      },
+      "pose": {
+        "position": {
+          "x": 0.0002359060789817333,
+          "y": -0.5767923022105393,
+          "z": 0.27294427908145474
+        },
+        "orientation": {
+          "x": 0.483001420244062,
+          "y": 0.5185588814799963,
+          "z": -0.48021969125160435,
+          "w": 0.516909433667687
+        }
+      }
+    },
+    "signed_twist_rad": -0.2962670649762322,
+    "total_twist_rad": 0.29733564687412833,
+    "twist_energy_rad2_per_m": 0.4227124774597762,
+    "diagnostic": "stopped checkpoint restored; winding retained without zeroing; endpoint_delta_rad=0.000001; no_unobserved_motion=true; checkpoint=durable stopped save ready; actuator=enabled; independently confirmed; no motion sent"
+  },
+  "final_gripper": {
+    "header": {
+      "stamp": {
+        "sec": 1793859335,
+        "nanosec": 481397372
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.459793526,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 1,
+    "grip_status": 1,
+    "position_raw": 1000,
+    "object_detected": false,
+    "object_dropped": false,
+    "detail": "confirmed by fresh device feedback"
+  },
+  "model_only_downward_margin_mm": 0.6099698501792101
+}

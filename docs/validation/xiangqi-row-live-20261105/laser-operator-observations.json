@@ -1,0 +1,37 @@
+{
+  "schema": "laser_operator_observations/v1",
+  "source": "2026-11-05 conversation; supplements do not change original STOPPED controller report",
+  "controller_report": "runs/laser_centers_20261105_06/center-alignment-result.json",
+  "observations": [
+    {
+      "index": 1,
+      "text": "补充一下第一颗基本居中"
+    },
+    {
+      "index": 2,
+      "text": "第二颗稍微偏左一点，也就是当前姿态下视频的左侧"
+    },
+    {
+      "index": 3,
+      "text": "基本中心"
+    },
+    {
+      "index": 4,
+      "text": "基本在中心，稍微偏左一点点，我估计也就1mm"
+    },
+    {
+      "index": 5,
+      "text": "这个也基本都在中心，前几个都是基本在中心"
+    },
+    {
+      "index": 6,
+      "text": "基本在中心，没有偏的很厉害"
+    },
+    {
+      "index": 7,
+      "text": "基本在中心，有点偏相机的靠近基座方向",
+      "protocol_reply_recorded": false
+    }
+  ],
+  "xy_compensation_changed": false
+}
