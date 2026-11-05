@@ -1,0 +1,15 @@
+{
+  "original_file": "src/chess_robot_arm/config/nova5_ag95_table_contact.candidate.yaml",
+  "original_sha256": "9cb9aa88cf1c8186464160462a4dbf8a82ffc871a09a3ee5ad6d6d6e3dc0e232",
+  "trial_file": "/home/kuang/workspace/chess_robot/runs/row_lower_1mm_20261105_01/guard.2mm.yaml",
+  "trial_sha256": "86517f6dea4834d06943f8c1ca41643449648e734352438c101824fa2b5289a3",
+  "only_geometry_policy_change": {
+    "field": "table_contact.finger_clearance_m",
+    "old_m": 0.003,
+    "new_m": 0.002
+  },
+  "unchanged_normal_clearance_m": 0.02,
+  "unchanged_contact_radius_m": 0.08,
+  "runtime_guard_path": "runs/row_lower_1mm_20261105_01/guard.2mm.yaml",
+  "runtime_guard_sha256": "86517f6dea4834d06943f8c1ca41643449648e734352438c101824fa2b5289a3"
+}

@@ -33,7 +33,7 @@ def validate_config(config):
         radius=config['measured']['piece_radius_m']
         if len(clearance)!=2 or any(not math.isfinite(x) or x<radius+.003 for x in clearance):
             raise ValueError('row XY clearances must cover the piece radius and 3mm allowance')
-        if any(distance(a,b)<=2*radius+.003 or row_slot_occupied(config,a,b)
+        if any(distance(a,b)<=2*radius+2*config.get('row_placement_tolerance_m',config['descent_tolerance_m']) or row_slot_occupied(config,a,b)
                for i,a in enumerate(slots) for b in slots[i+1:]):
             raise ValueError('row slots overlap the configured low-tool/piece clearance')
         if any(config.get(k) for k in ('resume_confirmed_stack_file','resume_held_placement','resume_pending_placement')):
@@ -259,6 +259,7 @@ class Demo:
         seed = select_target(self.c, candidates, self.retired+self.unavailable)
         qualify=(io.qualify_pick_target if self.c.get('business_mode')=='row' else
                  lambda seed,frames,**options:qualified_target(self.c,seed,frames,**options))
+        if self.c.get('business_mode')=='row':io.begin_pick()
         self.phase('SELECT', search_seed=seed['scan_target_id'])
         # Coarse point used only for the calibrated observation pose.
         observe = target_poses(self.c, seed, self.layers)['observe']
@@ -307,6 +308,7 @@ class Demo:
         self.object_state = 'held'
         self.phase('LIFT')
         io.move('RETREAT', poses['pregrasp'], 'held')
+        if self.c.get('business_mode')=='row':io.end_pick()
         return p, poses
 
     def place_piece(self, io, source_position, poses):
@@ -505,6 +507,10 @@ class RowDemo(Demo):
         scan=io.scan()
         if not (scan['returned_home'] and scan['physical_stop_confirmed']):
             raise RuntimeError('scan did not return Home and prove measured stop')
+        if scan.get('search_mode')=='known_source_continuation':
+            self.scan_unresolved.append(dict(reason='known remaining-source continuation; no new whole-table scan'))
+            self.phase('ROW_SEARCH_HINTS',source_hypotheses=len(scan['target_hypotheses']))
+            return scan['target_hypotheses']
         views=scan.get('views',[])
         if not views:
             self.scan_unresolved.append(dict(reason='scan contains no view records'))

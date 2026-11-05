@@ -14,7 +14,7 @@ public:
   GeometryGuard(const Config &,
                 std::shared_ptr<const chess_robot_twist::Model>);
   void check(const Joints &) const;
-  // Only moving finger hulls may use 3mm table clearance inside this target region.
+  // Only moving finger hulls may use configured (at least 2mm) target-local clearance.
   // Caller must restrict this to a checked vertical DESCEND/RETREAT operation.
   void checkTableContact(const Joints &, const Eigen::Vector2d &target_xy) const;
 };

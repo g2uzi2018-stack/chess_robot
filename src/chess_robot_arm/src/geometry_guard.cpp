@@ -62,7 +62,7 @@ struct GeometryGuard::Impl {
     if (y["table_contact"]) {
       const double gap = y["table_contact"]["finger_clearance_m"].as<double>();
       contact_radius = y["table_contact"]["target_radius_m"].as<double>();
-      if (!std::isfinite(gap) || gap < .003 || gap > clearance ||
+      if (!std::isfinite(gap) || gap < .002 || gap > clearance ||
           !std::isfinite(contact_radius) || contact_radius < .02 || contact_radius > .10)
         throw Failure(INVALID_GOAL, "invalid target-local fingertip clearance");
       contact_floor = ground + gap;

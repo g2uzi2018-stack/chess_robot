@@ -162,3 +162,5 @@ bash tools/pick_stack/run_once.sh --config tools/pick_stack/demo.row.current.jso
 ```
 
 本次结果及抓取余量见[实机记录](../../docs/validation/xiangqi-row-live-20261105.md)：1 颗落位验证通过，第二颗起抬失去夹持后停止；显式空爪撤离并回 Home。配置中的高位最终为 140 mm，裸桌抓取 Z、20% 力度和原守卫未改变。旧持物续接已经失效，不可重放。
+
+后续实机进展：累计七颗独立验证，最后一颗因源 mask 和原朝向下降逆解拒绝未搬运；已空爪回 Home。详见上述实机记录和 continuation-summary.json。本轮实验累计降低 1.3 mm、局部指尖模型净空 2 mm、放置容差 4.5 mm；默认行配置仍保留原基线，不可用于重放已有七颗。继续必须使用核对后的剩余提示并重新取得下降几何。

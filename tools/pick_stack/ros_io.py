@@ -280,14 +280,27 @@ class RealIO(PlanInspector):
             raise RuntimeError('physical scan requires completed pick precheck')
         if not self.at_home:
             raise RuntimeError('workflow must reach formal Home before scanning')
+        known=self.demo.get('remaining_search_targets')
+        if known:
+            self.stopped();self.check_parameters()
+            self.report['provided_search_targets']=known
+            self.report['inventory_coordinates_are_search_hints_only']=True
+            result=dict(schema='known_source_continuation/v1',search_mode='known_source_continuation',
+                target_hypotheses=known,returned_home=True,physical_stop_confirmed=True,
+                home_basis='startup Home completed and measured stop in this execution',
+                whole_table_coverage_confirmed=False)
+            write(self.out/'provided-search-hints.json',result)
+            return result
         inventory=self.demo.get('completed_scan_file')
         if inventory:
             report=json.loads(Path(inventory).read_text())
             if not (report['returned_home'] and report['physical_stop_confirmed'] and report['status']!='FAULT'):
                 raise RuntimeError('continuation requires a completed scan')
-            if 0 <= (self.now()-report['ended_ns'])*1e-9 <= 900:
+            if 0 <= (self.now()-report['ended_ns'])*1e-9 <= self.demo.get('search_hint_max_age_s',900):
                 self.report['search_inventory_file']=inventory
                 self.report['inventory_coordinates_are_search_hints_only']=True
+                self.report['search_hint_age_s']=(self.now()-report['ended_ns'])*1e-9
+                self.report['search_hint_max_age_s']=self.demo.get('search_hint_max_age_s',900)
                 return report
             self.report['expired_search_inventory_file']=inventory
         directory = self.out/'scan'
@@ -321,6 +334,12 @@ class RealIO(PlanInspector):
         self.at_home=True
         return scanner.report
 
+    def begin_pick(self):
+        self.active_orientation_xyzw=self.demo.get('pick_orientation_xyzw',self.demo['orientation_xyzw'])
+
+    def end_pick(self):
+        self.active_orientation_xyzw=self.demo['orientation_xyzw']
+
     def arm_goal(self, operation, xyz, plan):
         g = MoveArm.Goal()
         g.operation = getattr(g, operation)
@@ -332,7 +351,7 @@ class RealIO(PlanInspector):
             if operation in ('PREGRASP','RETREAT'):
                 p[2] -= self.c['expected_approach_clearance_m']
             g.target.pose.position.x,g.target.pose.position.y,g.target.pose.position.z = p
-            q = self.demo['orientation_xyzw']
+            q = getattr(self,'active_orientation_xyzw',self.demo['orientation_xyzw'])
             g.target.pose.orientation.x,g.target.pose.orientation.y,g.target.pose.orientation.z,g.target.pose.orientation.w = q
         return g
 
@@ -343,7 +362,8 @@ class RealIO(PlanInspector):
         self.gripper_state(held=self.held, idle=True)
         if before_send is not None:
             before_send()
-        self.pending = self.client.send_goal_async(self.arm_goal(operation, xyz, plan))
+        request=self.arm_goal(operation,xyz,plan)
+        self.pending = self.client.send_goal_async(request)
         self.goal = self.wait(self.pending, 8); self.pending = None
         if not self.goal.accepted:
             raise RuntimeError('arm rejected '+operation)
@@ -367,7 +387,8 @@ class RealIO(PlanInspector):
             elif xyz is not None:
                 if np.linalg.norm(position(s)-xyz) > self.c['position_tolerance_m']:
                     raise RuntimeError('measured endpoint position mismatch')
-                q=s.tcp.pose.orientation; target=np.array(self.demo['orientation_xyzw'])
+                q=s.tcp.pose.orientation; expected=request.target.pose.orientation
+                target=np.array([expected.x,expected.y,expected.z,expected.w])
                 angle=2*math.acos(float(np.clip(abs(np.array([q.x,q.y,q.z,q.w])@target),0,1)))
                 if angle > self.c['rotation_tolerance_rad']:
                     raise RuntimeError('measured endpoint orientation mismatch')
@@ -574,9 +595,19 @@ class RealIO(PlanInspector):
         from demo import qualified_target
         if self.demo.get('business_mode')!='row':
             return qualified_target(self.demo,seed,frames,allow_reclassify=allow_reclassify)
-        rois={id(frame):self.row_slot_visible(frame,seed['base_surface_center_m'][:2]) for frame in frames}
-        return qualified_target(self.demo,seed,frames,geometry_only=True,
-            unlocated_overlap=lambda frame,detection:detection_overlaps_roi(detection,rois[id(frame)]))
+        for attempt in range(6):
+            rois={id(frame):self.row_slot_visible(frame,seed['base_surface_center_m'][:2]) for frame in frames}
+            try:
+                return qualified_target(self.demo,seed,frames,geometry_only=True,
+                    unlocated_overlap=lambda frame,detection:detection_overlaps_roi(detection,rois[id(frame)]))
+            except RuntimeError as error:
+                if str(error)!='unlocated/incomplete observation in target view' or attempt==5:
+                    raise
+                self.report.setdefault('row_mask_window_retries',[]).append(dict(
+                    attempt=attempt+1,first_stamp_ns=frames[0]['stamp_ns'],
+                    last_stamp_ns=frames[-1]['stamp_ns'],reason=str(error)))
+                # Restart a complete stationary window; never remove bad frames.
+                frames=self.observe()
 
     def row_slot_visible(self, frame, slot):
         # Full-image detection coverage is insufficient if the destination is
@@ -635,7 +666,9 @@ class RealIO(PlanInspector):
             raise RuntimeError('row release TCP differs from calibrated bare-table target')
         self.report.setdefault('row_release_geometry',[]).append(dict(
             nominal_tcp_m=place,measured_tcp_m=measured.tolist(),
-            calibrated_bare_table_height=True,support_sensor_confirmed=False,stamp_ns=self.now()))
+            calibrated_bare_table_height=not self.demo.get('experimental_height_adjustment_m',0),
+            experimental_height_adjustment_m=self.demo.get('experimental_height_adjustment_m',0),
+            support_sensor_confirmed=False,stamp_ns=self.now()))
 
     def verify_row_placement(self, slot, source):
         from demo import qualified_target,qualified_scene_window,distance
@@ -650,7 +683,7 @@ class RealIO(PlanInspector):
             raise RuntimeError('camera/scene/reference identity changed before row verification')
         if measured['first_stamp_ns']<=self.last_placement_stamp:
             raise RuntimeError('row stability observation predates release')
-        if distance(p[:2],slot)>self.demo['descent_tolerance_m']:
+        if distance(p[:2],slot)>self.demo.get('row_placement_tolerance_m',self.demo['descent_tolerance_m']):
             raise RuntimeError('row piece misplaced beyond configured descent tolerance')
         if abs(p[2]-source['base_surface_center_m'][2])>.003:
             raise RuntimeError('row piece relative top height differs from its bare-table source')
