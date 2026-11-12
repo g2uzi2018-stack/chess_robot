@@ -1,0 +1,15 @@
+[Unit]
+Description=Chess robot camera and demand-driven LAN preview
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/kuang/workspace/chess_robot
+ExecStart=/bin/bash /home/kuang/workspace/chess_robot/src/chess_robot_preview/scripts/preview_service.sh
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=12
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

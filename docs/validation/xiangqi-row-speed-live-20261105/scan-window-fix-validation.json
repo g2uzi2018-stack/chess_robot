@@ -1,0 +1,10 @@
+{
+  "actual_spike_rad_s": 0.037870150700926766,
+  "checks": [
+    "recorded 0.03787 spike rejects whole attempt; bounded retry re-proves stop and can qualify",
+    "prior frame not reused after speed violation",
+    "reference-lost remains fatal",
+    "pose-moved remains fatal"
+  ],
+  "physical_commands_sent": 0
+}

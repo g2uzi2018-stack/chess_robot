@@ -1,0 +1,12 @@
+{
+  "input_sha256": "5395ec7cfcefff45f08ca750729f45b560ddd1dfa38534f040e6c6769a324925",
+  "units": "mm",
+  "components": "all",
+  "transform_m": [
+    [-1, 0, 0, 0.0465],
+    [0, 1, 0, -0.092],
+    [0, 0, -1, 0.107],
+    [0, 0, 0, 1]
+  ],
+  "datum_note": "Example from the reviewed user camera-v2 CAD. Not a universal gripper transform or physical calibration."
+}

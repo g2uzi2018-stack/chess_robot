@@ -1,0 +1,83 @@
+{
+  "schema": "xiangqi_pick_stack_preflight/v1",
+  "physical_actions_sent": 0,
+  "configuration_blockers": [
+    "unmeasured: surface_to_nominal_tcp_base_m",
+    "unmeasured: surface_to_observation_tcp_base_m",
+    "unmeasured: finger_lowest_point_and_contact_envelope",
+    "unmeasured: piece_radius_m",
+    "unmeasured: open_raw",
+    "unmeasured: close_raw",
+    "unmeasured: empty_bare_support_and_exit_clearance",
+    "unmeasured: grip_retention_and_release_evidence",
+    "unmeasured: stack_stability_observation_pose",
+    "calibration-bound contact/payload/stack review artifact unavailable"
+  ],
+  "arm_ready": false,
+  "arm_error": "fresh measured stationary interval unavailable",
+  "arm_latest": {
+    "header": {
+      "stamp": {
+        "sec": 1793754101,
+        "nanosec": 286930046
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": true,
+    "reference_valid": false,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 4,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 1793754101,
+          "nanosec": 286930046
+        },
+        "frame_id": "base_link"
+      },
+      "pose": {
+        "position": {
+          "x": 0.24085380504771634,
+          "y": -0.666667340658896,
+          "z": 0.08833035618852625
+        },
+        "orientation": {
+          "x": 0.4845504858626277,
+          "y": 0.5205523390267279,
+          "z": -0.4786478325071625,
+          "w": 0.5149100323554499
+        }
+      }
+    },
+    "signed_twist_rad": 0.0,
+    "total_twist_rad": 0.0,
+    "twist_energy_rad2_per_m": 0.0,
+    "diagnostic": "feedback gap; explicit reference required; checkpoint=durable stopped save ready; actuator=not requested; history alone grants no motion readiness"
+  },
+  "gripper_latest": {
+    "header": {
+      "stamp": {
+        "sec": 1793754101,
+        "nanosec": 252147371
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.36902799,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 0,
+    "grip_status": 1,
+    "position_raw": 1000,
+    "object_detected": false,
+    "object_dropped": false,
+    "detail": "TCP transaction timeout/poll failure"
+  }
+}

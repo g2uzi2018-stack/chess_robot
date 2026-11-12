@@ -1,0 +1,21 @@
+{
+  "src/chess_robot_description/meshes/nova5/base_link.STL": "ba127c64cf21500b64df841ea6563afbc9e0247ea60e52c7366e0fb2fe2bb43c",
+  "src/chess_robot_description/meshes/nova5/Link1.STL": "9c83374745953200965462041d798c6c57c371438ccdf0948c74047a589a17b0",
+  "src/chess_robot_description/meshes/nova5/Link2.STL": "9d6260d192b97db709006b8a0f8f3d68c608d4d522cea7e2a990ead86b190ee1",
+  "src/chess_robot_description/meshes/nova5/Link3.STL": "dd3f5b5101e612a9bb67c91b581b75e4a157d3201c30ae4b5d97b490d07e3898",
+  "src/chess_robot_description/meshes/nova5/Link4.STL": "8815c3d12f352a9deb19b925a7a077b7690d3c37d1cfc4bfa2dff84d9cb5e4b2",
+  "src/chess_robot_description/meshes/nova5/Link5.STL": "acb9f5a49b2faa7e284d106afd401bd411d04d77d2a6b8a64833a5b3569a4a30",
+  "src/chess_robot_description/meshes/nova5/Link6.STL": "fce89b691a627dabf0e06ad31ba851478fb42f09101da52d3e66c5c42972bf70",
+  "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl": "5a5a4473e9514dd210035fba0681a5ad59fd80f8928f6ae186f819e44f96f8f9",
+  "src/dh_ag95_description/meshes/visual/gripper_body.stl": "63555d0f0cce8e4d7addaa7910b74ac5c4bbb7c59419821dcf1180ea1f624464",
+  "src/dh_ag95_description/meshes/collision/gripper_body.stl": "969e7000c47fbc54379f70a2819d79c79e8e72ac28ae6c004fabd82f0106f79c",
+  "src/dh_ag95_description/meshes/visual/outer_knuckle.stl": "c136958ef72eef893260065a3668d7ac79fe80e20eca22f8d311df295a706f47",
+  "src/dh_ag95_description/meshes/collision/outer_knuckle.stl": "618ae262515dc2b1114b4783542c3feae412fb3e7f6e46431eee61ce60424a12",
+  "src/dh_ag95_description/meshes/visual/inner_knuckle.stl": "d6f1cabdda16b71f78d8779233ab4511def1fe6361eedc93928f9712dc6a2f3f",
+  "src/dh_ag95_description/meshes/collision/inner_knuckle.stl": "e6280d54e82ddfb7e3281e2f79f707d9e4007f77b4ee8e069fe1fdc244758415",
+  "src/dh_ag95_description/meshes/visual/finger.stl": "be0737719f5b31901ac68e4fed086467398d3052ec60fb4ee9a341fe9fce38a4",
+  "src/dh_ag95_description/meshes/collision/finger.stl": "7d4c275479a3c39d5884b78c383855d1db92d381a4a06a0f50706500f1855be4",
+  "src/dh_ag95_description/meshes/visual/finger_pad.stl": "44e4a98065782da69980cd30ef630d47ef4fc6364d5f026b7b5c02d8e4479825",
+  "src/dh_ag95_description/meshes/collision/finger_pad.stl": "3ed3044bdab33c99557c25335dfad88513c10bb0a7639087e4096ea9b0c8670a",
+  "src/chess_robot_description/urdf/nova5_with_ag95.urdf": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1"
+}

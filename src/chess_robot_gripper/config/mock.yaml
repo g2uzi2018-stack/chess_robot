@@ -1,0 +1,8 @@
+gripper_node:
+  ros__parameters:
+    backend: mock
+    enable_commands: true
+    max_force_percent: 30
+    mock_contact_raw: -1
+    poll_period_ms: 100
+    feedback_max_age_sec: 1.0

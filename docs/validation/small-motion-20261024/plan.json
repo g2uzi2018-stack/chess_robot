@@ -1,0 +1,38 @@
+{
+  "physical_execution": false,
+  "start_rad": [
+    1.3873624514421463,
+    0.29600795831732624,
+    1.4554299194273725,
+    -0.1806415842393158,
+    -1.5707963267948966,
+    -0.06370430298043014
+  ],
+  "lift_rad": [
+    1.387362447366928,
+    0.29184248286894876,
+    1.4303520192334656,
+    -0.15139820859703113,
+    -1.5707963267948966,
+    -0.06370430705564845
+  ],
+  "start_tcp_m": [
+    0.030351401893893334,
+    -0.5765188178839958,
+    0.27498759107000015
+  ],
+  "lift_tcp_m": [
+    0.030351401893893334,
+    -0.5765188178839958,
+    0.28498759107000016
+  ],
+  "delta_max_rad": 0.029243375642284686,
+  "screening_states": 1165,
+  "min_sigma": 0.20050761622879576,
+  "min_joint_margin_rad": 1.3345700805726275,
+  "ground_margin_pass": true,
+  "self_envelope_pass": true,
+  "velocity_percent": 1,
+  "acceleration_percent": 1,
+  "scope": "local 10mm vertical lift and return only; geometry model excludes unmodelled obstacles and physical cable shape"
+}

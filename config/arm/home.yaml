@@ -1,0 +1,18 @@
+chess_robot_arm:
+  ros__parameters:
+    home:
+      joint_names:
+        - joint1
+        - joint2
+        - joint3
+        - joint4
+        - joint5
+        - joint6
+      joint_positions_rad:
+        - 1.3350072344142241
+        - 0.29860853512178864
+        - 1.456467353830013
+        - -0.17973892243259029
+        - -1.5708955295455018
+        - -0.30805257040040035
+      taught: true

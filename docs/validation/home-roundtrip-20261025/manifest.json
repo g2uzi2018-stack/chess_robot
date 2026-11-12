@@ -1,0 +1,359 @@
+{
+  "schema": "chess_robot.home_roundtrip/v1",
+  "home": {
+    "joints_rad": [
+      1.3873624514421463,
+      0.29600795831732624,
+      1.4554299194273725,
+      -0.18064158423931584,
+      -1.5707963267948966,
+      -0.06370430298043014
+    ],
+    "tcp_m": [
+      0.03035140189389333,
+      -0.5765188178839957,
+      0.27498759107000015
+    ],
+    "quaternion_xyzw": [
+      0.5290191286346405,
+      0.46919141623276917,
+      -0.5290171976635255,
+      0.46918970688663303
+    ],
+    "home_yaml_sha256": "165f3ec9727f78bd5069538aa0029fd96275574dfd882db472a08b36a1be634a",
+    "arm_parameters": null
+  },
+  "quaternion_xyzw": [
+    0.5290191286346405,
+    0.46919141623276917,
+    -0.5290171976635255,
+    0.46918970688663303
+  ],
+  "rays": {
+    "left": [
+      -1,
+      0,
+      0
+    ],
+    "right": [
+      1,
+      0,
+      0
+    ],
+    "front": [
+      0,
+      1,
+      0
+    ],
+    "back": [
+      0,
+      -1,
+      0
+    ],
+    "up": [
+      0,
+      0,
+      1
+    ],
+    "down": [
+      0,
+      0,
+      -1
+    ]
+  },
+  "coarse_points": [
+    {
+      "id": "left_150",
+      "ray": "left",
+      "distance_m": 0.15,
+      "kind": "coarse",
+      "tcp_m": [
+        -0.11964859810610666,
+        -0.5765188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "left_300",
+      "ray": "left",
+      "distance_m": 0.3,
+      "kind": "coarse",
+      "tcp_m": [
+        -0.26964859810610664,
+        -0.5765188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "left_600",
+      "ray": "left",
+      "distance_m": 0.6,
+      "kind": "coarse",
+      "tcp_m": [
+        -0.5696485981061067,
+        -0.5765188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "right_150",
+      "ray": "right",
+      "distance_m": 0.15,
+      "kind": "coarse",
+      "tcp_m": [
+        0.18035140189389331,
+        -0.5765188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "right_300",
+      "ray": "right",
+      "distance_m": 0.3,
+      "kind": "coarse",
+      "tcp_m": [
+        0.33035140189389334,
+        -0.5765188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "right_600",
+      "ray": "right",
+      "distance_m": 0.6,
+      "kind": "coarse",
+      "tcp_m": [
+        0.6303514018938933,
+        -0.5765188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "front_150",
+      "ray": "front",
+      "distance_m": 0.15,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.4265188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "front_300",
+      "ray": "front",
+      "distance_m": 0.3,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.27651881788399574,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "front_600",
+      "ray": "front",
+      "distance_m": 0.6,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        0.02348118211600425,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "back_150",
+      "ray": "back",
+      "distance_m": 0.15,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.7265188178839957,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "back_300",
+      "ray": "back",
+      "distance_m": 0.3,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.8765188178839958,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "back_600",
+      "ray": "back",
+      "distance_m": 0.6,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -1.1765188178839958,
+        0.27498759107000015
+      ]
+    },
+    {
+      "id": "up_150",
+      "ray": "up",
+      "distance_m": 0.15,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.5765188178839957,
+        0.42498759107000017
+      ]
+    },
+    {
+      "id": "up_300",
+      "ray": "up",
+      "distance_m": 0.3,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.5765188178839957,
+        0.5749875910700002
+      ]
+    },
+    {
+      "id": "up_600",
+      "ray": "up",
+      "distance_m": 0.6,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.5765188178839957,
+        0.8749875910700001
+      ]
+    },
+    {
+      "id": "down_150",
+      "ray": "down",
+      "distance_m": 0.15,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.5765188178839957,
+        0.12498759107000015
+      ]
+    },
+    {
+      "id": "down_300",
+      "ray": "down",
+      "distance_m": 0.3,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.5765188178839957,
+        -0.02501240892999984
+      ]
+    },
+    {
+      "id": "down_600",
+      "ray": "down",
+      "distance_m": 0.6,
+      "kind": "coarse",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.5765188178839957,
+        -0.32501240892999983
+      ]
+    },
+    {
+      "id": "lower_left",
+      "kind": "height_slice",
+      "tcp_m": [
+        -0.26964859810610664,
+        -0.5765188178839957,
+        0.12498759107000015
+      ]
+    },
+    {
+      "id": "lower_right",
+      "kind": "height_slice",
+      "tcp_m": [
+        0.33035140189389334,
+        -0.5765188178839957,
+        0.12498759107000015
+      ]
+    },
+    {
+      "id": "lower_front",
+      "kind": "height_slice",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.27651881788399574,
+        0.12498759107000015
+      ]
+    },
+    {
+      "id": "lower_back",
+      "kind": "height_slice",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.8765188178839958,
+        0.12498759107000015
+      ]
+    },
+    {
+      "id": "upper_left",
+      "kind": "height_slice",
+      "tcp_m": [
+        -0.26964859810610664,
+        -0.5765188178839957,
+        0.42498759107000017
+      ]
+    },
+    {
+      "id": "upper_right",
+      "kind": "height_slice",
+      "tcp_m": [
+        0.33035140189389334,
+        -0.5765188178839957,
+        0.42498759107000017
+      ]
+    },
+    {
+      "id": "upper_front",
+      "kind": "height_slice",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.27651881788399574,
+        0.42498759107000017
+      ]
+    },
+    {
+      "id": "upper_back",
+      "kind": "height_slice",
+      "tcp_m": [
+        0.03035140189389333,
+        -0.8765188178839958,
+        0.42498759107000017
+      ]
+    }
+  ],
+  "max_refinements_per_ray": 2,
+  "refinement_min_interval_m": 0.025,
+  "maximum_targets": 38,
+  "maximum_roundtrip_attempts_including_qualification": 40,
+  "maximum_motion_legs_including_optional_recovery": 81,
+  "workspace_bounds": {
+    "min_m": [
+      -0.8,
+      -0.8,
+      0.0
+    ],
+    "max_m": [
+      0.8,
+      0.8,
+      1.2
+    ]
+  },
+  "estimated_duration_minutes": [
+    10,
+    25
+  ],
+  "estimate_note": "Replace with checked outbound + return durations before actuation; includes planning, feedback dwell and finite boundary refinement.",
+  "range_note": "Coordinates are exact TCP endpoints in base_link. Directions are base-frame axes, not camera left/right. All-pass rays are explicitly unbracketed; no global workspace or continuous-volume claim."
+}

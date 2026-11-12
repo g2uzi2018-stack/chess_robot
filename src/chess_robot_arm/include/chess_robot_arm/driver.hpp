@@ -1,0 +1,83 @@
+#pragma once
+#include "chess_robot_arm/core.hpp"
+#include "chess_robot_arm/feedback_frame.hpp"
+#include "chess_robot_arm/rotating_audit.hpp"
+#include <fstream>
+#include <memory>
+#include <condition_variable>
+#include <deque>
+#include <thread>
+
+class Socket;
+namespace chess_robot_arm {
+// A query has a whole-operation deadline and must retain unterminated notice
+// bytes.
+class CommandTransport {
+public:
+  virtual ~CommandTransport() = default;
+  virtual std::string query(const std::string &) = 0;
+  virtual bool streaming() const { return false; }
+  virtual void send(const std::string &) { throw std::runtime_error("stream unsupported"); }
+  virtual std::string receive(int) { throw std::runtime_error("stream unsupported"); }
+};
+using TransportFactory = std::function<std::unique_ptr<CommandTransport>()>;
+Feedback decodeFeedbackFrame(const FeedbackFrame &, Clock::time_point, int64_t ros_ns);
+Transform sdkPose(const std::array<double, 6> &mm_deg);
+std::array<double, 6> toSdkPose(const Transform &);
+class V4Driver final : public Driver {
+  Config config_;
+  TransportFactory transport_;
+  std::unique_ptr<CommandTransport> command_transport_;
+  std::mutex command_mutex_;
+  struct Pending { std::string command; Clock::time_point sent; };
+  std::mutex stream_mutex_;
+  std::condition_variable stream_cv_;
+  std::deque<Pending> pending_;
+  std::thread reply_thread_;
+  bool streaming_ = false, stream_exit_ = false, stream_broken_ = false;
+  std::string stream_error_;
+  std::optional<uint64_t> last_queue_id_;
+  std::unique_ptr<AuditDirectory> audit_directory_;
+  std::string audit_init_error_;
+  std::unique_ptr<RotatingAudit> send_audit_;
+  void replyLoop();
+  void closeStream(bool stopping);
+  void audit(const std::string &, const std::string &, Clock::time_point);
+  void validateServoReply(const std::string &, bool ordered);
+  std::unique_ptr<RotatingAudit> command_audit_, feedback_audit_;
+  std::unique_ptr<Socket> feedback_socket_;
+  FeedbackSequence sequence_;
+  std::function<int64_t()> ros_clock_;
+  struct FeedbackTiming {
+    int64_t frame=0, host=0, begin=0, complete=0, audit_begin=0, audit_end=0, decode_end=0;
+    int64_t dispatch_begin=0, dispatch_end=0, backoff_begin=0, backoff_end=0;
+    uint64_t controller=0, mode=0;
+    int status=-1;
+  };
+  std::vector<FeedbackTiming> feedback_timings_;
+  uint64_t timing_frames_=0, timing_dropped_=0;
+  void saveFeedbackTiming(const FeedbackTiming &);
+  void flushFeedbackTimings();
+  bool session_fault_ = false;
+  std::string call(const std::string &,const std::function<void()> &before_send = {});
+
+public:
+  explicit V4Driver(const Config &, TransportFactory factory = {},
+                    std::function<int64_t()> ros_clock = {});
+  ~V4Driver() override;
+  Transform fk(const Joints &) override;
+  Joints ik(const Transform &, const Joints &) override;
+  Feedback readFeedback() override;
+  void noteFeedbackDispatch(Clock::time_point, Clock::time_point);
+  void noteFeedbackBackoff(Clock::time_point, Clock::time_point);
+  void servo(const Joints &, double) override;
+  void stop() override;
+  // Guard is mandatory, runs under command ownership immediately before send.
+  void enableAfterHistoryRestore(bool checkpoint_attested=false,
+                                const std::function<void()> &before_enable = {});
+  std::string auditStatus();
+  void beginStream() override;
+  void checkStream() override;
+  void endStream() override;
+};
+} // namespace chess_robot_arm

@@ -1,0 +1,48 @@
+{
+  "status": "completed_at_user_selected_scope",
+  "user_ends_round_at_CH58": true,
+  "observed_board_corners": [
+    {
+      "corner_id": 81,
+      "qualitative_result": "approximately aligned",
+      "numeric_error_mm": null
+    },
+    {
+      "corner_id": 58,
+      "qualitative_result": "approximately aligned",
+      "numeric_error_mm": null
+    }
+  ],
+  "new_corners_executed_in_this_round": [
+    58
+  ],
+  "remaining_corner_not_executed_at_user_request": [
+    73
+  ],
+  "reserve_corner_not_executed": [
+    36
+  ],
+  "robot_last_confirmed_model_TCP_m": [
+    -0.013168428631299328,
+    -0.5812173372208832,
+    0.07466756613721981
+  ],
+  "last_real_stationary_proof_s": 0.645723008,
+  "last_positioning_and_stop_independent_review_passed": true,
+  "point_client_source_sha256": "f1848eaec1161dffd32e26715d48b86ee13fa84ab09b0e539653329eed7b7550",
+  "new_point_client_post_motion_image_capture_requested": false,
+  "previous_CH81_postcapture_failure_preserved": true,
+  "qualitative_checks_only": true,
+  "complete_TCP_identification": false,
+  "absolute_grasp_accuracy_verified": false,
+  "tcp_offset_modified": false,
+  "handeye_transform_modified": false,
+  "extra_compensation_added": false,
+  "production_TF_published": false,
+  "hands_and_tools_withdrawn_confirmed": true,
+  "further_motion_authorized": false,
+  "robot_remains_stopped": true,
+  "live_preview_active_target_corner": 58,
+  "completion_email_status": "sent",
+  "completion_email_id": "1a18b8a054a273f2"
+}

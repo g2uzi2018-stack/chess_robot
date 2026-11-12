@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "errors": [],
+  "message_counts": {
+    "color": 177,
+    "depth": 175,
+    "info": 180,
+    "debug": 180,
+    "candidates": 180
+  },
+  "synchronized_frames": 173,
+  "valid_candidate_observations": 31,
+  "invalid_candidate_observations": 0,
+  "candidate_z_comparisons": 31,
+  "median_finite_depth_fraction": 0.919150390625,
+  "candidate_receive_age_s_p50": 0.0214753365,
+  "candidate_receive_age_s_p99": 0.031643336980000186,
+  "elapsed_s": 11.229867816000478,
+  "node_exit": 0
+}

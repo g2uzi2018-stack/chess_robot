@@ -1,0 +1,91 @@
+{
+  "schema": "xiangqi_pick_stack_config/v1",
+  "scan_config": "tools/pick_stack/scan.table_contact.json",
+  "home_config": "config/arm/home.yaml",
+  "commissioning_review_file": null,
+  "confirmation_timeout_s": 300.0,
+  "observation_timeout_s": 6.0,
+  "home_joint_tolerance_rad": 0.0005,
+  "max_pieces": 8,
+  "startup_open_raw": 1000,
+  "table_z_m": -0.01,
+  "piece_thickness_m": 0.013,
+  "board_thickness_m": 0.014,
+  "board_thickness_use": "reference only; never added to bare-table stack height or substituted for measured source depth",
+  "stack_xy_m": [
+    0.00023669097092491665,
+    -0.5767915924856896
+  ],
+  "stack_xy_basis": "fixed daily Home model FK projection from unchanged Home joints and guard chain; physical empty bare support not yet verified",
+  "orientation_xyzw": [
+    0.48299238089943397,
+    0.5185547459906317,
+    -0.48022726217308936,
+    0.5169149950131322
+  ],
+  "orientation_basis": "existing p1 downward observation orientation, candidate only; gripper installation/contact geometry unmeasured",
+  "stack_exclusion_radius_m": 0.06,
+  "retired_radius_m": 0.03,
+  "neighbor_clearance_m": 0.11,
+  "reassociate_radius_m": 0.012,
+  "descent_tolerance_m": 0.003,
+  "vertical_clearance_m": 0.1,
+  "force_percent": 20,
+  "threshold_basis": "conservative search/rehearsal bounds only, not physical collision or metrology acceptance",
+  "measured": {
+    "surface_to_nominal_tcp_base_m": null,
+    "surface_to_observation_tcp_base_m": null,
+    "finger_lowest_point_and_contact_envelope": null,
+    "piece_radius_m": 0.02,
+    "open_raw": 1000,
+    "close_raw": 0,
+    "empty_bare_support_and_exit_clearance": null,
+    "grip_retention_and_release_evidence": null,
+    "stack_stability_observation_pose": null
+  },
+  "calibration_mode": "supervised_flat_table",
+  "nominal_pick_tcp_base_z_m": -0.005235731876821386,
+  "hover_tcp_base_z_m": 0.14,
+  "transfer_tcp_base_z_m": 0.14,
+  "business_mode": "row",
+  "row_slots_m": [
+    [
+      0.045,
+      -0.675
+    ],
+    [
+      0.045,
+      -0.625
+    ],
+    [
+      0.045,
+      -0.575
+    ],
+    [
+      0.045,
+      -0.525
+    ],
+    [
+      0.045,
+      -0.475
+    ],
+    [
+      0.045,
+      -0.425
+    ],
+    [
+      0.045,
+      -0.375
+    ],
+    [
+      0.045,
+      -0.325
+    ]
+  ],
+  "row_slot_clearance_xy_m": [
+    0.084,
+    0.039
+  ],
+  "excluded_pick_positions_m": [],
+  "workspace_observation": null
+}

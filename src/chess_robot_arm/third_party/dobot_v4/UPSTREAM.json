@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/Dobot-Arm/TCP-IP-CR-CPP-V4",
+  "commit": "0ca0b1bbd3894b951976c5dbf1535a36c173aab7",
+  "original_sha256": {
+    "api/Dashboard.cpp": "5e729bb84e13119947c0258742970ef6a72f601e07f541622d1eb0274d9a5246",
+    "api/Dashboard.h": "91e9c45066c0f2ef330bda23041449ab3efdbe39dadb3bce725d583b3416c28a",
+    "api/DescartesPoint.h": "47e38e437d83d5302ce75470d302b665d70f3f6025a67a44eec6327d26e436c3",
+    "api/DobotClient.cpp": "f18efc245c94fb1903e157a2d3d615e7844c07e821d457b245af18aa458a09ce",
+    "api/DobotClient.h": "1f50d59ddf0b739d7cee84328612a07a45ab1e28dabb4a9e5f1a6729e188a378",
+    "api/FeedbackData.h": "5983e414a0ada87e5e7ce5766d329c5a81d288acd2b54128aee102b5c9ef5f2f",
+    "api/JointPoint.h": "7101ea94e7aa8922d89574003aab7e1d0e5019dc4dddc66c227537c4887dba4b",
+    "LICENSE": "0a77e3d967a6466037c2df91f2fc16417d6e06c781a033904aa1a96545061143"
+  }
+}

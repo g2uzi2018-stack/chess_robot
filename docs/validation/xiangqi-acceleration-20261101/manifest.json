@@ -1,0 +1,114 @@
+{
+  "README.md": {
+    "bytes": 8770,
+    "sha256": "e159f8d0693a8ff3d75c1ce427d8555fc05d8364f9690a6611e7ef3866b4766d"
+  },
+  "lifecycle-stop-verified.json": {
+    "bytes": 681,
+    "sha256": "c8884b55b7514b8dee3b524b1c2169320eecc7ad42091747a1f11a0efcb5a2ba"
+  },
+  "deployment.json": {
+    "bytes": 977,
+    "sha256": "30ddca65e645d08aebad459f23dd08a65a5dc219019e10c2a0fefbd3a5ec9387"
+  },
+  "cpp-build.txt": {
+    "bytes": 172,
+    "sha256": "956693cb17a3aff33eb30311a6db8efa77c78d5f68fcdbcf33d053ce24a44248"
+  },
+  "accelerated.json": {
+    "bytes": 28556,
+    "sha256": "9041128bc085617a32f428bbcec2c735dd67192ae8c5ec4d3e042379ce640e3e"
+  },
+  "baseline.json": {
+    "bytes": 13384,
+    "sha256": "08abe7c3ea520dc2e9b1f256366746c76a438c7b24c17f3d43b6eb4e365f0bb8"
+  },
+  "renderer-regression.json": {
+    "bytes": 306,
+    "sha256": "dfff319984e64375f2b657e68f75cf3bfd6c54f1707587baabefad587aae59d6"
+  },
+  "final-verification.json": {
+    "bytes": 2110,
+    "sha256": "4a0e5762e1cc29dad03ad120cab3507809322670dce312d919b71464ffecccca"
+  },
+  "snapshot-validation.json": {
+    "bytes": 593,
+    "sha256": "cd3ddff7ad2e610ab227935e0d5cb53ed2d0d16d3fb0c0459c377d061a48db8e"
+  },
+  "publication-validation.json": {
+    "bytes": 723,
+    "sha256": "65dc6b011f2ec118a3e5c55beb104381fefdebaef5d20bb1ffc0b6a1588a191a"
+  },
+  "parity.json": {
+    "bytes": 469,
+    "sha256": "085bb61ae2193c5da2b7f379a508381b93a5aeea5ecb4613311ac3822b7db272"
+  },
+  "backend-build/export_onnx_fallback.py": {
+    "bytes": 2583,
+    "sha256": "fd5f7995a88b6eb14cc16310e98040c128e6614036b96b1570b8a60716da744f"
+  },
+  "backend-build/export_onnx.py": {
+    "bytes": 3511,
+    "sha256": "9efcebf15f85c45ac8cdc2455cdb4400ba8bb2cb7bd56e7217dc1a577e9a6fd2"
+  },
+  "backend-build/annotate_engine.py": {
+    "bytes": 1488,
+    "sha256": "23f250f45e173baf2c5456e035f85338b5d1920960b751e51d202f45dfdf326b"
+  },
+  "backend-build/build_engine.py": {
+    "bytes": 7558,
+    "sha256": "f9d72a8a2569575aa8dff0d69e0c0f21be277debaeb4e98147d78503704683b0"
+  },
+  "deployment-snapshot/check_parity.py": {
+    "bytes": 2495,
+    "sha256": "00c57a0a47feb94f3a59d41e8717a2d1800a92a90772175a7165a1463e9776e9"
+  },
+  "deployment-snapshot/parity.py": {
+    "bytes": 1547,
+    "sha256": "85df853f39b7f947cf1e798185b0d80a8feac4ef9a001bf199baaf8d0a2c526a"
+  },
+  "deployment-snapshot/launch_gpu.sh": {
+    "bytes": 705,
+    "sha256": "fdd5454691ec62449520163e197a28f051e28b3b8184448317d4b96d6c7e5200"
+  },
+  "deployment-snapshot/deploy.py": {
+    "bytes": 5102,
+    "sha256": "25a2adc1a10cbc10cce62034688eb0dd19ffea61666f615c64f9a93385136404"
+  },
+  "deployment-snapshot/observe.py": {
+    "bytes": 5185,
+    "sha256": "a1faca13720bd97159fa6f988268822e5a9d9c7388aa0dec3fde08816bf3c024"
+  },
+  "deployment-snapshot/clock_lease.py": {
+    "bytes": 4240,
+    "sha256": "c5679a89f38f31b2becacf9f0a674f6ec6ad511da54808dc38c7c4be8bcd768e"
+  },
+  "deployment-snapshot/performance.json": {
+    "bytes": 468,
+    "sha256": "6f90ff972fc1abfb4923dbd20c8772404c922cce74a63f201c54738a8d2f9ddc"
+  },
+  "deployment-snapshot/measure_lib.py": {
+    "bytes": 20706,
+    "sha256": "2e689a357158b416862e803f69e34394556b92f34f1d70f92e4bf30564136717"
+  },
+  "deployment-snapshot/launch_observer.sh": {
+    "bytes": 353,
+    "sha256": "db770c75e5d337a2c4eeef0f017b38f35b40511c5887b0dd265ece492a5980ea"
+  },
+  "deployment-snapshot/start_accelerated.sh": {
+    "bytes": 1185,
+    "sha256": "f27c9519cd1b02a23e547b7de1e96a8875b2a17a52488b3fcbd093dddb4b0923"
+  },
+  "deployment-snapshot/resource-helpers/restore_cpuidle.py": {
+    "bytes": 1582,
+    "sha256": "226b27f4be7a3dd5a9de3873b03e47b5139657442c20a3465daf314529203d5b"
+  },
+  "deployment-snapshot/resource-helpers/verify_restore.py": {
+    "bytes": 2232,
+    "sha256": "7a88f14588d908f36793fc43d63d748837e6f2bf6c6216345cd6092b75b59ec0"
+  },
+  "deployment-snapshot/resource-helpers/verify_fixed.py": {
+    "bytes": 5249,
+    "sha256": "04ce893cfb076bf4e683b53e31dd66ce7a82681007dc214b330925aeefbe6201"
+  }
+}

@@ -1,0 +1,6 @@
+string job_id
+bool success
+string detail
+---
+bool accepted
+string detail

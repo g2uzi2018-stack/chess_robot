@@ -1,0 +1,65 @@
+{
+  "reviewed_at": "2026-11-02T08:54:01.323703+00:00",
+  "verdict": "acceptable_as_explicit_shadow_experiment_only; not approved as production replacement",
+  "source_sha256": {
+    "depth_candidates.py": "c88a1825dca51b1c2c0369a0f74a6ad9c8f6ca0cbadb47a01de15b6f2e8ad3ab",
+    "candidate_roi.py": "c3ee6ea84fc1c6d584220ed0448b124602bbb26598d2d75749b41742994acdf9",
+    "recognize_tracked.py": "3fd990f8cd3c1665ad14d136fdd478d7950a81b929d41ce238850cc1ab103a72",
+    "shared_pipeline.py": "f1e16f74ee052ed34bfcefd716ab56245beb67d88684e9a11777931293d263b8",
+    "measurement_contract.py": "4827512e565b3d2abec52a8008d8cd0974bad8c2b05a158e951ddbe1a61e8c82",
+    "perception_node.py": "d1ffdd24f84e086510b2d620fd7b3ff77c19f7c5bf666ac05802f7098e646881",
+    "test_depth_candidates.py": "1087a588568f047d8e37d49dce538f6ded8272d6bd766828440a3f46b295bdea",
+    "test_depth_policy.py": "d8ae1d9538eac1da27b0962dbde10e96a214df0e45df45dfb932458dd6815fcf"
+  },
+  "checked": {
+    "combined_pytest": 83,
+    "combined_pytest_passed": true,
+    "independent_counterexamples": 6,
+    "independent_counterexamples_passed": true,
+    "real_fresh_rgbd_frames": 12,
+    "real_reference_valid_frames": 12,
+    "real_coverage_valid_frames": 0,
+    "full_frame_model_call_blocked_by_tests": true,
+    "physical_commands": 0,
+    "live_services_changed": false
+  },
+  "fixed_findings": [
+    {
+      "id": "D1",
+      "problem": "global valid fraction allowed a hole large enough to hide a whole piece",
+      "fix": "any unobserved workspace depth revokes coverage"
+    },
+    {
+      "id": "D2",
+      "problem": "image-edge object missed boundary gate when workspace filled image",
+      "fix": "zero-pad workspace before distance transform"
+    },
+    {
+      "id": "D3",
+      "problem": "broad board bypassed maximum-height gate",
+      "fix": "board height checked"
+    },
+    {
+      "id": "D4",
+      "problem": "touching pair fit permissive generic max span",
+      "fix": "explicit single-piece diameter admission"
+    },
+    {
+      "id": "D5",
+      "problem": "touching grid of piece tops was treated as empty board",
+      "fix": "rectangular footprint support gate; unresolved otherwise"
+    },
+    {
+      "id": "D6",
+      "problem": "candidate limit truncated only after all full-frame masks accumulated",
+      "fix": "processing/candidate/board/summary limits checked before accumulation"
+    }
+  ],
+  "limitations": [
+    "Current-view pixel workspace and bare-table seed remain external assumptions. Camera epoch/intrinsics do not prove unchanged wrist-camera pose.",
+    "Minimum physical height/diameter assumptions and nominal thickness do not establish measurement truth.",
+    "Depth holes and table noise currently prevent coverage in all 12 fresh real frames.",
+    "Thresholded height-support masks are not exact chess-piece outlines; no absolute geometry or pose acceptance follows.",
+    "No production 30 Hz or accuracy acceptance; CPU timings here are Windows replay timings, not Orin throughput."
+  ]
+}

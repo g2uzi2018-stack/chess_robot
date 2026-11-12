@@ -1,0 +1,621 @@
+{
+  "window_s": 180.05645323899807,
+  "records": 5277,
+  "complete_unique_frames": 5277,
+  "completion_hz": 29.30747498949993,
+  "frame_info_unique": 5376,
+  "frame_info_hz": 29.85730254757469,
+  "frame_info_source_stamp_hz": 29.85852668095449,
+  "completion_to_frame_info_ratio": 0.9815848214285714,
+  "frame_info_is_not_four_image_topic_matching": true,
+  "duplicates": 0,
+  "camera_geometry_frames": 5277,
+  "base_transform_frames": 5277,
+  "motion_ready_frames": 0,
+  "grasp_ready_frames": 0,
+  "latency_host_sdk_stamp_to_publish_ms": {
+    "n": 5277,
+    "p50": 92.224207,
+    "p95": 108.10694620000001,
+    "p99": 117.32775627999999,
+    "maximum": 252.17477
+  },
+  "live_stage_ms": {
+    "analysis": {
+      "n": 5277,
+      "p50": 36.998172057792544,
+      "p95": 39.00165960658342,
+      "p99": 43.368690724018954,
+      "maximum": 46.60149198025465
+    },
+    "debug_image_generated": {
+      "n": 5277,
+      "p50": 0.0,
+      "p95": 0.0,
+      "p99": 0.0,
+      "maximum": 0.0
+    },
+    "frame_pipeline_elapsed": {
+      "n": 5277,
+      "p50": 53.2736589666456,
+      "p95": 66.11535138217732,
+      "p99": 70.50935274222863,
+      "maximum": 212.97977404901758
+    },
+    "geometry_stage": {
+      "n": 5277,
+      "p50": 16.63404598366469,
+      "p95": 17.900766583625227,
+      "p99": 18.919513428118076,
+      "maximum": 20.72360902093351
+    },
+    "gpu_stage": {
+      "n": 5277,
+      "p50": 20.207544963341206,
+      "p95": 21.417783806100488,
+      "p99": 27.325501877348856,
+      "maximum": 29.358006024267524
+    },
+    "image_age_at_processing_start": {
+      "n": 5277,
+      "p50": 37.178354999999996,
+      "p95": 50.494304599999985,
+      "p99": 62.55390707999997,
+      "maximum": 154.279281
+    },
+    "image_decode": {
+      "n": 5277,
+      "p50": 1.8053429666906595,
+      "p95": 3.220927226357162,
+      "p99": 4.0518912323750556,
+      "maximum": 9.219133004080504
+    },
+    "shared_memory_copy": {
+      "n": 5277,
+      "p50": 0.8988800109364092,
+      "p95": 2.2946367855183776,
+      "p99": 3.230495005846021,
+      "maximum": 135.34533802885562
+    },
+    "tracking": {
+      "n": 5277,
+      "p50": 2.3840629728510976,
+      "p95": 9.611205174587667,
+      "p99": 10.959295800421376,
+      "maximum": 150.2896980382502
+    }
+  },
+  "detections_per_frame": {
+    "n": 5277,
+    "p50": 4.0,
+    "p95": 4.0,
+    "p99": 4.0,
+    "maximum": 4.0
+  },
+  "arm_samples": 18006,
+  "arm_reference_values": [
+    true
+  ],
+  "arm_modes": [
+    5
+  ],
+  "arm_feedback_fresh_fraction": 1.0,
+  "http_unique_jpeg": 5174,
+  "http_jpeg_hz": 28.735432176553466,
+  "preview_latest": {
+    "stamp_ns": 1793522201234478551,
+    "video_hz": 30.0247,
+    "recognition_hz": 27.5637,
+    "published_frames": 236155,
+    "overlay_valid": true,
+    "visible_tracks": 4
+  },
+  "compute_samples": [
+    {
+      "predictor_device": "cuda:0",
+      "model_parameter_device": null,
+      "boxes_device": "cuda:0",
+      "masks_device": "cuda:0",
+      "fp16": false,
+      "inference_backend": "tensorrt",
+      "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+      "matmul_allow_tf32": false,
+      "cudnn_allow_tf32": false
+    },
+    {
+      "predictor_device": "cuda:0",
+      "model_parameter_device": null,
+      "boxes_device": "cuda:0",
+      "masks_device": "cuda:0",
+      "fp16": false,
+      "inference_backend": "tensorrt",
+      "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+      "matmul_allow_tf32": false,
+      "cudnn_allow_tf32": false
+    }
+  ],
+  "roi_shapes": [
+    [
+      0,
+      0,
+      1280,
+      720
+    ],
+    [
+      400,
+      48,
+      1072,
+      720
+    ],
+    [
+      400,
+      176,
+      944,
+      720
+    ],
+    [
+      576,
+      208,
+      1088,
+      720
+    ]
+  ],
+  "track_ids": 4,
+  "confirmed_frames": 5277,
+  "four_complete_center_frames": 3582,
+  "detection_counts": {
+    "3": 1583,
+    "4": 3692,
+    "2": 2
+  },
+  "status_counts": {
+    "collecting": 1742,
+    "locked": 32,
+    "needs_resample": 3
+  },
+  "snapshots": [
+    {
+      "snapshot_id": "f86fcedd9e9a4c99a4b0716743e4e7b0",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.000661997,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "d2ed06eeb16f425286a2b11a9a308100",
+      "targets": 4,
+      "unique_frames": 61,
+      "span_s": 2.034958826,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "7145f4357c7d407a9cd655cd76e907d5",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.030031959,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "a4d8201a508e40d4a36501b38e6ccef3",
+      "targets": 4,
+      "unique_frames": 59,
+      "span_s": 2.004717578,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "b64cb6396fa247d8b9c71c04d8756ae1",
+      "targets": 4,
+      "unique_frames": 59,
+      "span_s": 2.000027029,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "56399530ea77465593752dde71e13b28",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.0349911880000002,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "be10e3c92d064f16bcbf017b041505e0",
+      "targets": 4,
+      "unique_frames": 61,
+      "span_s": 2.029619041,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "b662f72b567d431b82b136f17e1807a8",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.030961386,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "5235c7857bfc4a68bbc8b89037730d79",
+      "targets": 4,
+      "unique_frames": 61,
+      "span_s": 2.064572852,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "8fd2b12735784a4181fd16cc1576d604",
+      "targets": 4,
+      "unique_frames": 56,
+      "span_s": 2.030044818,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "98d640ce1ed240af98182b616650f268",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.034971994,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "bfdd600d51274c5ea0b60148d9931eb0",
+      "targets": 4,
+      "unique_frames": 61,
+      "span_s": 2.034058693,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "18ac064cd31b4883b731821b983cf110",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.034983502,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "c45fa9d193e349cf91bafb7b194ad5b0",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.000004643,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "510737f0d45d49c799824a08dda26cbe",
+      "targets": 4,
+      "unique_frames": 59,
+      "span_s": 2.0000163950000003,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "4063ed3426a541e69f2aa9711a9fab6c",
+      "targets": 4,
+      "unique_frames": 59,
+      "span_s": 2.000055967,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "8a75527a3ba74d60b08d2727a45768a5",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.0299525760000003,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "226e380491284ceca46da8a9c8bd12fb",
+      "targets": 4,
+      "unique_frames": 61,
+      "span_s": 2.03499013,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "9a74734ab9484b14acb0aaac7ada0242",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.00000296,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "eb2304ac267f4a6093b7705e5a49427f",
+      "targets": 4,
+      "unique_frames": 60,
+      "span_s": 2.000066233,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "e1dce5c3311a423da19f084daec17d90",
+      "targets": 4,
+      "unique_frames": 59,
+      "span_s": 2.000000971,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    },
+    {
+      "snapshot_id": "167821ccba574d1f8b8e75e44de53357",
+      "targets": 4,
+      "unique_frames": 56,
+      "span_s": 2.0000288210000003,
+      "identity": {
+        "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+        "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+        "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+        "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+        "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+        "ultralytics": "8.4.32",
+        "torch": "2.8.0",
+        "imgsz": 640,
+        "inference_backend": "tensorrt",
+        "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+        "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35"
+      }
+    }
+  ],
+  "base_rejections": {},
+  "backend_samples": [
+    {
+      "predictor_device": "cuda:0",
+      "model_parameter_device": null,
+      "boxes_device": "cuda:0",
+      "masks_device": "cuda:0",
+      "fp16": false,
+      "inference_backend": "tensorrt",
+      "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+      "matmul_allow_tf32": false,
+      "cudnn_allow_tf32": false
+    },
+    {
+      "predictor_device": "cuda:0",
+      "model_parameter_device": null,
+      "boxes_device": "cuda:0",
+      "masks_device": "cuda:0",
+      "fp16": false,
+      "inference_backend": "tensorrt",
+      "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+      "matmul_allow_tf32": false,
+      "cudnn_allow_tf32": false
+    }
+  ]
+}

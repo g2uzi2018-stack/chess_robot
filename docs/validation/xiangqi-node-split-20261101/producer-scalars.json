@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "real_record_non_native_paths": [
+    {
+      "path": "$.identity.torch",
+      "type": "torch.torch_version.TorchVersion"
+    }
+  ],
+  "pre_fix_check_error": "unsupported JSON value type",
+  "normalized_packet_non_native_paths": [],
+  "payload_bytes": 5844,
+  "synthetic_numpy_scalar_types": [
+    "bool",
+    "int",
+    "float"
+  ],
+  "nonfinite_and_array_rejections": 4,
+  "external_validation_remains_strict": true,
+  "actual_model_constructor": true,
+  "inference_backend": "tensorrt",
+  "inference_executed": false,
+  "cached_detector_outputs": true,
+  "physical_commands": 0
+}

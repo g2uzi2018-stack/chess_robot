@@ -1,0 +1,51 @@
+{
+  "passed": true,
+  "target_fps": 30,
+  "method": "real Windows client over LAN, unique JPEG sequence, one request in flight",
+  "clock": "QueryPerformanceCounter()",
+  "clock_resolution_s": 1e-07,
+  "results": [
+    {
+      "channel": "color",
+      "duration_s": 8.004523399984464,
+      "jpeg_frames": 238,
+      "unique_jpeg_fps": 29.732849966699572,
+      "jpeg_mib_per_s": 0.9988389466242117,
+      "response_time_ms_mean": 20.28548445243451,
+      "encoding_fps": 30.10797619761693,
+      "waiting_responses": 0,
+      "received_ros_fps": 30.10797619761693,
+      "viewers_start": 2,
+      "viewers_end": 2,
+      "preview": {
+        "cpu_one_core_percent": 16.664516559129797,
+        "rss_mib": 68.203125
+      },
+      "camera": {
+        "cpu_one_core_percent": 112.60451903526298,
+        "rss_mib": 105.42578125
+      }
+    },
+    {
+      "channel": "depth",
+      "duration_s": 8.003761899890378,
+      "jpeg_frames": 232,
+      "unique_jpeg_fps": 29.20415233512191,
+      "jpeg_mib_per_s": 0.4956687410210094,
+      "response_time_ms_mean": 20.41821077100708,
+      "encoding_fps": 29.361193266283774,
+      "waiting_responses": 2,
+      "received_ros_fps": 29.361193266283774,
+      "viewers_start": 2,
+      "viewers_end": 2,
+      "preview": {
+        "cpu_one_core_percent": 53.69362649276725,
+        "rss_mib": 71.26953125
+      },
+      "camera": {
+        "cpu_one_core_percent": 112.52940429775933,
+        "rss_mib": 106.22265625
+      }
+    }
+  ]
+}

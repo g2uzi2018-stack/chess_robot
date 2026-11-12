@@ -1,0 +1,327 @@
+{
+  "status": "PARTIAL_BLOCKED_ONE_REMAINING",
+  "verified_total": 7,
+  "newly_verified_this_chat": 2,
+  "placements": [
+    {
+      "slot_index": 0,
+      "slot_xy_m": [
+        0.045,
+        -0.675
+      ],
+      "source_position_m": [
+        -0.08437416774507481,
+        -0.6047434866695438,
+        -0.00338305369102578
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.046203815228687994,
+          -0.6746562040103753,
+          -0.0021526517405973155
+        ],
+        "class_name": "black_pawn",
+        "first_stamp_ns": 1793858769050280991,
+        "last_stamp_ns": 1793858771085195973,
+        "samples": 55,
+        "scene_identity": [
+          903,
+          "7a63469e62654deea83ac63f87f08a7a",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 0
+    },
+    {
+      "slot_index": 0,
+      "slot_xy_m": [
+        0.045,
+        -0.625
+      ],
+      "source_position_m": [
+        -0.06442185315496678,
+        -0.3817652000758552,
+        -0.004613358610910377
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.04682110232825724,
+          -0.6251861474375235,
+          -0.0028163962260917075
+        ],
+        "class_name": "black_elephant",
+        "first_stamp_ns": 1793862986972952805,
+        "last_stamp_ns": 1793862989037950412,
+        "samples": 53,
+        "scene_identity": [
+          1584,
+          "da45e008643f4fc2bcc7c4a9d585f5f6",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 1
+    },
+    {
+      "slot_index": 1,
+      "slot_xy_m": [
+        0.045,
+        -0.575
+      ],
+      "source_position_m": [
+        0.15999046417807916,
+        -0.43100624034944734,
+        -0.004481343260990332
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.04679770936840658,
+          -0.5745710981583988,
+          -0.003773903722033084
+        ],
+        "class_name": "unknown",
+        "first_stamp_ns": 1793863130129552469,
+        "last_stamp_ns": 1793863132129592735,
+        "samples": 49,
+        "scene_identity": [
+          1675,
+          "d420198dde374c2ca3f53cf4bb7724ba",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 2
+    },
+    {
+      "slot_index": 2,
+      "slot_xy_m": [
+        0.045,
+        -0.525
+      ],
+      "source_position_m": [
+        0.29973489661178776,
+        -0.4358265018051662,
+        -0.003864494472596763
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.048304463977851084,
+          -0.524505033089862,
+          -0.003935831506717991
+        ],
+        "class_name": "red_cannon",
+        "first_stamp_ns": 1793863727543096650,
+        "last_stamp_ns": 1793863729573081037,
+        "samples": 47,
+        "scene_identity": [
+          1801,
+          "9bf7023f754446b2abd3fbdb2bfd9ead",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 3
+    },
+    {
+      "slot_index": 0,
+      "slot_xy_m": [
+        0.045,
+        -0.475
+      ],
+      "source_position_m": [
+        -0.2512663407330513,
+        -0.22865720132269393,
+        -0.004362233768154109
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.046699472642584124,
+          -0.4754391951367642,
+          -0.00396629515362482
+        ],
+        "class_name": "red_king",
+        "first_stamp_ns": 1793864241782168898,
+        "last_stamp_ns": 1793864243848352835,
+        "samples": 32,
+        "scene_identity": [
+          2001,
+          "638fe2e53dbb45f096603fa50c997e96",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 4
+    },
+    {
+      "slot_index": 0,
+      "slot_xy_m": [
+        0.045,
+        -0.425
+      ],
+      "source_position_m": [
+        -0.23398653384331633,
+        -0.47125767104888405,
+        -0.003464549251987645
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.04937601389413801,
+          -0.4251554987669342,
+          -0.004160842044471611
+        ],
+        "class_name": "red_king",
+        "first_stamp_ns": 1793872170877449370,
+        "last_stamp_ns": 1793872172911403044,
+        "samples": 32,
+        "scene_identity": [
+          2283,
+          "b7ec67edc129400ea51f165e95a9d87a",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 5
+    },
+    {
+      "slot_index": 0,
+      "slot_xy_m": [
+        0.045,
+        -0.375
+      ],
+      "source_position_m": [
+        0.27808964487949656,
+        -0.22402955062813942,
+        -0.00453007410180831
+      ],
+      "measurement": {
+        "base_surface_center_m": [
+          0.04687844536000756,
+          -0.3760878546293771,
+          -0.00478093346038945
+        ],
+        "class_name": "black_horse",
+        "first_stamp_ns": 1793872799505416831,
+        "last_stamp_ns": 1793872801535511732,
+        "samples": 44,
+        "scene_identity": [
+          2527,
+          "3e246def866841d68866ff048d5764de",
+          "3c1a4a4eb4004c79b6bca4ec2988087d",
+          "{\"K\": [654.5543212890625, 0.0, 645.0987548828125, 0.0, 654.255126953125, 371.55303955078125, 0.0, 0.0, 1.0], \"identity\": {\"calibration\": \"/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml\", \"calibration_sha256\": \"9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002\", \"candidate_artifact\": \"/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine\", \"candidate_artifact_sha256\": \"5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b\", \"candidate_conf\": 0.1, \"candidate_dedup_iou\": 0.65, \"candidate_input_hw\": [384, 640], \"candidate_mode\": \"lite\", \"imgsz\": 640, \"inference_artifact\": \"/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine\", \"inference_artifact_sha256\": \"26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35\", \"inference_backend\": \"tensorrt\", \"roi_batch_size\": 1, \"roi_group_max_size\": 704, \"roi_planner\": \"grouped\", \"torch\": \"2.8.0\", \"ultralytics\": \"8.4.32\", \"urdf_sha256\": \"e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1\", \"weights\": \"/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt\", \"weights_sha256\": \"f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e\"}}",
+          "c61b6ff30ddb49e5873ef15f2eaed4f0"
+        ],
+        "classification_required": false
+      },
+      "global_slot_index": 6
+    }
+  ],
+  "remaining_search_hints": [
+    {
+      "scan_target_id": "remaining-search-3",
+      "class_name": "unknown",
+      "association_state": "within_view_unique",
+      "base_surface_center_m": [
+        0.05822885158705525,
+        -0.2277405440271552,
+        -0.004098909840195605
+      ],
+      "source_scan_target_id": "continuation-candidate-12",
+      "source_last_stamp_ns": 1793861142642204260,
+      "provenance": "unpicked search-location group after excluding actual recorded source and destination of all five verified placements; new geometric confirmation required"
+    }
+  ],
+  "final_arm": {
+    "header": {
+      "stamp": {
+        "sec": 1793873122,
+        "nanosec": 471464888
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": true,
+    "reference_valid": true,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 5,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 1793873122,
+          "nanosec": 471464888
+        },
+        "frame_id": "base_link"
+      },
+      "pose": {
+        "position": {
+          "x": 0.0002382297687625182,
+          "y": -0.5767934051111265,
+          "z": 0.2729551810487809
+        },
+        "orientation": {
+          "x": 0.4829931898510972,
+          "y": 0.5185565742396088,
+          "z": -0.4802211954541772,
+          "w": 0.5169180411892247
+        }
+      }
+    },
+    "signed_twist_rad": -0.29627259400847294,
+    "total_twist_rad": 0.29733863995353604,
+    "twist_energy_rad2_per_m": 0.42275273967808646,
+    "diagnostic": "stopped checkpoint restored; winding retained without zeroing; endpoint_delta_rad=0.000001; no_unobserved_motion=true; checkpoint=durable stopped save ready; actuator=enabled; independently confirmed; no motion sent"
+  },
+  "final_gripper": {
+    "header": {
+      "stamp": {
+        "sec": 1793873122,
+        "nanosec": 385465036
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": true,
+    "feedback_valid": true,
+    "feedback_age_sec": 0.262911782,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 1,
+    "grip_status": 1,
+    "position_raw": 1000,
+    "object_detected": false,
+    "object_dropped": false,
+    "detail": "confirmed by fresh device feedback"
+  },
+  "whole_table_physical_count_confirmed": false,
+  "pick_tcp_z_m": -0.006535731876821386,
+  "source_alignment_tolerance_m": 0.003,
+  "placement_tolerance_m": 0.0045,
+  "fingertip_local_model_clearance_m": 0.002,
+  "evidence": {
+    "sixth": "runs/row_lower_1mm_20261105_01/sixth-placement-reverify08/run-result.json",
+    "seventh": "runs/row_lower_1mm_20261105_01/seventh-placement-reverify15/run-result.json",
+    "last_original_yaw_ik_fault": "runs/row_lower_1mm_20261105_01/execute17/run-result.json",
+    "last_halfturn_mask_failure": "runs/row_lower_1mm_20261105_01/execute18/run-result.json"
+  },
+  "blockers": [
+    "last piece half-turn source view lacks complete same-frame ROI masks at 120/140mm",
+    "original yaw at 120mm passes geometry but DESCEND plan query returns controller InverseKin error -1; no descent executed"
+  ],
+  "next_action": "User may relocate last unpicked piece to the now-empty previous right-hand source near [0.278,-0.226]; then reacquire fresh geometry before any descent. Do not replay completed slots."
+}

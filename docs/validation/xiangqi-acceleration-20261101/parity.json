@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "case": 0,
+      "matched_targets": 4,
+      "minimum_mask_iou": 1.0,
+      "maximum_box_delta_px": 6.103515625e-05,
+      "maximum_position_delta_m": 0.0
+    },
+    {
+      "case": 1,
+      "matched_targets": 5,
+      "minimum_mask_iou": 1.0,
+      "maximum_box_delta_px": 3.0517578125e-05,
+      "maximum_position_delta_m": 0.0
+    }
+  ],
+  "scope": "Same fresh saved image in full/ROI; not labelled accuracy acceptance"
+}

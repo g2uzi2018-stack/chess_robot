@@ -1,0 +1,25 @@
+{
+  "read_only": true,
+  "motion_commands": 0,
+  "queries": 2000,
+  "errors": [],
+  "query_latency_ms_percentiles": [
+    1.2089590018149465,
+    1.9142380042467266,
+    2.3242988041602075,
+    2.8407067901571277,
+    11.303862993372604
+  ],
+  "query_above_30ms": 0,
+  "query_above_60ms": 0,
+  "slow_queries": [],
+  "timer_max_jitter_ms": 7.307734980713576,
+  "timer_p99_jitter_ms": 0.10530905128689483,
+  "feedback_frames": 7351,
+  "feedback_max_gap_ms": 10.927958,
+  "modes": [
+    5
+  ],
+  "peak_joint_speed_deg_s": 0.048065185546875,
+  "tcp_total_retrans": 0
+}

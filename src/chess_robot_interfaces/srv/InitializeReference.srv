@@ -1,0 +1,4 @@
+# Explicit software reference initialization; never encoder zeroing.
+---
+bool success
+string detail

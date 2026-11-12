@@ -1,0 +1,212 @@
+{
+  "schema": "xiangqi_pick_stack_limited_validation/v1",
+  "date": "2026-11-03",
+  "timezone": "Asia/Taipei",
+  "base_revision": "19d1281750ad517eaf48c554f4bce60d44a6c848",
+  "execution_available": false,
+  "physical_io_implemented": false,
+  "physical_actions_sent": 0,
+  "offline_verification": {
+    "verification": "offline state transitions and rejection semantics",
+    "checks": [
+      "geometry_13mm_bare_table",
+      "historical_unknown_preserved",
+      "isolated_seed",
+      "nearby_unknown_blocks_rook",
+      "synthetic_batch_1_completes",
+      "synthetic_batch_2_completes",
+      "eight_not_claimed_despite_nine_hypotheses",
+      "independent_two_second_window",
+      "duplicate_frame_rejected",
+      "epoch_changed_rejected",
+      "frame_gap_rejected",
+      "coverage_missing_rejected",
+      "label_unknown_rejected",
+      "geometry_missing_rejected",
+      "target_displaced_rejected",
+      "near_neighbor_rejected",
+      "grasp_does_not_commit_layer",
+      "grasp_does_not_home_or_open_on_fault",
+      "RETREAT_held_does_not_commit_layer",
+      "RETREAT_held_does_not_home_or_open_on_fault",
+      "support_does_not_commit_layer",
+      "support_does_not_home_or_open_on_fault",
+      "release_does_not_commit_layer",
+      "release_does_not_home_or_open_on_fault",
+      "placement_does_not_commit_layer",
+      "placement_does_not_home_or_open_on_fault",
+      "camera_source_epoch_changed_rejected"
+    ],
+    "check_count": 27,
+    "persistent_test_files_created": false,
+    "physical_actions_sent": 0,
+    "synthetic_results_are_hardware_evidence": false
+  },
+  "audit": {
+    "schema": "xiangqi_pick_stack_audit/v1",
+    "physical_actions_sent": 0,
+    "scan_id": "4d6c5e1c03924b6887c579381c40619d",
+    "scan_hypotheses": 9,
+    "unique_physical_target_count": null,
+    "first_search_seed": "candidate-4",
+    "batch_limit": 1,
+    "table_z_m": -0.01,
+    "stack_xy_m": [
+      0.00023669097092491665,
+      -0.5767915924856896
+    ],
+    "theoretical_stack_top_z_m": [
+      0.002999999999999999,
+      0.016,
+      0.028999999999999998,
+      0.041999999999999996,
+      0.055,
+      0.068,
+      0.081,
+      0.094
+    ],
+    "missing_measurements": [
+      "surface_to_nominal_tcp_base_m",
+      "surface_to_observation_tcp_base_m",
+      "finger_lowest_point_and_contact_envelope",
+      "piece_radius_m",
+      "open_raw",
+      "close_raw",
+      "empty_bare_support_and_exit_clearance",
+      "grip_retention_and_release_evidence",
+      "stack_stability_observation_pose"
+    ],
+    "execution_available": false,
+    "blockers": [
+      "no reviewed contact-stage guard policy",
+      "no dynamic payload / growing-stack collision guard",
+      "physical arm/gripper/support IO not yet implemented",
+      "first physical pick authorization and exclusive control not established"
+    ],
+    "historical_coordinates_authorize_descent": false
+  },
+  "static_geometry_necessary_condition": {
+    "schema": "xiangqi_pick_stack_floor_bound/v1",
+    "guard_path": "src/chess_robot_arm/config/nova5_ag95_geometry.yaml",
+    "guard_sha256": "a3cf4909d9a96debc39a7d21a3deb411cadf61547362c77ea1be073dd9e5dfd3",
+    "orientation_xyzw": [
+      0.48299238089943397,
+      0.5185547459906317,
+      -0.48022726217308936,
+      0.5169149950131322
+    ],
+    "floor_z_m": 0.01,
+    "lowest_fixed_link6_hull_offset_from_nominal_tcp_z_m": -0.0008232462109888324,
+    "necessary_nominal_tcp_z_m": 0.010823246210988832,
+    "full_arm_path_validated": false,
+    "real_tcp_calibrated": false,
+    "payload_stack_collision_checked": false,
+    "uncalibrated_top_endpoint_probes": [
+      {
+        "layer": 1,
+        "nominal_tcp_z_m": 0.002999999999999999,
+        "fixed_link6_hull_min_z_m": 0.0021767537890111668,
+        "necessary_floor_condition_met": false
+      },
+      {
+        "layer": 2,
+        "nominal_tcp_z_m": 0.016,
+        "fixed_link6_hull_min_z_m": 0.015176753789011168,
+        "necessary_floor_condition_met": true
+      },
+      {
+        "layer": 8,
+        "nominal_tcp_z_m": 0.094,
+        "fixed_link6_hull_min_z_m": 0.09317675378901116,
+        "necessary_floor_condition_met": true
+      }
+    ]
+  },
+  "current_start_planning": {
+    "status": "BLOCKED",
+    "error": "fresh measured stationary interval unavailable",
+    "start": null,
+    "probes": [],
+    "physical_actions_sent": 0,
+    "chained_path_validated": false,
+    "grasp_calibration_validated": false,
+    "physical_stop_confirmed": false
+  },
+  "final_readonly_arm": {
+    "header": {
+      "stamp": {
+        "sec": 1793698355,
+        "nanosec": 220570272
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": false,
+    "reference_valid": false,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 5,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 0,
+          "nanosec": 0
+        },
+        "frame_id": ""
+      },
+      "pose": {
+        "position": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0
+        },
+        "orientation": {
+          "x": 0.0,
+          "y": 0.0,
+          "z": 0.0,
+          "w": 1.0
+        }
+      }
+    },
+    "signed_twist_rad": 0.0,
+    "total_twist_rad": 0.0,
+    "twist_energy_rad2_per_m": 0.0,
+    "diagnostic": "missing/stale feedback; checkpoint=durable stopped save ready; actuator=not requested; history alone grants no motion readiness"
+  },
+  "final_readonly_gripper": {
+    "header": {
+      "stamp": {
+        "sec": 1793698832,
+        "nanosec": 73405380
+      },
+      "frame_id": ""
+    },
+    "simulated": false,
+    "connected": false,
+    "feedback_valid": false,
+    "feedback_age_sec": 477.05923385,
+    "busy": false,
+    "commands_enabled": true,
+    "initialization": 255,
+    "grip_status": 255,
+    "position_raw": 65535,
+    "object_detected": false,
+    "object_dropped": false,
+    "detail": "TCP transaction timeout/poll failure"
+  },
+  "first_readonly_state": {
+    "arm_feedback_fresh": true,
+    "arm_reference_valid": true,
+    "pose": "p1",
+    "gripper_connected": true,
+    "gripper_initialization": 1,
+    "gripper_position_raw": 1000
+  },
+  "modifications_committed": false,
+  "modifications_pushed": false,
+  "physical_services_restarted": false,
+  "unrelated_vision_changes_preserved": true
+}

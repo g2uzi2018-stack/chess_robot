@@ -1,0 +1,33 @@
+{
+  "source_geometry_sha256": "a3cf4909d9a96debc39a7d21a3deb411cadf61547362c77ea1be073dd9e5dfd3",
+  "candidate_geometry_sha256": "9cb9aa88cf1c8186464160462a4dbf8a82ffc871a09a3ee5ad6d6d6e3dc0e232",
+  "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1",
+  "original_arm_hulls_unchanged": true,
+  "aperture_states": 21,
+  "raw_to_angle_calibrated": false,
+  "split_hulls": [
+    {
+      "name": "camera_and_fixed_gripper_body",
+      "vertices": 141,
+      "role": "normal"
+    },
+    {
+      "name": "left_finger_assembly_21_state_union",
+      "vertices": 563,
+      "role": "finger_assembly"
+    },
+    {
+      "name": "right_finger_assembly_21_state_union",
+      "vertices": 563,
+      "role": "finger_assembly"
+    }
+  ],
+  "recombined_old_envelope_max_outside_m": 8.326672684688674e-17,
+  "new_envelope_max_outside_old_m": 2.498001805406602e-16,
+  "mesh_containment_max_outside_m": {
+    "body": 1.8214596497756474e-17,
+    "left_finger_assembly": 7.892991815694472e-17,
+    "right_finger_assembly": 4.163336342344337e-17
+  },
+  "robot_commands_sent": 0
+}

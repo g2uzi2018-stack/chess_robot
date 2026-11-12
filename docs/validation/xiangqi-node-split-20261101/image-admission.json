@@ -1,0 +1,60 @@
+{
+  "passed": true,
+  "domain": 117,
+  "deterministic_pipeline_fixture": true,
+  "malformed_roi_did_not_kill_spin": true,
+  "invalid_nan_K_published_then_recovered": true,
+  "real_model_test": "Not tested by this fixture; saved-input comparison reuses cached detector outputs. See separate read-only deployed model observation.",
+  "cases": [
+    {
+      "case": "rgbd-mismatch",
+      "passed": true,
+      "records": 0,
+      "camera_geometry_frames": 0
+    },
+    {
+      "case": "stale",
+      "passed": true,
+      "records": 0,
+      "camera_geometry_frames": 0
+    },
+    {
+      "case": "bad-intrinsics",
+      "passed": true,
+      "records": 9,
+      "camera_geometry_frames": 0
+    },
+    {
+      "case": "nan-intrinsics",
+      "passed": true,
+      "records": 9,
+      "camera_geometry_frames": 0
+    },
+    {
+      "case": "good-no-arm",
+      "passed": true,
+      "records": 7,
+      "camera_geometry_frames": 7
+    },
+    {
+      "case": "invalid-depth",
+      "passed": true,
+      "records": 9,
+      "camera_geometry_frames": 0
+    },
+    {
+      "case": "stream-invalid",
+      "passed": true,
+      "records": 11,
+      "camera_geometry_frames": 0
+    },
+    {
+      "case": "source-resumed",
+      "passed": true,
+      "records": 7,
+      "camera_geometry_frames": 7
+    }
+  ],
+  "physical_commands": 0,
+  "summary_note": "This public summary clarifies metadata; original raw fixture JSON/log is preserved unchanged in runs."
+}

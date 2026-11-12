@@ -1,0 +1,25 @@
+# Operator tools only; the motion node remains read_only by default.
+controller:
+  ip: 192.168.30.234
+  dashboard_port: 29999
+  feedback_port: 30004
+  timeout_ms: 500
+transition_timeout_s: 10.0
+home:
+  velocity_percent: 5
+  acceleration_percent: 5
+  timeout_s: 120.0
+  joint_tolerance_rad: 0.015
+  arrival_dwell_s: 0.3
+  stop_timeout_s: 3.0
+# Nova5 position limits copied from vendor URDF; velocity percentages are
+# controller profile ratios, not certified absolute velocity/acceleration caps.
+limits:
+  lower_rad: [-6.28, -3.14, -2.79, -6.28, -6.28, -6.28]
+  upper_rad: [6.28, 3.14, 2.79, 6.28, 6.28, 6.28]
+capture:
+  duration_s: 3.0
+  min_frames: 100
+  max_gap_s: 0.25
+  stationary_rad_s: 0.01
+  max_span_rad: 0.003

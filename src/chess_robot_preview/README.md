@@ -1,0 +1,119 @@
+# 预览节点
+
+`chess_robot_preview` 是独立的 C++ / ROS 2 Humble 节点，从现有 ROS 图像 topic 接收数据，向局域网浏览器提供预览；不访问相机 USB，不控制机械臂和夹爪。
+压缩、缩放与深度伪彩色均由预览节点负责，JPEG 只通过 HTTP 给浏览器，不另发 ROS 压缩话题。
+
+## 1 启动
+
+```bash
+cd /home/kuang/workspace/chess_robot
+source /opt/ros/humble/setup.bash
+source install_vision/setup.bash
+
+# 相机已运行：仅启动预览节点
+ros2 launch chess_robot_preview preview.launch.py
+
+# 相机未运行：一起启动相机与预览节点（不要重复占用相机）
+ros2 launch chess_robot_preview camera_preview.launch.py
+```
+
+本机局域网地址：[http://192.168.30.26:8088](http://192.168.30.26:8088)。监听地址默认只绑定 AGX 的这个 LAN 网卡。
+页头“夹爪控制”跳转到 [手动控制面板](http://192.168.30.26:8089)，控制面板可点击“图像预览”返回，均在当前标签页跳转。
+离开预览会释放查看需求；进入控制页不会自动初始化或移动夹爪。现场路径、启动和维护见[双网页操作说明](../../docs/operations/web-panels.md)。
+preview在进程启动时缓存网页文件；修改安装目录HTML/CSS后需重新启动预览进程才能生效。
+当前 `chess_robot_preview.service` 同时管理相机与预览，重启该服务会短暂重新连接相机。
+单独启动预览节点时，相机节点和预览节点须处于同一 ROS domain。
+
+本次已安装并启动用户服务 `chess_robot_preview.service`，包含相机与预览节点，使用 `ROS_DOMAIN_ID=90`、`ROS_LOCALHOST_ONLY=1`。未启用开机自启。
+服务运行期间不要再用上述命令重复启动相机。查看和管理本实例：
+
+```bash
+systemctl --user status chess_robot_preview.service
+systemctl --user stop chess_robot_preview.service
+systemctl --user start chess_robot_preview.service
+ROS_DOMAIN_ID=90 ROS_LOCALHOST_ONLY=1 ros2 topic list
+```
+
+## 2 面板行为与资源
+
+- 左侧为可扩展的图像列表，右侧为选中图像的大图；首次打开不选择、不订阅图像。
+- 默认包含彩色、深度和检测叠加图。检测项只订阅 `/pose/debug/image`，不执行检测或绘制叠加；无数据时显示“无数据”，未来发布图像后自动显示，过期/停发后恢复无数据。
+- 只有点击的图像才订阅和编码。左侧选中项与右侧共用同一个浏览器 Blob，不额外下载缩略图。
+- 同一浏览器切换选项时释放旧订阅；不同浏览器可以各看一路，同一路共享 JPEG 缓存。
+- 暂停、页面隐藏、离开页面会释放查看需求；异常断开后 2 秒超时回收。隐藏页面仍可能低频读取元数据，不传输图像。
+- 默认 30 fps、最大宽度 1280 px、JPEG 质量 75。慢请求不堆积，浏览器仅一个图像请求在途。
+- 无新图或断线时清除旧画面，显示等待状态；不会把冻结图像当实时图。
+- 预览节点始终轻量监听 HTTP；无查看者时没有图像订阅或 JPEG 编码。相机本身的采集、对齐与校正仍是独立的基础开销。
+- 相机节点按需发布未压缩 Image，内参与采集帧信息随处理频率发布；预览节点只处理当前查看的图像。
+
+预览开销随选中图像尺寸、帧率、编码质量及查看者数量变化。多看一路会增加那一路的处理和传输；同一路多个查看者不重复编码，但各自占用网络流量。
+
+## 3 增加图像
+
+编辑 `src/chess_robot_preview/config/channels.yaml`，在 `channels` 末尾增加一条并重启节点即可，不改前端。
+
+```yaml
+  - id: another_camera
+    title: 另一张图
+    description: 简短说明
+    topic: /another/image
+    type: image
+    mode: color
+```
+
+- `id` 唯一，仅英文字母、数字、下划线、短横线。
+- `type: image` 接收 `sensor_msgs/Image`，彩色模式通过 cv_bridge 转 BGR8。
+- `type: compressed` 可兼容外部已有的 `sensor_msgs/CompressedImage`，解码后仍由预览按本节点质量设置编码；默认三项均接收未压缩 Image。
+- `mode: depth` 接收 **32FC1、单位 m** 深度；按配置距离范围伪彩色显示，无效或超出范围为黑色。
+- `source_fps` 可填写已知输入帧率。彩色/深度源为 30；检测图默认 0（未知），使用预览限频时钟；低于目标的输入不会被补帧。
+- 所有 JPEG 均由预览编码，默认质量 75、最大宽度 1280；不再提供 `passthrough` 或相机侧预览压缩接口。
+- 深度源为 32FC1 米制 Image，预览根据 `depth_min_m` / `depth_max_m` 生成伪彩色，默认 0.07 / 0.50 m；算法深度不受显示范围影响。
+- 每路均为 SensorDataQoS、队列深度 2；上游需提供兼容 QoS。
+
+配置是启动时读取。可用自定义文件：
+
+```bash
+ros2 launch chess_robot_preview preview.launch.py preview_config:=/absolute/path/channels.yaml
+```
+
+## 4 构建与接口
+
+```bash
+source /opt/ros/humble/setup.bash
+colcon --log-base log_vision build \
+  --base-paths src/chess_robot_vision src/chess_robot_preview \
+  --build-base build_vision --install-base install_vision --executor sequential \
+  --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCMAKE_PREFIX_PATH=/home/kuang/.local/realsense-2.58.1
+```
+
+- `GET /api/channels`：列表、是否存在发布者及接收/编码/响应字节统计，只取元数据不会开启图像。
+- `GET /api/frame/{id}?client={browser_token}&after={sequence}`：按需选择、刷新租约；已有序号相同则最多等待 50 ms 新帧；200 JPEG，202 JSON `{"status":"no_data"}`（无新鲜有效图像），204 无新帧。无数据时清除旧图，降低重试频率，并继续等待未来发布者。
+- `POST /api/release?client={browser_token}`：释放该浏览器的选择。
+- 一个 token 最多选择一路；最多 16 个活跃查看 token、8 个并行 HTTP 请求。
+- 响应不缓存，Web 资源全部随包安装，无 CDN 或云服务。
+
+节点只用于局域网预览，当前没有账户系统或互联网发布。HTTP 的暂停/选择仅影响预览订阅，不会停止上游相机节点。
+
+## 5 Jetson 硬件 JPEG 编码
+
+构建环境提供 `gstreamer-app-1.0` 时，预览节点编译可选的 NVIDIA JPEG 编码路径。运行环境需有与 Jetson Linux 版本对应的 `nvjpegenc` 插件及其依赖。`jpeg_backend` 默认值为 `opencv`，可在启动时选择 `nvjpeg`。
+
+```bash
+ros2 launch chess_robot_preview preview.launch.py jpeg_backend:=nvjpeg
+```
+
+组合入口 `camera_preview.launch.py` 同样接收 `jpeg_backend` 参数。插件放在独立运行目录时，通过 `GST_PLUGIN_PATH` 和 `LD_LIBRARY_PATH` 指向对应目录。
+
+硬件路径将 BGR 转为 I420，并把亮度与色度转换到 JPEG 所需的完整数值范围。NVIDIA 插件优先解析自身依赖中的 JPEG 符号，以兼容同一进程中的 OpenCV JPEG 编解码。宽或高为奇数的图像使用 OpenCV 编码。
+
+`GET /api/channels` 的每路 `jpeg_backend` 字段报告最近一次实际使用的编码器。硬件编码适用于预览 JPEG，识别节点继续使用原始 RGB-D 话题。
+
+2026-11-06 现场选定版本通过现有服务启动。日常重新启动预览使用以下命令。
+
+```bash
+systemctl --user restart chess_robot_preview.service
+systemctl --user status chess_robot_preview.service --no-pager
+```
+
+本次现场依赖与安装目录位于 `runs/vision_hardware_20261105_01/`。该目录包含运行脚本、工件摘要、对照结果与部署回退入口，属于现场运行所需文件。

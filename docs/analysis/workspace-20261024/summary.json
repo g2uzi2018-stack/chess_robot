@@ -1,0 +1,240 @@
+{
+  "ground_z_m": -0.01,
+  "clearance_m": 0.02,
+  "static_base_excluded": true,
+  "self_collision_method": "FCL conservative convex envelopes; >=10mm separation between nonadjacent groups; fixed/end-effector and adjacent groups excluded",
+  "gripper_samples": 21,
+  "grid_step_m": 0.025,
+  "grid_shape": [
+    89,
+    89,
+    57
+  ],
+  "grid_targets": 451497,
+  "general_samples": 262144,
+  "general_ground_clear": 135106,
+  "general_self_clear": 99776,
+  "floor_only_down_targets": 65560,
+  "ground_and_self_clear_down_targets": 64892,
+  "healthy_down_targets": 62399,
+  "corridor_down_targets": 29290,
+  "branches": [
+    {
+      "branch": 0,
+      "valid_pose": 31236,
+      "ground_clear": 29392,
+      "self_clear": 25969,
+      "healthy": 25109,
+      "corridor": 4899
+    },
+    {
+      "branch": 1,
+      "valid_pose": 31236,
+      "ground_clear": 26856,
+      "self_clear": 6202,
+      "healthy": 5480,
+      "corridor": 184
+    },
+    {
+      "branch": 2,
+      "valid_pose": 68096,
+      "ground_clear": 59712,
+      "self_clear": 38294,
+      "healthy": 36094,
+      "corridor": 10235
+    },
+    {
+      "branch": 3,
+      "valid_pose": 68096,
+      "ground_clear": 64812,
+      "self_clear": 64267,
+      "healthy": 61308,
+      "corridor": 28323
+    },
+    {
+      "branch": 4,
+      "valid_pose": 68096,
+      "ground_clear": 64812,
+      "self_clear": 64266,
+      "healthy": 61307,
+      "corridor": 28319
+    },
+    {
+      "branch": 5,
+      "valid_pose": 68096,
+      "ground_clear": 59712,
+      "self_clear": 38256,
+      "healthy": 36058,
+      "corridor": 10249
+    },
+    {
+      "branch": 6,
+      "valid_pose": 31236,
+      "ground_clear": 26864,
+      "self_clear": 6200,
+      "healthy": 5488,
+      "corridor": 187
+    },
+    {
+      "branch": 7,
+      "valid_pose": 31236,
+      "ground_clear": 29392,
+      "self_clear": 25975,
+      "healthy": 25118,
+      "corridor": 584
+    }
+  ],
+  "max_accepted_ik_position_residual_m": 1.5576696351241008e-15,
+  "max_accepted_ik_rotation_residual_rad_approx": 7.360640962608076e-06,
+  "characteristic_length_m": 0.85,
+  "sigma_threshold": 0.05,
+  "condition_limit": 80.0,
+  "joint_margin_deg": 5,
+  "reference_descent_speed_m_s": 0.01,
+  "configured_joint_speed_cap_rad_s": 0.25,
+  "elapsed_s": 85.15631130999827,
+  "audit_candidates": [
+    {
+      "branch": 1,
+      "q": [
+        3.7057717445484863,
+        -2.0401724202116425,
+        1.3489788246202163,
+        2.2619898890968084,
+        -1.5707963267948966,
+        2.2547049901292393
+      ],
+      "tcp": [
+        -0.4500000000000024,
+        -0.12500000000000355,
+        0.025
+      ],
+      "reason": "TCP_above_table_but_geometry_hits_margin"
+    },
+    {
+      "branch": 2,
+      "q": [
+        -0.15825457919318753,
+        2.039824889248216,
+        -1.3480394629671986,
+        0.8790108672243653,
+        -1.5707963267948966,
+        -1.609321333615597
+      ],
+      "tcp": [
+        -0.7000000000000015,
+        -0.025000000000003908,
+        0.025
+      ],
+      "reason": "TCP_above_table_but_geometry_hits_margin"
+    },
+    {
+      "branch": 5,
+      "q": [
+        3.3712323660773524,
+        -2.0398238664985957,
+        1.3480393737997298,
+        -0.879011867385544,
+        1.5707963267948966,
+        -1.2214196955220915
+      ],
+      "tcp": [
+        -0.7000000000000015,
+        -0.025000000000003908,
+        0.025
+      ],
+      "reason": "TCP_above_table_but_geometry_hits_margin"
+    },
+    {
+      "branch": 6,
+      "q": [
+        -0.022298482346126747,
+        2.0401734113487224,
+        -1.3489789046270573,
+        -2.261990866806075,
+        1.5707963267948966,
+        1.6682347632323902
+      ],
+      "tcp": [
+        -0.4500000000000024,
+        -0.12500000000000355,
+        0.025
+      ],
+      "reason": "TCP_above_table_but_geometry_hits_margin"
+    }
+  ],
+  "home_tcp": [
+    [
+      4.390194380070616e-07,
+      0.9928413161760997,
+      -0.11944086776944093,
+      0.030351401893893334
+    ],
+    [
+      3.6205371500280052e-06,
+      -0.11944086777024768,
+      -0.9928413161694984,
+      -0.5765188178839958
+    ],
+    [
+      -0.9999999999933495,
+      3.43653766348767e-09,
+      -3.6470557319628937e-06,
+      0.27498759107000015
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "down_bounds_m": [
+    [
+      -0.850000000000001,
+      -0.850000000000001,
+      0.025
+    ],
+    [
+      0.849999999999993,
+      0.849999999999993,
+      0.675
+    ]
+  ],
+  "down_radial_range_m": [
+    0.14142135623730334,
+    0.8558621384311859
+  ],
+  "healthy_bounds_m": [
+    [
+      -0.8250000000000011,
+      -0.8250000000000011,
+      0.025
+    ],
+    [
+      0.8249999999999931,
+      0.8249999999999931,
+      0.65
+    ]
+  ],
+  "healthy_radial_range_m": [
+    0.14999999999999547,
+    0.8459462157844341
+  ],
+  "corridor_bounds_m": [
+    [
+      -0.7750000000000012,
+      -0.7750000000000012,
+      0.025
+    ],
+    [
+      0.7749999999999932,
+      0.7749999999999932,
+      0.4
+    ]
+  ],
+  "corridor_radial_range_m": [
+    0.15206906325745037,
+    0.7766112283504562
+  ]
+}

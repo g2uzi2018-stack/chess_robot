@@ -1,0 +1,12 @@
+{
+  "returncode": 0,
+  "elapsed_s": 22.687764080008492,
+  "stdout": "offline_snapshot_only=true; motion_commands=0\nexplicit recorded power epoch replayed; winding retained without zeroing; endpoint_delta_rad=[0,0,2.22044604925e-16,0,-2.22044604925e-16,0]; endpoint_max_delta_rad=2.22044604925e-16; endpoint_tolerance_rad=0.001; power_cycle_handoff=false; expanded_power_cycle_handoff_used=false; accumulated_twist_retained=true; historical_twist_net_rad=-0.05033500278; historical_twist_total_rad=0.295139381102; restored_twist_net_rad=-0.05033500278; restored_twist_total_rad=0.295139381102; recorded_stopped_join_committed=true; recorded_expanded_stopped_join_used=true; recorded_stopped_join_delta_rad=[3.32895136279e-06,0.00270027889777,0.00140401852669,0.00113753597011,-1.01200121421e-05,-2.39684498106e-06]; recorded_stopped_join_max_delta_rad=0.00270027889777; recorded_stopped_join_tolerance_rad=0.005; recorded_stopped_join_stationary_dwell_s=0.620084227; recorded_stopped_join_required_dwell_s=0.4; accepted_host_freshness_s=0.2; fault_restart_committed=true; fault_restart_offset_bytes=970581368; fault_restart_delta_rad=5.17651936884e-05; fault_anchor_max_delta_rad=0.00320268423742; fault_prehealthy_dwell_s=5337.91730252; fault_raw_frames=2; fault_nonstationary_frames=1; healthy_twist_total_rad=0.294923837762; fault_twist_total_rad=0.295132896439; fault_restart_sha256=1a219cb39e9d0eaf2e4d227f66e2f67fd3b36e7e852f20a8185051ac828dc413\nindependent_replay_equal=true; twist_not_zeroed=true\nreference_valid=1; net=-0.0503350027799895; total=0.295139381101961; tcp_xyz_m=[0.0225914500204529,-0.583522788383933,0.191830402061108]\n",
+  "stderr": "",
+  "files": 16,
+  "records": 1817739,
+  "all_source_sha256_unchanged": true,
+  "test_snapshot_only": true,
+  "physical_connections": 0,
+  "binary_sha256": "298f39ef1d02dc7a401b93245ec187a4b19ba525e26c8bcf74d7e40752f802b7"
+}

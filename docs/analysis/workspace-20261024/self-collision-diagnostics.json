@@ -1,0 +1,541 @@
+{
+  "engine": "python-fcl triangle BVH",
+  "scope": "selected poses; no volumetric containment certificate; fixed/end-effector groups and direct adjacent groups excluded explicitly",
+  "checked_pairs": [
+    [
+      "base_link",
+      "Link2"
+    ],
+    [
+      "base_link",
+      "Link3"
+    ],
+    [
+      "base_link",
+      "Link4"
+    ],
+    [
+      "base_link",
+      "Link5"
+    ],
+    [
+      "base_link",
+      "Link6"
+    ],
+    [
+      "base_link",
+      "camera_bracket_link"
+    ],
+    [
+      "base_link",
+      "ag95_body"
+    ],
+    [
+      "base_link",
+      "left_outer_knuckle"
+    ],
+    [
+      "base_link",
+      "left_inner_knuckle"
+    ],
+    [
+      "base_link",
+      "left_finger"
+    ],
+    [
+      "base_link",
+      "left_finger_pad"
+    ],
+    [
+      "base_link",
+      "right_outer_knuckle"
+    ],
+    [
+      "base_link",
+      "right_inner_knuckle"
+    ],
+    [
+      "base_link",
+      "right_finger"
+    ],
+    [
+      "base_link",
+      "right_finger_pad"
+    ],
+    [
+      "Link1",
+      "Link3"
+    ],
+    [
+      "Link1",
+      "Link4"
+    ],
+    [
+      "Link1",
+      "Link5"
+    ],
+    [
+      "Link1",
+      "Link6"
+    ],
+    [
+      "Link1",
+      "camera_bracket_link"
+    ],
+    [
+      "Link1",
+      "ag95_body"
+    ],
+    [
+      "Link1",
+      "left_outer_knuckle"
+    ],
+    [
+      "Link1",
+      "left_inner_knuckle"
+    ],
+    [
+      "Link1",
+      "left_finger"
+    ],
+    [
+      "Link1",
+      "left_finger_pad"
+    ],
+    [
+      "Link1",
+      "right_outer_knuckle"
+    ],
+    [
+      "Link1",
+      "right_inner_knuckle"
+    ],
+    [
+      "Link1",
+      "right_finger"
+    ],
+    [
+      "Link1",
+      "right_finger_pad"
+    ],
+    [
+      "Link2",
+      "Link4"
+    ],
+    [
+      "Link2",
+      "Link5"
+    ],
+    [
+      "Link2",
+      "Link6"
+    ],
+    [
+      "Link2",
+      "camera_bracket_link"
+    ],
+    [
+      "Link2",
+      "ag95_body"
+    ],
+    [
+      "Link2",
+      "left_outer_knuckle"
+    ],
+    [
+      "Link2",
+      "left_inner_knuckle"
+    ],
+    [
+      "Link2",
+      "left_finger"
+    ],
+    [
+      "Link2",
+      "left_finger_pad"
+    ],
+    [
+      "Link2",
+      "right_outer_knuckle"
+    ],
+    [
+      "Link2",
+      "right_inner_knuckle"
+    ],
+    [
+      "Link2",
+      "right_finger"
+    ],
+    [
+      "Link2",
+      "right_finger_pad"
+    ],
+    [
+      "Link3",
+      "Link5"
+    ],
+    [
+      "Link3",
+      "Link6"
+    ],
+    [
+      "Link3",
+      "camera_bracket_link"
+    ],
+    [
+      "Link3",
+      "ag95_body"
+    ],
+    [
+      "Link3",
+      "left_outer_knuckle"
+    ],
+    [
+      "Link3",
+      "left_inner_knuckle"
+    ],
+    [
+      "Link3",
+      "left_finger"
+    ],
+    [
+      "Link3",
+      "left_finger_pad"
+    ],
+    [
+      "Link3",
+      "right_outer_knuckle"
+    ],
+    [
+      "Link3",
+      "right_inner_knuckle"
+    ],
+    [
+      "Link3",
+      "right_finger"
+    ],
+    [
+      "Link3",
+      "right_finger_pad"
+    ],
+    [
+      "Link4",
+      "Link6"
+    ],
+    [
+      "Link4",
+      "camera_bracket_link"
+    ],
+    [
+      "Link4",
+      "ag95_body"
+    ],
+    [
+      "Link4",
+      "left_outer_knuckle"
+    ],
+    [
+      "Link4",
+      "left_inner_knuckle"
+    ],
+    [
+      "Link4",
+      "left_finger"
+    ],
+    [
+      "Link4",
+      "left_finger_pad"
+    ],
+    [
+      "Link4",
+      "right_outer_knuckle"
+    ],
+    [
+      "Link4",
+      "right_inner_knuckle"
+    ],
+    [
+      "Link4",
+      "right_finger"
+    ],
+    [
+      "Link4",
+      "right_finger_pad"
+    ]
+  ],
+  "group_assignment": {
+    "base_link": 0,
+    "Link1": 1,
+    "Link2": 2,
+    "Link3": 3,
+    "Link4": 4,
+    "Link5": 5,
+    "Link6": 6,
+    "camera_bracket_link": 6,
+    "ag95_body": 6,
+    "left_outer_knuckle": 6,
+    "left_inner_knuckle": 6,
+    "left_finger": 6,
+    "left_finger_pad": 6,
+    "right_outer_knuckle": 6,
+    "right_inner_knuckle": 6,
+    "right_finger": 6,
+    "right_finger_pad": 6
+  },
+  "home": [
+    {
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "opening_rad": 0.94,
+      "contacts": []
+    }
+  ],
+  "sampled_candidate_checks": [
+    {
+      "candidate": 38602,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 38602,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 38602,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 37382,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 37382,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 37382,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 46252,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 46252,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 46252,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 6631,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 6631,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 6631,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 59520,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 59520,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 59520,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 55273,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 55273,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 55273,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 19673,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 19673,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 19673,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 16259,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 16259,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 16259,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 44523,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 44523,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 44523,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 17413,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 17413,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 17413,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 39816,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 39816,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 39816,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 30291,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 30291,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 30291,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 35848,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 35848,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 35848,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 50829,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 50829,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 50829,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 46551,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 46551,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 46551,
+      "opening_rad": 0.94,
+      "contacts": []
+    },
+    {
+      "candidate": 49862,
+      "opening_rad": 0.0,
+      "contacts": []
+    },
+    {
+      "candidate": 49862,
+      "opening_rad": 0.47,
+      "contacts": []
+    },
+    {
+      "candidate": 49862,
+      "opening_rad": 0.94,
+      "contacts": []
+    }
+  ]
+}

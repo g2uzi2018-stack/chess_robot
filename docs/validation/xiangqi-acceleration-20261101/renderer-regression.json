@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "domain": 119,
+  "fresh_track_marker": true,
+  "moving_arm_base_id_suppressed": true,
+  "camera_only_without_arm": true,
+  "stale_xyz_suppressed": true,
+  "video_frames_while_fresh": 17,
+  "video_frames_while_moving": 17,
+  "video_frames_while_stale": 20,
+  "real_robot_commands": 0
+}

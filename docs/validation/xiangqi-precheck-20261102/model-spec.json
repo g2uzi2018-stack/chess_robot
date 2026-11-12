@@ -1,0 +1,38 @@
+{
+  "schema": "xiangqi_piece_candidate_model_spec/v1",
+  "status": "trained_not_integrated_or_deployed",
+  "role": "full-frame piece candidate detector only; ROI classifier remains the original 14-class segmentation model",
+  "source_image_size_wh": [
+    1280,
+    720
+  ],
+  "predict_imgsz_hw": [
+    384,
+    640
+  ],
+  "tensor_shape_nchw": [
+    1,
+    3,
+    384,
+    640
+  ],
+  "rect": true,
+  "batch": 1,
+  "class_names": {
+    "0": "piece"
+  },
+  "confidence_threshold": 0.1,
+  "candidate_dedup": {
+    "algorithm": "descending confidence; suppress IoU strictly greater than threshold",
+    "iou_threshold": 0.65
+  },
+  "max_det": 300,
+  "precision": "FP32-no-TF32",
+  "model_pt": "models/yolo26n-piece.pt",
+  "model_pt_sha256": "980551baa725bc1796d3d5ef1644224a33256cb99890f2b971b4eac93fc558b4",
+  "engine": "models/yolo26n-piece-imgsz640-fp32.engine",
+  "engine_sha256": "5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b",
+  "remote_engine": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine",
+  "remote_weights": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/runs/train/weights/best.pt",
+  "warning": "Exact TensorRT profile for full 1280x720 source and [384,640] letterboxed input. Do not replace the existing ROI segmentation model with this detect-only engine."
+}

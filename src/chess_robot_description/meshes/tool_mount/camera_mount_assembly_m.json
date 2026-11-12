@@ -1,0 +1,177 @@
+{
+  "created": "2026-10-24",
+  "version": "user_camera_20260117_v2",
+  "source_path": "reference/ag95/user/arm_gripper_camera_20260117_v2.STL",
+  "source_original_filename": "\u673a\u68b0\u81c2+\u5939\u722a_20260117(2).STL",
+  "source_sha256": "5395ec7cfcefff45f08ca750729f45b560ddd1dfa38534f040e6c6769a324925",
+  "output": "camera_mount_assembly_m.stl",
+  "output_sha256": "5a5a4473e9514dd210035fba0681a5ad59fd80f8928f6ae186f819e44f96f8f9",
+  "units": "metres",
+  "source_units": "millimetres",
+  "frame": "Link6 flange mounting face",
+  "raw_to_Link6_mm": [
+    [
+      -1.0,
+      0.0,
+      0.0,
+      46.5
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      -92.0
+    ],
+    [
+      0.0,
+      0.0,
+      -1.0,
+      107.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "datum_raw_mm": [
+    46.5,
+    92.0,
+    107.0
+  ],
+  "registration": "180-degree Y rotation; flange circle/pilot center and flat mounting face at raw [46.5,92,107] mm map to the URDF flange datum. Common base planes match Z=-3.5,0,5,14.7 mm; slot faces are X=+-40.55 mm versus the generic base +-40.5 mm.",
+  "selection": "Use all seven fixed components: mounting plate/clamp, two support struts, camera assembly and its two connector pieces. No arm or articulated gripper is included; no spatial clipping.",
+  "generic_gripper_base_geometry_in_assembly": false,
+  "original_components": 7,
+  "retained_components": 7,
+  "triangles": 14356,
+  "bounds_Link6_m": [
+    [
+      -0.0465,
+      -0.092,
+      -0.0035
+    ],
+    [
+      0.0465,
+      0.0335,
+      0.107
+    ]
+  ],
+  "components": [
+    {
+      "index_by_descending_face_count": 0,
+      "triangles": 5628,
+      "raw_bounds_mm": [
+        [
+          0.0,
+          6.899997711181641,
+          92.30000305175781
+        ],
+        [
+          93.0,
+          125.5,
+          110.5
+        ]
+      ]
+    },
+    {
+      "index_by_descending_face_count": 1,
+      "triangles": 2604,
+      "raw_bounds_mm": [
+        [
+          28.399999618530273,
+          6.899997711181641,
+          31.999998092651367
+        ],
+        [
+          34.400001525878906,
+          44.900001525878906,
+          102.0
+        ]
+      ]
+    },
+    {
+      "index_by_descending_face_count": 2,
+      "triangles": 2604,
+      "raw_bounds_mm": [
+        [
+          58.60000228881836,
+          6.899997711181641,
+          31.999998092651367
+        ],
+        [
+          64.5999984741211,
+          44.900001525878906,
+          102.0
+        ]
+      ]
+    },
+    {
+      "index_by_descending_face_count": 3,
+      "triangles": 1520,
+      "raw_bounds_mm": [
+        [
+          25.500001907348633,
+          0.0,
+          2.0000040531158447
+        ],
+        [
+          67.5,
+          65.0,
+          24.999998092651367
+        ]
+      ]
+    },
+    {
+      "index_by_descending_face_count": 4,
+      "triangles": 1316,
+      "raw_bounds_mm": [
+        [
+          19.000001907348633,
+          6.899997711181641,
+          0.0
+        ],
+        [
+          74.0,
+          44.900001525878906,
+          31.999998092651367
+        ]
+      ]
+    },
+    {
+      "index_by_descending_face_count": 5,
+      "triangles": 342,
+      "raw_bounds_mm": [
+        [
+          58.60000228881836,
+          6.899997711181641,
+          25.748924255371094
+        ],
+        [
+          64.5999984741211,
+          44.900001525878906,
+          31.999998092651367
+        ]
+      ]
+    },
+    {
+      "index_by_descending_face_count": 6,
+      "triangles": 342,
+      "raw_bounds_mm": [
+        [
+          28.399999618530273,
+          6.899997711181641,
+          25.748924255371094
+        ],
+        [
+          34.400001525878906,
+          44.900001525878906,
+          31.999998092651367
+        ]
+      ]
+    }
+  ],
+  "calibration": "CAD datum registration only, not a measured physical TCP or camera optical calibration. The fixture replaces the generic AG95 base shape in the combined model.",
+  "normal_export": "Normals recomputed from registered vertices for deterministic output"
+}

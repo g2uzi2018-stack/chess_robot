@@ -1,0 +1,19 @@
+{
+  "workspace_passed": 64,
+  "local_planning_passed": 6,
+  "physical_arrived": 5,
+  "physical_stopped": 1,
+  "physical_failed": 1,
+  "feedback_frames": 3572,
+  "tcp_min_m": [
+    0.029985073255730292,
+    -0.5765602909316747,
+    0.25287668983626566
+  ],
+  "tcp_max_m": [
+    0.055013655238624094,
+    -0.576192670545799,
+    0.2754254195904669
+  ],
+  "scope": "Planning pass is not execution. TCP from real encoders and nominal URDF; no independent TCP metrology or continuous-volume certification."
+}

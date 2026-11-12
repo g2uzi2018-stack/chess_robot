@@ -1,0 +1,12 @@
+{
+  "status": "deployed_and_read_only_observed",
+  "service": "chess-robot-xiangqi-preview-20261031.service",
+  "launcher": "/home/kuang/workspace/chess_robot/runs/stable_observation_20261101_01/start_visual.sh",
+  "source": "/home/kuang/workspace/chess_robot/runs/xiangqi_node_split_20261101_01/source-final-02",
+  "launcher_sha256": "f89e1d8c746a75819840000ac8597af42cfc6a4825ab85d7b75280f36f830549",
+  "clock_helper": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock_lease.py",
+  "no_boot_enable_added": true,
+  "actuator_commands_sent": false,
+  "audit_passed": true,
+  "visual_main_pid": 3831042
+}

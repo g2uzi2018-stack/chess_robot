@@ -1,0 +1,391 @@
+{
+  "sampled_points": 81,
+  "passed": 64,
+  "rejected": 17,
+  "by_height": [
+    {
+      "tcp_z_m": 0.025,
+      "height_above_table_mm": 35,
+      "tested": 57,
+      "passed": 44
+    },
+    {
+      "tcp_z_m": 0.1,
+      "height_above_table_mm": 110,
+      "tested": 12,
+      "passed": 11
+    },
+    {
+      "tcp_z_m": 0.2,
+      "height_above_table_mm": 210,
+      "tested": 12,
+      "passed": 9
+    }
+  ],
+  "rejected_points": [
+    {
+      "label": "grid_-0.35_-0.75_0.025",
+      "xyz": [
+        -0.35,
+        -0.75,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_-0.25_-0.75_0.025",
+      "xyz": [
+        -0.25,
+        -0.75,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_0.25_-0.75_0.025",
+      "xyz": [
+        0.25,
+        -0.75,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_0.35_-0.75_0.025",
+      "xyz": [
+        0.35,
+        -0.75,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_-0.15_-0.25_0.025",
+      "xyz": [
+        -0.15,
+        -0.25,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "关节限位余量不足"
+    },
+    {
+      "label": "grid_-0.05_-0.25_0.025",
+      "xyz": [
+        -0.05,
+        -0.25,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_0.05_-0.25_0.025",
+      "xyz": [
+        0.05,
+        -0.25,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_0.15_-0.25_0.025",
+      "xyz": [
+        0.15,
+        -0.25,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "关节限位余量不足"
+    },
+    {
+      "label": "grid_0.35_-0.65_0.1",
+      "xyz": [
+        0.35,
+        -0.65,
+        0.1
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "接近奇异位形"
+    },
+    {
+      "label": "grid_-0.25_-0.65_0.2",
+      "xyz": [
+        -0.25,
+        -0.65,
+        0.2
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "grid_0.15_-0.65_0.2",
+      "xyz": [
+        0.15,
+        -0.65,
+        0.2
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "接近奇异位形"
+    },
+    {
+      "label": "grid_0.35_-0.65_0.2",
+      "xyz": [
+        0.35,
+        -0.65,
+        0.2
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "edge_0",
+      "xyz": [
+        0,
+        -0.1,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "edge_1",
+      "xyz": [
+        0,
+        -0.15,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "自碰撞余量不足"
+    },
+    {
+      "label": "edge_2",
+      "xyz": [
+        0,
+        -0.2,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "edge_3",
+      "xyz": [
+        0,
+        -0.79,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "厂家逆解/正解拒绝"
+    },
+    {
+      "label": "edge_8",
+      "xyz": [
+        0,
+        0.3,
+        0.025
+      ],
+      "accepted": false,
+      "code": 14,
+      "reason": "扭转超限"
+    }
+  ],
+  "yaw": [
+    {
+      "label": "yaw_-180",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.4691912294245215,
+        -0.5290186427741449,
+        -0.46919012043439917,
+        -0.5290174824287587
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4521,
+      "elapsed_s": 6.191393801011145,
+      "feedback_rows": 123,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351819940539645,
+        -0.5765186356936425,
+        0.2749876158467156
+      ],
+      "duration_s": 135.6
+    },
+    {
+      "label": "yaw_-90",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.705840969679034,
+        -0.04230436968036927,
+        -0.705839365016507,
+        -0.04230433336671393
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4080,
+      "elapsed_s": 6.036505345982732,
+      "feedback_rows": 122,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035086814227194,
+        -0.5765185825383254,
+        0.27498749415484863
+      ],
+      "duration_s": 122.37
+    },
+    {
+      "label": "yaw_-45",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.6683012064877045,
+        0.23102950369719172,
+        -0.6682997100762051,
+        0.23102892316887105
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3959,
+      "elapsed_s": 5.766754609998316,
+      "feedback_rows": 119,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351224281756767,
+        -0.5765189781517189,
+        0.27498790859702316
+      ],
+      "duration_s": 118.74
+    },
+    {
+      "label": "yaw_45",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.3091977862641602,
+        0.6359228437010538,
+        -0.3091971386369537,
+        0.635921375082823
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 3959,
+      "elapsed_s": 5.773713637987385,
+      "feedback_rows": 117,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351131567450205,
+        -0.5765186359721339,
+        0.27498761584670983
+      ],
+      "duration_s": 118.74
+    },
+    {
+      "label": "yaw_90",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        0.04230436968036938,
+        0.705840969679034,
+        -0.04230433336671404,
+        0.705839365016507
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4080,
+      "elapsed_s": 5.8928534270089585,
+      "feedback_rows": 120,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351069492586803,
+        -0.5765189705840386,
+        0.27498776868812635
+      ],
+      "duration_s": 122.37
+    },
+    {
+      "label": "yaw_180",
+      "operation": 3,
+      "target_m": [
+        0.03035100200610001,
+        -0.5765193343676036,
+        0.025
+      ],
+      "quaternion_xyzw": [
+        -0.4691912294245214,
+        0.5290186427741449,
+        0.46919012043439906,
+        0.5290174824287587
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 4521,
+      "elapsed_s": 6.2653148749959655,
+      "feedback_rows": 127,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.0303518108053143,
+        -0.5765186849359053,
+        0.274986812358544
+      ],
+      "duration_s": 135.6
+    }
+  ],
+  "scope": "Actual production Action and SDK, full pregrasp/descend/retreat planning from a fresh Home snapshot; these global sampled points were not physically executed."
+}

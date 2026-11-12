@@ -1,0 +1,65 @@
+{
+  "status": "passed",
+  "source_dataset_unchanged": true,
+  "source_fixed_files_verified": 479,
+  "source_manifest_sha256": "a4fc4bf8d32d4b9919a53371397bbdd6acc150781c6b6d004efeec8a9b9cb203",
+  "conversion_manifest_sha256": "19161a41eefd3de1c2ee63da4b7194df4eeac4628af75173df5864205a9c5cc5",
+  "split_counts": {
+    "train": {
+      "images": 190,
+      "objects": 785
+    },
+    "val": {
+      "images": 49,
+      "objects": 198
+    }
+  },
+  "total_images": 239,
+  "total_objects": 983,
+  "source_objects_by_class": {
+    "train": {
+      "4": 24,
+      "11": 47,
+      "0": 36,
+      "7": 27,
+      "3": 52,
+      "5": 49,
+      "12": 79,
+      "1": 30,
+      "8": 70,
+      "6": 117,
+      "13": 132,
+      "10": 51,
+      "9": 48,
+      "2": 23
+    },
+    "val": {
+      "2": 13,
+      "9": 13,
+      "10": 13,
+      "11": 18,
+      "4": 18,
+      "0": 8,
+      "7": 8,
+      "12": 18,
+      "5": 12,
+      "3": 13,
+      "13": 20,
+      "1": 10,
+      "6": 24,
+      "8": 10
+    }
+  },
+  "excluded_images_preserved": 39,
+  "same_source_image_cross_split": 0,
+  "cross_split_groups": 0,
+  "cross_split_leakage_components": 0,
+  "finite_in_bounds_nondegenerate_polygons_and_boxes": true,
+  "polygon_bbox_serialization_max_tolerance_normalized": 1e-09,
+  "copied_image_sha256_verified": true,
+  "labels_and_images_read_only": true,
+  "new_dataset": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/dataset",
+  "original_database_opened": false,
+  "gpu_used": false,
+  "deployment_ready": false
+}

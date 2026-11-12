@@ -1,0 +1,14 @@
+[
+  {
+    "optimization": "-O0",
+    "returncode": 1,
+    "stdout": "",
+    "stderr": "checkpoint schema/model/controller mismatch\n"
+  },
+  {
+    "optimization": "-O3",
+    "returncode": 0,
+    "stdout": "{\"passed\":true,\"actual_runtime_identity\":\"00a5beae3ca7438dea8476d30b79426472fa7450c272a254ba6cf6b129da5449\",\"local_preserved\":true,\"phase_preserved\":true,\"endpoint_preserved\":true,\"net\":-0.17558126817476832,\"total\":0.97044152974388342,\"physical_connections\":0,\"checkpoint_rewritten\":false}\n",
+    "stderr": ""
+  }
+]

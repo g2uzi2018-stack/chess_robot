@@ -1,0 +1,18 @@
+{
+  "rows": 10113,
+  "minimum_tcp_m": [
+    0.020331914687627673,
+    -0.5865271921500796,
+    0.2726211409907312
+  ],
+  "maximum_tcp_m": [
+    0.04036168397368893,
+    -0.5665026426639251,
+    0.2946729892983617
+  ],
+  "peak_joint_speed_rad_s": 0.022530342822070355,
+  "peak_abs_net_twist_rad": 0.03457625443441323,
+  "peak_total_twist_rad": 0.03613104052979116,
+  "final_home_joint_error_rad": 9.121326733529944e-06,
+  "scope": "Joint feedback at ROS publication rate; TCP reconstructed by nominal URDF, not independent metrology."
+}

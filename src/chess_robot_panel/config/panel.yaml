@@ -1,0 +1,17 @@
+panel_node:
+  ros__parameters:
+    bind_address: "127.0.0.1"
+    port: 8089
+    enable_control: true
+    enable_arm_control: false
+    allow_hardware: false
+    arm_profile: "roundtrip_low"
+    arm_max_delta_deg: 10.0
+    arm_timeout_sec: 10.0
+    default_force_percent: 20
+    max_force_percent: 30
+    open_position_raw: 1000
+    close_position_raw: 0
+    step_raw: 20
+    timeout_sec: 5.0
+    feedback_max_age_sec: 1.0

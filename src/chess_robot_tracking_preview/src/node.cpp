@@ -1,0 +1,157 @@
+#include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/image.hpp>
+#include <sensor_msgs/msg/joint_state.hpp>
+#include <std_msgs/msg/string.hpp>
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgproc.hpp>
+#include <yaml-cpp/yaml.h>
+#include <algorithm>
+#include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <vector>
+#include <map>
+
+struct Entry {int id;std::string name,reason;double score,tilt;cv::Point center;std::vector<cv::Point> outline;std::vector<double> xyz;bool base=false,classified=false,camera_geometry=false,base_geometry=false,complete=false,confirmed=false,edge=false;int hits=0;std::vector<double> camera;};
+class TrackingPreview final:public rclcpp::Node {
+ public:
+  TrackingPreview():Node("xiangqi_tracking_preview") {
+    cv::setNumThreads(1);auto qos=rclcpp::SensorDataQoS().keep_last(1);
+    images_=create_publisher<sensor_msgs::msg::Image>("/pose/debug/image",qos);
+    metrics_=create_publisher<std_msgs::msg::String>("/pose/xiangqi/preview_metrics",10);
+    data_=create_subscription<std_msgs::msg::String>("/pose/xiangqi/detections",10,[this](std_msgs::msg::String::ConstSharedPtr msg){data(msg->data);});
+    joints_=create_subscription<sensor_msgs::msg::JointState>("/arm/joint_states",rclcpp::QoS(5),[this](sensor_msgs::msg::JointState::ConstSharedPtr msg){joint_=*msg;});
+    source_=create_subscription<sensor_msgs::msg::Image>("/vision/color/image_rect",qos,[this](sensor_msgs::msg::Image::ConstSharedPtr msg){image(msg);});
+    auto durable=rclcpp::QoS(1).transient_local();
+    status_=create_subscription<std_msgs::msg::String>("/pose/xiangqi/observation/status",durable,[this](std_msgs::msg::String::ConstSharedPtr msg){
+      try {auto s=YAML::Load(msg->data);observation_state_=s["state"].as<std::string>();observation_id_=s["snapshot_id"].IsNull()?"":s["snapshot_id"].as<std::string>();observation_elapsed_=s["sample_elapsed_s"].as<double>(0);observation_eligible_=s["observation_eligible"].as<bool>(false);status_received_=now().nanoseconds();}catch(const std::exception&){observation_state_="waiting";}
+    });
+    snapshot_=create_subscription<std_msgs::msg::String>("/pose/xiangqi/observation/snapshot",durable,[this](std_msgs::msg::String::ConstSharedPtr msg){
+      try {auto s=YAML::Load(msg->data);snapshot_id_=s["snapshot_id"].as<std::string>();locked_xyz_.clear();for(const auto &t:s["targets"])locked_xyz_[t["track_id"].as<int>()]=t["base_surface_center_m"].as<std::vector<double>>();}catch(const std::exception&){locked_xyz_.clear();}
+    });
+  }
+ private:
+  void data(const std::string &s) {
+    try {
+      const auto d=YAML::Load(s);const int64_t next=d["stamp_ns"].as<int64_t>();
+      if(next<=data_stamp_) return;
+      data_stamp_=next;entries_.clear();source_q_.clear();source_names_.clear();
+      if(d["source_joint_position_rad"] && d["base_transform_valid"].as<bool>(false))
+        source_q_=d["source_joint_position_rad"].as<std::vector<double>>();
+      if(source_q_.size()!=6) source_q_.clear();
+      if(d["source_joint_names"])source_names_=d["source_joint_names"].as<std::vector<std::string>>();
+      else source_names_={"joint1","joint2","joint3","joint4","joint5","joint6"};
+      for(const auto &v:d["detections"]) {
+        if(!v["detection_valid"].as<bool>(v["valid"].as<bool>(false)))continue;
+        Entry e;e.base=v["valid"].as<bool>(false)&&v["track_confirmed"].as<bool>(false)&&v["complete_center_target"].as<bool>(false);
+        e.classified=v["classification_valid"].as<bool>(false);e.camera_geometry=v["camera_geometry_valid"].as<bool>(false);
+        e.base_geometry=v["base_geometry_valid"].as<bool>(false);e.complete=v["complete_center_target"].as<bool>(false);
+        e.confirmed=v["track_confirmed"].as<bool>(false);e.hits=v["track_hits"].as<int>(0);
+        e.edge=v["touches_image_edge"].as<bool>(false)||v["touches_processing_edge"].as<bool>(false);
+        if(e.edge)e.reason="incomplete image/processing boundary";
+        else if(!e.classified)e.reason=v["classification_reason"].as<std::string>("classification unresolved");
+        else if(!e.camera_geometry)e.reason=v["camera_geometry_reason"].as<std::string>(v["reason"].as<std::string>("camera geometry unresolved"));
+        else if(!e.base_geometry||!e.complete)e.reason=v["reason"].as<std::string>(d["base_transform_reason"].as<std::string>("complete center unresolved"));
+        e.id=e.base?v["track_id"].as<int>():0;
+        e.name=v["class_name"].as<std::string>(v["track_class_name"].as<std::string>("unknown"));
+        e.score=v["confidence"].as<double>(v["track_class_vote_fraction"].as<double>(0));e.tilt=v["surface_tilt_deg"].as<double>(0);
+        std::vector<double> uv;
+        if(v["center_pixel"])uv=v["center_pixel"].as<std::vector<double>>();
+        else if(v["box_xyxy"]) {auto b=v["box_xyxy"].as<std::vector<double>>();if(b.size()==4)uv={(b[0]+b[2])/2,(b[1]+b[3])/2};}
+        if(uv.size()!=2||!std::isfinite(uv[0])||!std::isfinite(uv[1]))continue;
+        e.center={int(std::lround(uv[0])),int(std::lround(uv[1]))};
+        if(e.base)e.xyz=v["base_surface_center_m"].as<std::vector<double>>();
+        if(e.xyz.size()!=3)e.base=false;
+        if(v["camera_geometry_valid"].as<bool>(false)&&v["camera_surface_center_m"])e.camera=v["camera_surface_center_m"].as<std::vector<double>>();
+        for(const auto &point:v["mask_outline_xy"]) {auto xy=point.as<std::vector<int>>();if(xy.size()==2)e.outline.emplace_back(xy[0],xy[1]);}
+        entries_.push_back(std::move(e));
+      }
+      std::sort(entries_.begin(),entries_.end(),[](const Entry&a,const Entry&b){return a.id<b.id;});
+      ++rate_data_frames_;
+    } catch(const std::exception &e) {entries_.clear();source_q_.clear();source_names_.clear();RCLCPP_WARN_THROTTLE(get_logger(),*get_clock(),2000,"Track JSON rejected: %s",e.what());}
+  }
+  void image(const sensor_msgs::msg::Image::ConstSharedPtr msg) {
+    const int64_t stamp=rclcpp::Time(msg->header.stamp).nanoseconds();const int64_t current=now().nanoseconds();
+    if(msg->encoding!="bgr8"||msg->header.frame_id!="d405_color_optical_frame"||current<stamp||(current-stamp)*1e-9>.3)return;
+    if(rate_window_start_==0)rate_window_start_=current;
+    ++rate_video_frames_;
+    last_image_=stamp;
+    auto image=cv_bridge::toCvCopy(msg,"bgr8");auto &bgr=image->image;
+    const double age=(current-data_stamp_)*1e-9;
+    const bool camera_valid=data_stamp_>0&&age>=0&&age<=.5&&stamp>=data_stamp_&&(stamp-data_stamp_)*1e-9<=.5;
+    bool valid=camera_valid&&source_q_.size()==6&&joint_.position.size()==6&&joint_.velocity.size()==6;
+    std::string render_reason=!camera_valid?"image stale":(source_q_.size()!=6?"base unavailable":"joint unavailable");
+    if(valid) {
+      double joint_age=(current-rclcpp::Time(joint_.header.stamp).nanoseconds())*1e-9;
+      valid=joint_age>=0&&joint_age<=.25&&joint_.name==source_names_;
+      render_reason=joint_age<0||joint_age>.25?"joint stale":(joint_.name!=source_names_?"joint order":"ok");
+      for(size_t i=0;i<6;++i) {
+        if(!std::isfinite(joint_.position[i])||!std::isfinite(joint_.velocity[i])) {valid=false;render_reason="joint invalid";}
+        else if(std::abs(joint_.velocity[i])>.002) {valid=false;render_reason="moving";}
+        else if(std::abs(joint_.position[i]-source_q_[i])>.001) {valid=false;render_reason="pose changed";}
+      }
+    }
+    cv::rectangle(bgr,{0,0},{bgr.cols,49},{0,0,0},-1);
+    std::ostringstream title;title<<std::fixed<<std::setprecision(1)<<"VIDEO "<<video_hz_<<" Hz / "<<bgr.cols<<"x"<<bgr.rows<<" | processed "<<data_hz_<<" Hz";
+    cv::putText(bgr,title.str(),{10,20},cv::FONT_HERSHEY_SIMPLEX,.52,{0,255,255},1);
+    std::ostringstream description;
+    if(current-status_received_<500000000LL&&status_received_>0)description<<observation_state_<<" "<<std::fixed<<std::setprecision(1)<<observation_elapsed_<<"/2s | "<<(observation_eligible_?"snapshot usable once":"history / awaiting confirmation")<<" | ";
+    description<<"No motion qualification | ";
+    if(camera_valid)description<<"measurement age "<<std::fixed<<std::setprecision(2)<<age<<" s";else description<<"waiting for fresh image detections";
+    cv::putText(bgr,description.str(),{10,41},cv::FONT_HERSHEY_SIMPLEX,.44,{0,255,255},1);
+    if(camera_valid) {
+      static const cv::Scalar colors[]={{0,255,0},{255,200,0},{0,220,255},{255,0,200},{200,255,200},{255,150,100}};
+      int row=0;
+      for(const auto &e:entries_) {
+        const bool show_base=valid&&e.base;
+        std::string cause;
+        if(!show_base) {
+          ++pred_observations_;
+          if(e.edge) {cause="edge";++pred_edge_;}
+          else if(!e.classified) {cause="class";++pred_class_;}
+          else if(!e.camera_geometry) {cause="geometry";++pred_geometry_;}
+          else if(!e.base_geometry||!e.complete) {cause="base";++pred_base_;}
+          else if(!e.confirmed) {cause="track";++pred_track_;}
+          else {cause=render_reason;++pred_render_;}
+        } else ++number_observations_;
+        auto color=show_base?colors[(e.id-1)%6]:cv::Scalar(255,200,0);
+        if(e.outline.size()>2)cv::polylines(bgr,std::vector<std::vector<cv::Point>>{e.outline},true,color,2);
+        cv::drawMarker(bgr,e.center,color,cv::MARKER_CROSS,17,2);
+        const std::string id=show_base?"#"+std::to_string(e.id):"pred("+cause+")";cv::Point at=e.center+cv::Point(12,-12);
+        cv::putText(bgr,id,at,cv::FONT_HERSHEY_SIMPLEX,.8,{0,0,0},5);cv::putText(bgr,id,at,cv::FONT_HERSHEY_SIMPLEX,.8,color,2);
+        if(row<12) {
+          std::ostringstream text;text<<id<<" "<<e.name<<" "<<std::fixed<<std::setprecision(2)<<e.score;
+          text<<" C:"<<(e.classified?"ok":"wait")<<" G:"<<(e.camera_geometry?"ok":"wait")
+              <<" B:"<<(e.base_geometry?"ok":"wait")<<" T:"<<(e.confirmed?"ok":std::to_string(e.hits)+"/3");
+          if(!show_base&&!e.reason.empty())text<<" ["<<e.reason<<"]";
+          const bool locked=observation_id_==snapshot_id_&&!snapshot_id_.empty()&&locked_xyz_.count(e.id);
+          const auto &xyz=locked?locked_xyz_.at(e.id):(show_base?e.xyz:e.camera);
+          if(xyz.size()==3)text<<(locked?" LOCKED base mm ":(show_base?" live base mm ":" camera mm "))<<std::setprecision(1)<<xyz[0]*1000<<", "<<xyz[1]*1000<<", "<<xyz[2]*1000;
+          cv::Point text_at(10,72+row*25);cv::putText(bgr,text.str(),text_at,cv::FONT_HERSHEY_SIMPLEX,.42,{0,0,0},4);cv::putText(bgr,text.str(),text_at,cv::FONT_HERSHEY_SIMPLEX,.42,color,1);++row;
+        }
+      }
+    }
+    images_->publish(*image->toImageMsg());++published_;
+    if(current-last_metrics_>2000000000LL) {
+      const double duration=(current-rate_window_start_)*1e-9;
+      if(duration>=1.) {video_hz_=rate_video_frames_/duration;data_hz_=rate_data_frames_/duration;rate_window_start_=current;rate_video_frames_=0;rate_data_frames_=0;}
+      std::ostringstream json;json<<"{\"stamp_ns\":"<<stamp<<",\"video_hz\":"<<video_hz_<<",\"recognition_hz\":"<<data_hz_<<",\"published_frames\":"<<published_<<",\"overlay_valid\":"<<(valid?"true":"false")<<",\"visible_tracks\":"<<(camera_valid?entries_.size():0)
+          <<",\"number_observations\":"<<number_observations_<<",\"pred_observations\":"<<pred_observations_
+          <<",\"pred_edge\":"<<pred_edge_<<",\"pred_classification\":"<<pred_class_<<",\"pred_camera_geometry\":"<<pred_geometry_
+          <<",\"pred_base_geometry\":"<<pred_base_<<",\"pred_track_confirmation\":"<<pred_track_<<",\"pred_render_feedback\":"<<pred_render_<<"}";
+      std_msgs::msg::String value;value.data=json.str();metrics_->publish(value);last_metrics_=current;
+      number_observations_=pred_observations_=pred_edge_=pred_class_=pred_geometry_=pred_base_=pred_track_=pred_render_=0;
+    }
+  }
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr source_;
+  rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr joints_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr data_;
+  rclcpp::Subscription<std_msgs::msg::String>::SharedPtr status_,snapshot_;
+  rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr images_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr metrics_;
+  sensor_msgs::msg::JointState joint_;std::vector<double> source_q_;std::vector<std::string> source_names_;std::vector<Entry> entries_;
+  std::map<int,std::vector<double>> locked_xyz_;std::string observation_state_="waiting",observation_id_,snapshot_id_;double observation_elapsed_=0;bool observation_eligible_=false;int64_t status_received_=0;
+  int64_t data_stamp_{0},last_image_{0},last_metrics_{0},rate_window_start_{0};uint64_t published_{0},rate_video_frames_{0},rate_data_frames_{0};double video_hz_{0},data_hz_{0};
+  uint64_t number_observations_{0},pred_observations_{0},pred_edge_{0},pred_class_{0},pred_geometry_{0},pred_base_{0},pred_track_{0},pred_render_{0};
+};
+int main(int argc,char**argv){rclcpp::init(argc,argv);rclcpp::spin(std::make_shared<TrackingPreview>());rclcpp::shutdown();}

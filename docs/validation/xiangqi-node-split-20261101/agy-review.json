@@ -1,0 +1,41 @@
+{
+  "collection_mode": "read-only manual collection of already-written late draft",
+  "formal_peer_acceptance": false,
+  "reason": "Execution budget expired before the final atomic rename request; no further CLI input or budget reset was sent.",
+  "validation": "valid six-field current-round envelope",
+  "result": {
+    "task_id": "task-2d8fbab6a5b44ef09999ec36acd29c8f",
+    "attempt_id": "806ae80978a74f468f04961c382b6ba9",
+    "round": 0,
+    "handoff": {
+      "STATUS": "DONE",
+      "RESULT": [
+        "Issue 1: Snapshot observation eligibility granted and consumable despite invalid base FK. File/lines: tools/testing/xiangqi_tracking/scene_state.py#L153-L157 and tools/testing/xiangqi_tracking/stable_observation.py#L263-L274, L356-L359, L385-L389. Triggering sequence: A locked snapshot exists (StableObservation.snapshot is set, self.requested is False). A camera frame arrives where camera geometry matches snapshot targets (_scene_matches is True) and feedback is stationary (safe is True), but BaseGeometry forward kinematics fails (transform is None, base_valid is False, record['base_transform_valid'] is False). SceneState.process invokes self.observation.observe(record, now, safe, ...) passing safe=True without gating on base_valid. In StableObservation.observe, line 265 sets self.pending = not matches or not trusted (evaluating to False) without checking record.get('base_transform_valid'). Consequently, status(now)['observation_eligible'] returns True, allowing action='consume' in StableObservation.request to vend a base-coordinate snapshot while base FK is invalid.",
+        "Issue 2: Expired/out-of-order controller feedback packets resurrect retired controller epochs. File/lines: tools/testing/xiangqi_tracking/stable_observation.py#L70-L83 (FeedbackWindow.ingest). Triggering sequence: FeedbackWindow is tracking active epoch E2 with self.last=t2. A delayed/reordered feedback message arrives with an older, retired epoch E1 (ingest(t1, arm, joint, now, epoch=E1)). Line 71 does not discard it because epoch == self.epoch is False. Line 79 checks epoch != self.epoch, executes self._break(), clears self.rows, and resets self.last=0. Line 82 overwrites self.epoch=E1. Because self.last was cleared to 0, line 83 (t <= self.last) does not reject the packet, allowing an expired feedback frame to reset settling and revive a retired controller epoch without epoch monotonicity or retired-epoch checks.",
+        "Issue 3: Early exit in validate() bypasses finite-value and bounded-payload enforcement when detection_valid is False. File/lines: tools/testing/xiangqi_tracking/measurement_contract.py#L120-L123, L163, and L34-L41. Triggering sequence: A camera measurement packet is provided with detection_valid=False (e.g. perception configuration change or camera detection failure) containing non-finite floats (NaN/Inf in metadata or compute dicts) or a payload size exceeding MAX_MESSAGE_BYTES. Line 120 detects not packet['detection_valid'] and line 123 executes 'return packet' early, skipping encode(packet) at line 163. The packet bypasses json.dumps(..., allow_nan=False) and payload size bounding in encode(), violating the bounded/finite wire contract and triggering an unhandled ValueError in downstream SceneState.process (line 88)."
+      ],
+      "EVIDENCE": [
+        "scene_state.py#L108-L109 calculates base_valid = bool(transform is not None and packet['detection_valid']). L154 passes safe (only feedback-derived) to observe(), omitting base_valid.",
+        "stable_observation.py#L265 updates self.pending = not matches or not trusted during locked observation scene checks, never inspecting record.get('base_transform_valid'). Lines 356-359 and 385 confirm eligibility and permit consumption without validating current base FK.",
+        "stable_observation.py#L71-L83: FeedbackWindow lacks retired epoch history or sequence bounds across epoch changes. On epoch mismatch, self.rows is wiped, self.last is reset to 0, and self.epoch is reassigned to the incoming packet's epoch.",
+        "measurement_contract.py#L120-L123 returns packet immediately if not packet['detection_valid'] and not detections, skipping encode(packet) at L163 which validates payload size and non-finite floats."
+      ],
+      "VALIDATION": [
+        "Static code review of tools/testing/xiangqi_tracking/measurement_contract.py (contract validation, SequenceGuard, RoiHint).",
+        "Static code review of tools/testing/xiangqi_tracking/scene_state.py (SceneState.process, tick, reject_packet, retirement handling).",
+        "Static code review of tools/testing/xiangqi_tracking/stable_observation.py (FeedbackWindow.ingest/at, StableObservation.observe/tick/request/status)."
+      ],
+      "REMAINING_WORK": [],
+      "RISKS": []
+    }
+  },
+  "scope": {
+    "changed_paths": [],
+    "scope_violations": [],
+    "git_state_changed": false,
+    "scope_check_exclusions": [
+      "Git-ignored untracked files",
+      "paths outside the worktree"
+    ]
+  }
+}

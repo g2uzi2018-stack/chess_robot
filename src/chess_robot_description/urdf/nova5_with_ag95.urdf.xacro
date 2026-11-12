@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<robot name="nova5_with_ag95" xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- ROS resolves the installed package; the generator supplies a source path. -->
+  <xacro:include filename="nova5.urdf"/>
+  <xacro:arg name="ag95_macro_file" default="$(find dh_ag95_description)/urdf/dh_ag95_macro.xacro"/>
+  <xacro:include filename="$(arg ag95_macro_file)"/>
+  <xacro:arg name="include_ground" default="false"/>
+  <!-- New fixture includes the slotted gripper base; flange datums coincide in CAD.
+       Additional mount Z remains adjustable for later physical calibration. -->
+  <xacro:arg name="gripper_mount_z" default="0.0"/>
+  <xacro:arg name="grasp_link_offset" default="0.20"/>
+  <xacro:arg name="gripper_joint_upper_limit" default="0.94"/>
+
+  <!-- User 20260117 v2 fixture: mounting plate, slotted clamp and new camera.
+       Includes the base shape, so the generic AG95 base geometry is omitted below. -->
+  <link name="camera_bracket_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl"/>
+      </geometry>
+      <material name="silver"><color rgba="0.75 0.75 0.75 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.stl"/>
+      </geometry>
+    </collision>
+  </link>
+  <joint name="camera_bracket_joint" type="fixed">
+    <parent link="Link6"/>
+    <child link="camera_bracket_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <xacro:dh_ag95_gripper prefix="" parent="camera_bracket_link"
+      grasp_link_offset="$(arg grasp_link_offset)"
+      include_base_geometry="false"
+      joint_upper_limit="$(arg gripper_joint_upper_limit)">
+    <origin xyz="0 0 $(arg gripper_mount_z)" rpy="0 0 0"/>
+  </xacro:dh_ag95_gripper>
+
+  <!-- Scene geometry is optional; not part of the default robot model. -->
+  <xacro:if value="$(arg include_ground)">
+    <link name="env_ground">
+      <collision><geometry><box size="2.0 2.0 0.05"/></geometry></collision>
+      <visual>
+        <geometry><box size="2.0 2.0 0.05"/></geometry>
+        <material name="ground"><color rgba="0.5 0.5 0.5 0.6"/></material>
+      </visual>
+    </link>
+    <joint name="ground_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="env_ground"/>
+      <origin xyz="0 0 -0.03" rpy="0 0 0"/>
+    </joint>
+  </xacro:if>
+</robot>

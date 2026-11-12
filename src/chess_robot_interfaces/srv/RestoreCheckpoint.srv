@@ -1,0 +1,5 @@
+# Explicit operator attestation if automatic recovery is not configured.
+bool no_unobserved_motion
+---
+bool success
+string detail

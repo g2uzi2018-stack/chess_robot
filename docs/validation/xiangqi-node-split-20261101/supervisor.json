@@ -1,0 +1,27 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "scenario": "normal-stop",
+      "exit_code": 0,
+      "passed": true,
+      "shared_slots_unlinked": 3,
+      "child_groups_stopped": true
+    },
+    {
+      "scenario": "perception-crash",
+      "exit_code": 1,
+      "passed": true,
+      "shared_slots_unlinked": 3,
+      "child_groups_stopped": true
+    },
+    {
+      "scenario": "scene-crash",
+      "exit_code": 1,
+      "passed": true,
+      "shared_slots_unlinked": 3,
+      "child_groups_stopped": true
+    }
+  ],
+  "physical_commands": 0
+}

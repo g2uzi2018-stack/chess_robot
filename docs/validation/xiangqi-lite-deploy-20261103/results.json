@@ -1,0 +1,181 @@
+{
+  "schema": "xiangqi_lite_deployment_summary/v1",
+  "deployed": true,
+  "measured_at": "2026-11-03",
+  "timezone": "Asia/Taipei",
+  "git_base": "ee1c2e11e5717bb0efcd8176c981f7a689f9c3bf",
+  "summary": {
+    "started": "2026-11-03T09:46:24.760167+08:00",
+    "seconds": 60.00022109801648,
+    "unique_completed_frames": 1418,
+    "processing_fps": 23.6332462456022,
+    "camera_frameinfo_hz": 29.98322284614835,
+    "duplicates": 0,
+    "one_minute_fps": [
+      23.6332462456022
+    ],
+    "counts": {
+      "4": 1418
+    },
+    "candidate_counts": {
+      "4": 1418
+    },
+    "class_sequences": {
+      "red_pawn|black_pawn|black_elephant|red_pawn": 1407,
+      "red_pawn|black_pawn|unknown|red_pawn": 11
+    },
+    "four_expected_class_frames": 1407,
+    "all_classification_complete_frames": 1407,
+    "four_valid_geometry_frames": 1332,
+    "latency_ms": {
+      "n": 1418,
+      "p50": 120.93268549999999,
+      "p95": 139.62589395,
+      "min": 99.68687700000001,
+      "max": 153.723612
+    },
+    "gpu_ms": {
+      "n": 1418,
+      "p50": 35.54913747939281,
+      "p95": 36.910176850506105,
+      "min": 34.44779000710696,
+      "max": 41.28095897613093
+    },
+    "candidate_ms": {
+      "n": 1418,
+      "p50": 7.803914981195703,
+      "p95": 8.61393769737333,
+      "min": 7.315399998333305,
+      "max": 10.793077002745122
+    },
+    "geometry_ms": {
+      "n": 1418,
+      "p50": 13.516226492356509,
+      "p95": 15.249415658763608,
+      "min": 12.468836037442088,
+      "max": 18.964425020385534
+    },
+    "policies": {
+      "lite_candidates_roi_classes/v1": 1418
+    },
+    "roi_counts": {
+      "1": 1418
+    },
+    "preview_last": {
+      "stamp_ns": 1793670443577961389,
+      "video_hz": 29.9694,
+      "recognition_hz": 23.5825,
+      "published_frames": 1407196,
+      "overlay_valid": true,
+      "visible_tracks": 4
+    },
+    "preview_stats": {
+      "video_hz": {
+        "n": 30,
+        "p50": 29.99515,
+        "p95": 30.04975,
+        "min": 29.9361,
+        "max": 30.0897
+      },
+      "recognition_hz": {
+        "n": 30,
+        "p50": 23.577849999999998,
+        "p95": 24.05038,
+        "min": 22.9977,
+        "max": 24.1016
+      }
+    },
+    "observation_states": {
+      "locked": 971,
+      "pending_confirmation": 445,
+      "needs_resample": 2
+    },
+    "ready_frames": 0,
+    "first_identity": {
+      "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+      "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+      "ultralytics": "8.4.32",
+      "torch": "2.8.0",
+      "imgsz": 640,
+      "inference_backend": "tensorrt",
+      "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+      "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+      "candidate_mode": "lite",
+      "candidate_artifact": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine",
+      "candidate_artifact_sha256": "5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b",
+      "candidate_input_hw": [
+        384,
+        640
+      ],
+      "candidate_conf": 0.1,
+      "candidate_dedup_iou": 0.65,
+      "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+      "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+      "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1"
+    },
+    "physical_commands": 0,
+    "legacy_reference_match_frames_before_review": 1407,
+    "reference_classes_by_x": [
+      "red_pawn",
+      "black_pawn",
+      "black_elephant",
+      "red_pawn"
+    ],
+    "reference_source": "manual review of xiangqi-lite-scene-20261103.jpg; arrangement changed from the earlier straight row",
+    "class_match_fraction": 0.9922425952045134,
+    "four_valid_geometry_fraction": 0.9393511988716502
+  },
+  "verification": {
+    "time_ns": 1793670515718343753,
+    "active": true,
+    "visual_pid": 774227,
+    "clock_owner_pid": 774227,
+    "source": "/home/kuang/workspace/chess_robot/runs/xiangqi_lite_deploy_20261103_01/source",
+    "source_files_verified": 33,
+    "repo_source_equal": {
+      "candidate_roi.py": true,
+      "recognize_tracked.py": true,
+      "measurement_contract.py": true,
+      "perception_node.py": true,
+      "README.md": true
+    },
+    "protected_files_unchanged": {
+      ".runtime/arm.yaml": true,
+      ".runtime/arm-install-prefix": true,
+      ".runtime/audit/commands.csv": true
+    },
+    "independent_services_unchanged": true,
+    "policy": "lite_candidates_roi_classes/v1",
+    "model_identity": {
+      "weights": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/runs/train/weights/best.pt",
+      "weights_sha256": "f4fce2c0217b2ce292820e45f1779654b4cf58da3d156aff6306d56ae6aabf7e",
+      "ultralytics": "8.4.32",
+      "torch": "2.8.0",
+      "imgsz": 640,
+      "inference_backend": "tensorrt",
+      "inference_artifact": "/home/kuang/workspace/chess_robot/runs/perf_ceiling_20261031/01_backend/weights/20261031T143600930755709/best.engine",
+      "inference_artifact_sha256": "26103821bc0788d1dc0a2d0051c91362530d5b6b1cc92347f2289d12c9469d35",
+      "candidate_mode": "lite",
+      "candidate_artifact": "/home/kuang/workspace/xiangqi-yolo-training/20261102-yolo26n-piece-v1/artifacts/yolo26n-piece-fp32-v1/imgsz640-fp32/yolo26n-piece-imgsz640-fp32.engine",
+      "candidate_artifact_sha256": "5ef87b3e4f6fd3991586845687a30ee8b5a0819019eb96cd73ebac1a80953a7b",
+      "candidate_input_hw": [
+        384,
+        640
+      ],
+      "candidate_conf": 0.1,
+      "candidate_dedup_iou": 0.65,
+      "calibration": "/home/kuang/workspace/chess_robot/docs/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+      "calibration_sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+      "urdf_sha256": "e49a804dae1419e5e5ab0c9391ed016762900487f2c4d96fcce290894eb89ce1"
+    },
+    "stamp_ns": 1793670515456225284,
+    "pipeline_job_id": 4216,
+    "deployment_coordinator_finished": true,
+    "motion_ready": false,
+    "grasp_ready": false,
+    "physical_commands": 0,
+    "git_head": "ee1c2e11e5717bb0efcd8176c981f7a689f9c3bf",
+    "git_status": " M tools/testing/xiangqi_tracking/README.md\n M tools/testing/xiangqi_tracking/candidate_roi.py\n M tools/testing/xiangqi_tracking/measurement_contract.py\n M tools/testing/xiangqi_tracking/perception_node.py\n M tools/testing/xiangqi_tracking/recognize_tracked.py\n"
+  },
+  "evidence_package_sha256": "a8ddbbd106c688a92e7d8ff5d1c99be6cccb58f4893b414d831f58faf0fca70e"
+}

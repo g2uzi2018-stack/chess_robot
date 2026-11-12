@@ -1,0 +1,29 @@
+{
+  "status": "incremental_review_complete",
+  "conclusion": "no_remaining_blocker_in_requested_targeted_checks",
+  "hashes": {
+    "final-manifest.json": "f3406882501cd813e64d743e239992d9d98700b18e3912ba7bf13ed4e27503eb",
+    "deployment_helper.py": "d60f2a4baf8834f92eab31988498312e44b4161ac33b587aae6f79b0348243f0",
+    "observe_deployment.py": "10fff04c649e0de2146b54a263266fd8506705a5ca8eddb53be4667b45df4fe8",
+    "zz-vision-acceleration.conf": "d826930a44035a441b24a12b8f931307fc310654c1860fb4f7332195f754b93e"
+  },
+  "tests": {
+    "tests_run": 15,
+    "passed": true,
+    "guard_failure_passed": true,
+    "history_and_idempotence_passed": true,
+    "manifest_entries": 21
+  },
+  "findings": [],
+  "deployment_static": {
+    "real_newline_launcher": true,
+    "clock_release_persistent_dropin": true,
+    "start_checks_dropin": true,
+    "backup_original_TOP": true
+  },
+  "limits": [
+    "No ROS rerun or hardware operation",
+    "Pure CPU 15 targeted tests plus direct SpinGuard/history/idempotence proofs",
+    "Implementation isolated ROS evidence read, not independently rerun"
+  ]
+}

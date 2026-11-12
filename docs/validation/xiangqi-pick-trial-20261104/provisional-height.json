@@ -1,0 +1,23 @@
+{
+  "schema": "provisional_pick_height/v1",
+  "basis": "user authorized reference pose minus 1mm; not a TCP calibration",
+  "reference_tcp_base_m": [
+    0.009173740168028,
+    -0.46580131347763043,
+    -0.004235731876821386
+  ],
+  "nominal_grasp_tcp_base_z_m": -0.005235731876821386,
+  "orientation_xyzw": [
+    0.48299238089943397,
+    0.5185547459906317,
+    -0.48022726217308936,
+    0.5169149950131322
+  ],
+  "bare_table_base_z_m": -0.01,
+  "piece_thickness_m": 0.013,
+  "removed_seed_xy_m": [
+    0.00917,
+    -0.4658
+  ],
+  "removed_seed_exclusion_radius_m": 0.03
+}

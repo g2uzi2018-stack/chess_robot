@@ -1,0 +1,15 @@
+std_msgs/Header header
+string backend
+string phase
+string job_id
+bool busy
+bool feedback_fresh
+bool reference_valid
+bool hardware_certified
+bool simulated
+uint64 controller_mode
+geometry_msgs/PoseStamped tcp
+float64 signed_twist_rad
+float64 total_twist_rad
+float64 twist_energy_rad2_per_m
+string diagnostic

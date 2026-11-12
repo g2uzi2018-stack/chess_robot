@@ -1,0 +1,1090 @@
+{
+  "status": "PASS",
+  "mode": "commissioning",
+  "motion_goals_attempted": 28,
+  "goals": [
+    {
+      "label": "initial_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 44,
+      "elapsed_s": 2.3020496850076597,
+      "feedback_rows": 46,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035120931837164,
+        -0.5765183825455936,
+        0.2749941579787064
+      ],
+      "duration_s": 1.29
+    },
+    {
+      "label": "cancel_up_2mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.026993366081940195
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 137,
+      "elapsed_s": 0.1468505930097308,
+      "feedback_rows": 3,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035191074519664,
+        -0.5765173042613754,
+        0.27499104991370366
+      ],
+      "duration_s": 4.08
+    },
+    {
+      "label": "cancel_up_2mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.026993366081940195
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 17,
+      "detail": "goal canceled",
+      "executed": true,
+      "samples": 137,
+      "elapsed_s": 2.2887146279972512,
+      "feedback_rows": 46,
+      "cancel_requested": true,
+      "cancel_to_verified_terminal_s": 0.9057977619813755,
+      "final_tcp_m": [
+        0.03035220274170801,
+        -0.5765193964876753,
+        0.2755072236982009
+      ],
+      "duration_s": 4.08
+    },
+    {
+      "label": "home_after_cancel",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 44,
+      "elapsed_s": 2.279622828005813,
+      "feedback_rows": 45,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035122877681862,
+        -0.5765181119775147,
+        0.27499402381866417
+      ],
+      "duration_s": 1.29
+    },
+    {
+      "label": "up_5mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.029993366081940198
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 381,
+      "elapsed_s": 0.3597319010004867,
+      "feedback_rows": 7,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035175781130363,
+        -0.5765181286488986,
+        0.27499111455376524
+      ],
+      "duration_s": 11.4
+    },
+    {
+      "label": "up_5mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.029993366081940198
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 381,
+      "elapsed_s": 12.796617368992884,
+      "feedback_rows": 256,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030355431332347273,
+        -0.5765167498982439,
+        0.27967870482060053
+      ],
+      "duration_s": 11.4
+    },
+    {
+      "label": "up_5mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 381,
+      "elapsed_s": 12.641957005020231,
+      "feedback_rows": 254,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351485607816812,
+        -0.5765167275282915,
+        0.27498328212477197
+      ],
+      "duration_s": 11.4
+    },
+    {
+      "label": "left_5mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.025351810761823575,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 245,
+      "elapsed_s": 0.261799161991803,
+      "feedback_rows": 6,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035163539508246,
+        -0.57651671724406,
+        0.2749837246223896
+      ],
+      "duration_s": 7.319999999
+    },
+    {
+      "label": "left_5mm",
+      "operation": 0,
+      "target_m": [
+        0.025351810761823575,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 245,
+      "elapsed_s": 8.59178941999562,
+      "feedback_rows": 172,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.02535621488206503,
+        -0.576512969083902,
+        0.2746650168600325
+      ],
+      "duration_s": 7.319999999
+    },
+    {
+      "label": "left_5mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 245,
+      "elapsed_s": 8.450604176992783,
+      "feedback_rows": 169,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035227372843853,
+        -0.5765194677682356,
+        0.2749888604570945
+      ],
+      "duration_s": 7.319999999
+    },
+    {
+      "label": "right_5mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.035351810761823574,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 245,
+      "elapsed_s": 0.32683378001092933,
+      "feedback_rows": 7,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351904363186896,
+        -0.5765188120808797,
+        0.2749870282538206
+      ],
+      "duration_s": 7.319999999
+    },
+    {
+      "label": "right_5mm",
+      "operation": 0,
+      "target_m": [
+        0.035351810761823574,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 245,
+      "elapsed_s": 8.6280811149918,
+      "feedback_rows": 173,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03535673682341898,
+        -0.5765180991778284,
+        0.2746608629281682
+      ],
+      "duration_s": 7.319999999
+    },
+    {
+      "label": "right_5mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 245,
+      "elapsed_s": 8.470303867012262,
+      "feedback_rows": 170,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03034944479381687,
+        -0.576516687010593,
+        0.2749883396150584
+      ],
+      "duration_s": 7.319999999
+    },
+    {
+      "label": "front_5mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5715178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 501,
+      "elapsed_s": 0.4428650389891118,
+      "feedback_rows": 9,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351373234119326,
+        -0.5765173332805227,
+        0.27498882644290823
+      ],
+      "duration_s": 15.0
+    },
+    {
+      "label": "front_5mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5715178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 501,
+      "elapsed_s": 16.43528324898216,
+      "feedback_rows": 329,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035607468871753,
+        -0.5715075410457746,
+        0.2746660143372945
+      ],
+      "duration_s": 15.0
+    },
+    {
+      "label": "front_5mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 502,
+      "elapsed_s": 16.383806789992377,
+      "feedback_rows": 328,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350784045035197,
+        -0.5765213064123657,
+        0.2749766875952889
+      ],
+      "duration_s": 15.03
+    },
+    {
+      "label": "back_5mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5815178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 462,
+      "elapsed_s": 0.45529474201612175,
+      "feedback_rows": 10,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350466643007543,
+        -0.5765209908793709,
+        0.27497805904203354
+      ],
+      "duration_s": 13.83
+    },
+    {
+      "label": "back_5mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5815178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 462,
+      "elapsed_s": 15.294245594996028,
+      "feedback_rows": 306,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030354065467898945,
+        -0.5815232871745801,
+        0.27465585803191406
+      ],
+      "duration_s": 13.83
+    },
+    {
+      "label": "back_5mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 463,
+      "elapsed_s": 15.100854710995918,
+      "feedback_rows": 303,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351209091466293,
+        -0.576516146819274,
+        0.27499009295759685
+      ],
+      "duration_s": 13.86
+    },
+    {
+      "label": "up_10mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.0349933660819402
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 787,
+      "elapsed_s": 0.7032008639944252,
+      "feedback_rows": 14,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351232682795035,
+        -0.5765168616026298,
+        0.2749912224377347
+      ],
+      "duration_s": 23.58
+    },
+    {
+      "label": "up_10mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.0349933660819402
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 787,
+      "elapsed_s": 25.30103353600134,
+      "feedback_rows": 507,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030355373058815357,
+        -0.5765179122805172,
+        0.2846740092573452
+      ],
+      "duration_s": 23.58
+    },
+    {
+      "label": "up_10mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 787,
+      "elapsed_s": 25.05307559101493,
+      "feedback_rows": 502,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035231863577211,
+        -0.576516744616818,
+        0.2749798718810074
+      ],
+      "duration_s": 23.58
+    },
+    {
+      "label": "left_10mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.020351810761823574,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 487,
+      "elapsed_s": 0.5388410529994871,
+      "feedback_rows": 12,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035165698220742,
+        -0.5765174428299559,
+        0.27498116193976274
+      ],
+      "duration_s": 14.58
+    },
+    {
+      "label": "left_10mm",
+      "operation": 0,
+      "target_m": [
+        0.020351810761823574,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 487,
+      "elapsed_s": 16.094508895999752,
+      "feedback_rows": 323,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.020355449219713467,
+        -0.576514719394632,
+        0.2746657542855943
+      ],
+      "duration_s": 14.58
+    },
+    {
+      "label": "left_10mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 488,
+      "elapsed_s": 15.882522097002948,
+      "feedback_rows": 318,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351705528138234,
+        -0.576520049579933,
+        0.27498581764686436
+      ],
+      "duration_s": 14.61
+    },
+    {
+      "label": "right_10mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.04035181076182358,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 489,
+      "elapsed_s": 0.48188155199750327,
+      "feedback_rows": 10,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035085217277987,
+        -0.5765197546621893,
+        0.2749853662118415
+      ],
+      "duration_s": 14.639999999
+    },
+    {
+      "label": "right_10mm",
+      "operation": 0,
+      "target_m": [
+        0.04035181076182358,
+        -0.5765178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 489,
+      "elapsed_s": 16.12897446998977,
+      "feedback_rows": 323,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.04035579154606149,
+        -0.5765187397830422,
+        0.2746606653595583
+      ],
+      "duration_s": 14.639999999
+    },
+    {
+      "label": "right_10mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 489,
+      "elapsed_s": 15.931018912000582,
+      "feedback_rows": 319,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035143758065298,
+        -0.5765165990622468,
+        0.2749912671804128
+      ],
+      "duration_s": 14.639999999
+    },
+    {
+      "label": "front_10mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5665178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 973,
+      "elapsed_s": 0.8222850059974007,
+      "feedback_rows": 17,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351666877676924,
+        -0.5765177768700602,
+        0.2749917011833892
+      ],
+      "duration_s": 29.16
+    },
+    {
+      "label": "front_10mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5665178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 973,
+      "elapsed_s": 31.51876770600211,
+      "feedback_rows": 631,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030355266436695356,
+        -0.5665132682961633,
+        0.2746765947247817
+      ],
+      "duration_s": 29.16
+    },
+    {
+      "label": "front_10mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 973,
+      "elapsed_s": 30.74467347501195,
+      "feedback_rows": 616,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351450712452214,
+        -0.5765234496524213,
+        0.2749739748521707
+      ],
+      "duration_s": 29.16
+    },
+    {
+      "label": "back_10mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5865178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 953,
+      "elapsed_s": 0.8965013719862327,
+      "feedback_rows": 19,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035088655659871,
+        -0.5765199566812753,
+        0.2749791232862548
+      ],
+      "duration_s": 28.56
+    },
+    {
+      "label": "back_10mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5865178432228821,
+        0.024993366081940194
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 953,
+      "elapsed_s": 30.492800977022853,
+      "feedback_rows": 611,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030356050882343326,
+        -0.5865228479580004,
+        0.2746659411146851
+      ],
+      "duration_s": 28.56
+    },
+    {
+      "label": "back_10mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 953,
+      "elapsed_s": 30.10461836401373,
+      "feedback_rows": 603,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035107165573793,
+        -0.5765140641013705,
+        0.2749935283616983
+      ],
+      "duration_s": 28.56
+    },
+    {
+      "label": "up_20mm_precheck",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.04499336608194021
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": true,
+      "code": 0,
+      "detail": "PLAN_READY: sampled geometric plan only; movement not executed",
+      "executed": false,
+      "samples": 1783,
+      "elapsed_s": 1.3683425670024008,
+      "feedback_rows": 28,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030351496724177043,
+        -0.5765183067132358,
+        0.2749948208416729
+      ],
+      "duration_s": 53.46
+    },
+    {
+      "label": "up_20mm",
+      "operation": 0,
+      "target_m": [
+        0.030351810761823576,
+        -0.5765178432228821,
+        0.04499336608194021
+      ],
+      "quaternion_xyzw": [
+        -0.5290165453746655,
+        -0.46918872627785635,
+        0.5290204915883088,
+        -0.4691915955484308
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 1783,
+      "elapsed_s": 55.992801965010585,
+      "feedback_rows": 1121,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030356220625978668,
+        -0.576517863541738,
+        0.29467206330314044
+      ],
+      "duration_s": 53.46
+    },
+    {
+      "label": "up_20mm_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 1783,
+      "elapsed_s": 55.32846006102045,
+      "feedback_rows": 1108,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.03035183026594304,
+        -0.5765148696564254,
+        0.27497690586539025
+      ],
+      "duration_s": 53.46
+    },
+    {
+      "label": "descend_2mm",
+      "operation": 1,
+      "target_m": [
+        0.030351914754122043,
+        -0.5765144142261673,
+        0.2729764335100934
+      ],
+      "quaternion_xyzw": [
+        0.5290256831687544,
+        0.46919628429023674,
+        -0.5290108929441408,
+        0.46918455697359773
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 190,
+      "elapsed_s": 6.896889394993195,
+      "feedback_rows": 140,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030356447195179055,
+        -0.5765055279586985,
+        0.2726297169240832
+      ],
+      "duration_s": 5.67
+    },
+    {
+      "label": "retreat_2mm",
+      "operation": 2,
+      "target_m": [
+        0.030351914754122043,
+        -0.5765144142261673,
+        0.024976433510093377
+      ],
+      "quaternion_xyzw": [
+        0.5290256831687544,
+        0.46919628429023674,
+        -0.5290108929441408,
+        0.46918455697359773
+      ],
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 193,
+      "elapsed_s": 6.926338582008611,
+      "feedback_rows": 139,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030359389806766893,
+        -0.5765064912589803,
+        0.2746539044408701
+      ],
+      "duration_s": 5.76
+    },
+    {
+      "label": "final_home",
+      "operation": 4,
+      "target_m": null,
+      "quaternion_xyzw": null,
+      "plan_only": false,
+      "code": 1,
+      "detail": "measured arrival verified",
+      "executed": true,
+      "samples": 26,
+      "elapsed_s": 1.7313822279975284,
+      "feedback_rows": 35,
+      "cancel_requested": false,
+      "final_tcp_m": [
+        0.030350697113976876,
+        -0.5765197485586921,
+        0.274993828147727
+      ],
+      "duration_s": 0.75
+    }
+  ],
+  "home_sha256": "165f3ec9727f78bd5069538aa0029fd96275574dfd882db472a08b36a1be634a",
+  "initial": {
+    "tcp_m": [
+      0.03035247782994824,
+      -0.5765179136265921,
+      0.27551465165899874
+    ],
+    "quaternion_xyzw": [
+      -0.5290179177723922,
+      -0.469190259359931,
+      0.5290188829588942,
+      -0.4691903288330315
+    ],
+    "joints_rad": [
+      1.3873643156549094,
+      0.2957654109210473,
+      1.454138019982575,
+      -0.17911191444344476,
+      -1.5707968594271147,
+      -0.0637014275986907
+    ],
+    "mode": 5
+  },
+  "local_origin_tcp_m": [
+    0.030351810761823576,
+    -0.5765178432228821,
+    0.2749933660819402
+  ],
+  "final": {
+    "mode": 5,
+    "reference_valid": true,
+    "fresh": true,
+    "joints_rad": [
+      1.3873615193357647,
+      0.2959993363332971,
+      1.4554260578437919,
+      -0.1806415842393158,
+      -1.5707963267948966,
+      -0.06370094906193231
+    ],
+    "tcp_m": [
+      0.030350275790888857,
+      -0.5765195386338755,
+      0.27499385292278966
+    ],
+    "net_twist_rad": 7.916632047688665e-07,
+    "total_twist_rad": 7.064575170190324e-06
+  }
+}

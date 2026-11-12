@@ -1,0 +1,44 @@
+{
+  "read_only": true,
+  "physical_commands": 0,
+  "window_s": 30.019116906973068,
+  "nodes": [
+    [
+      "chess_robot_arm",
+      "/"
+    ],
+    [
+      "vision_node",
+      "/"
+    ],
+    [
+      "preview_node",
+      "/"
+    ],
+    [
+      "xiangqi_tracking_preview",
+      "/"
+    ],
+    [
+      "xiangqi_split_deployment_observer",
+      "/"
+    ],
+    [
+      "xiangqi_scene",
+      "/"
+    ],
+    [
+      "xiangqi_perception",
+      "/"
+    ],
+    [
+      "gripper_node",
+      "/"
+    ],
+    [
+      "panel_node",
+      "/"
+    ]
+  ],
+  "topics": {}
+}

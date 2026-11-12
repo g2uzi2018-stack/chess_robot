@@ -1,0 +1,2 @@
+id,x_m,y_m,z_m,status,measured_epoch,outbound_code,return_code,outbound_error_m,return_error_m,outbound_elapsed_s,return_elapsed_s,failure_reason
+qualification_roundtrip_low,-0.11964859810610666,-0.5765188178839957,0.27498759107000015,execution_failed,2026-10-26,13,,,,3.6218435659829993,,business-node measured completion failed: feedback lost during task

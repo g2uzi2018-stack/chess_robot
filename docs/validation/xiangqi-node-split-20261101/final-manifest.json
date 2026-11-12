@@ -1,0 +1,90 @@
+{
+  "tools/testing/xiangqi_tracking/base_geometry.py": {
+    "sha256": "6827b9fb594819993e836ce7a7350603c63b87bc2c5cff148ac37e1a11b3850d",
+    "bytes": 3339
+  },
+  "tools/testing/xiangqi_tracking/measurement_contract.py": {
+    "sha256": "92ebd725fc5aaea77ab32f8cab23c0b25f7833f4eeb08e6c04aec872d3cbe908",
+    "bytes": 18495
+  },
+  "tools/testing/xiangqi_tracking/perception_node.py": {
+    "sha256": "2ccf29b437be9eb3eb7fe7a9d6724c14cbddd479799a06710bb5ca86b67c1e5b",
+    "bytes": 10967
+  },
+  "tools/testing/xiangqi_tracking/scene_node.py": {
+    "sha256": "9cd02c24b9d9378401c0c52fe16eb5f53930a9f92fe41100240f027a5a3da939",
+    "bytes": 10335
+  },
+  "tools/testing/xiangqi_tracking/scene_state.py": {
+    "sha256": "067665189726f3e358b35c435527b87f0c94feb3ae52c0bacabfe69c30d126e7",
+    "bytes": 11081
+  },
+  "tools/testing/xiangqi_tracking/split_supervisor.py": {
+    "sha256": "cbc92a74f332523b64caa8b2da56ddf710c082a3160bf53b953e43701605dfe5",
+    "bytes": 4649
+  },
+  "tools/testing/xiangqi_tracking/live_tracked.py": {
+    "sha256": "fcb63edbbc1061528f7f5c6d1b5417c509061a462b2b38cca5c15b803e79d416",
+    "bytes": 169
+  },
+  "tools/testing/xiangqi_tracking/start_perception.sh": {
+    "sha256": "244f36ecfcccf8b0ef961cf32e24cda85fa05ccf0db77deb2c1aa2ebe89bd786",
+    "bytes": 686
+  },
+  "tools/testing/xiangqi_tracking/start_scene.sh": {
+    "sha256": "2388ef48aaba260b10aa8790f99e3222cf81c8a651e29243c30cd1d9b93f3188",
+    "bytes": 610
+  },
+  "tools/testing/xiangqi_tracking/recognize_tracked.py": {
+    "sha256": "326437628da1912cafb5049a9ed28ab71b9ef52045890df4d08b7091a4850c82",
+    "bytes": 14462
+  },
+  "tools/testing/xiangqi_tracking/shared_pipeline.py": {
+    "sha256": "82f427ef17192bea1b7b68636cb5d00ed65ac563197571ba54d507e0fb514043",
+    "bytes": 7587
+  },
+  "tools/testing/xiangqi_tracking/qualification.py": {
+    "sha256": "104bcc1f0ba4abc9077951d56f03c1600336a41b5b2c8d7732755cda73100afb",
+    "bytes": 1851
+  },
+  "tools/testing/xiangqi_tracking/test_node_split.py": {
+    "sha256": "ae7f696ba9bd413d0f6c3ef9ad3e7733fdbcbbe8b2d2bb3560db439d1bf81322",
+    "bytes": 11466
+  },
+  "tools/testing/xiangqi_tracking/test_split_supervisor.py": {
+    "sha256": "38b8053d8425e29985c4038955d487a83e8b97da6fdef1abe9f5bbe624555e46",
+    "bytes": 4522
+  },
+  "tools/testing/xiangqi_tracking/test_scene_lifecycle_ros.py": {
+    "sha256": "6db65c96952e68567fb48d212fb13d078dfac77492aef4d8911cacbe51aaaaa3",
+    "bytes": 6078
+  },
+  "tools/testing/xiangqi_tracking/test_image_admission.py": {
+    "sha256": "2b4a452cc72dd1daeb32ad79a6218787c296129b1b502c1ac3967628067545a5",
+    "bytes": 5891
+  },
+  "tools/testing/xiangqi_tracking/test_observation_ros.py": {
+    "sha256": "7ce1c0c96fe7176a8b647c938f5a79c04024eec5fb20b2e91468ef65ae6ae13c",
+    "bytes": 7938
+  },
+  "tools/testing/xiangqi_tracking/compare_split_saved_inputs.py": {
+    "sha256": "70f79ebf74b57133edca33d0fea436f49351fb40eebaf8237ded952817e3ad88",
+    "bytes": 4974
+  },
+  "tools/testing/xiangqi_tracking/stable_observation.py": {
+    "sha256": "e1c9887a5a3a45adad55dce996a4a561ab93f55999661adb5af06ed619f52203",
+    "bytes": 22825
+  },
+  "tools/testing/xiangqi_tracking/spin_guard.py": {
+    "sha256": "7e36d0a8efc5f8c8ea1a94f1b4defd30d2bb956cb741b3d41bcf36dd9cd7c868",
+    "bytes": 688
+  },
+  "tools/testing/xiangqi_tracking/test_review_fixes.py": {
+    "sha256": "82d8a864dbf9c2434bffd6a95767933884e3c0a53d045106f9f84e69c6a40427",
+    "bytes": 10797
+  },
+  "tools/testing/xiangqi_tracking/test_producer_scalars.py": {
+    "sha256": "56541d00f11409f37999e59bdc154fa4a23576e07b7b9bd4265b6118eda1ff1e",
+    "bytes": 4257
+  }
+}

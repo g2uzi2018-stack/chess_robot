@@ -1,0 +1,35 @@
+{
+  "wall_seconds": 10.0,
+  "all_messages": 157,
+  "valid_observations": 156,
+  "valid_observation_hz": 15.6,
+  "processing_median_ms": 73.96495399007108,
+  "latency_median_ms": 167.73259900000002,
+  "inference_median_ms": 37.67589850758668,
+  "compute": {
+    "predictor_device": "cuda:0",
+    "model_parameter_device": "cuda:0",
+    "boxes_device": "cuda:0",
+    "masks_device": "cuda:0",
+    "fp16": false
+  },
+  "track_ids": [
+    9,
+    10,
+    11,
+    12
+  ],
+  "latest_stages": {
+    "image_decode": 9.201295004459098,
+    "shared_memory_copy": 4.49881301028654,
+    "image_age_at_processing_start": 134.42565299999998,
+    "analysis": 78.09157299925573,
+    "gpu_stage": 46.5739659848623,
+    "geometry_stage": 31.517607014393434,
+    "tracking": 6.811975996242836,
+    "frame_pipeline_elapsed": 99.7091679892037,
+    "debug_image_generated": false
+  },
+  "source_stamp_preserved": true,
+  "robot_commands": 0
+}

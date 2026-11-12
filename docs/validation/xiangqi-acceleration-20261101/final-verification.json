@@ -1,0 +1,51 @@
+{
+  "time_utc": "2026-11-01T08:38:32.829774+00:00",
+  "protected_hashes_unchanged": {
+    "/home/kuang/workspace/chess_robot/.runtime/arm.yaml": true,
+    "/home/kuang/workspace/chess_robot/.runtime/arm-install-prefix": true,
+    "/home/kuang/workspace/chess_robot/.runtime/audit/commands.csv": true
+  },
+  "checkpoint_note": "Periodic valid-state persistence may legitimately update checkpoint bytes; no checkpoint rewrite by this task.",
+  "other_visual_services_unchanged": {
+    "chess-robot-xiangqi-render-20261031.service": true,
+    "chess_robot_preview.service": true
+  },
+  "arm_driver_pids_before": [
+    "3641630"
+  ],
+  "arm_driver_pids_after": [
+    "3641630"
+  ],
+  "clock_lease": {
+    "active": true,
+    "owner_pid": 3683649,
+    "invocation_id": "514336803e4443da9010791de7ad7766",
+    "boot_id": "fc9de482-7b4d-49ba-87a0-c68a6999152a",
+    "folder": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock-sessions/514336803e4443da9010791de7ad7766",
+    "snapshot": "/home/kuang/workspace/chess_robot/runs/vision_acceleration_20261101_01/clock-sessions/514336803e4443da9010791de7ad7766/original.conf",
+    "created_at": "2026-11-01T08:31:06.523967+00:00"
+  },
+  "fixed_clock_verification": "PASS fixed clock envelope: CPU/GPU/EMC pinned; MAXN, governors, CPU idle states, fan policy and non-target saved settings preserved\nCPU policies verified: 12; EMC override=1; nvpmodel=NV Power Mode: MAXN\n0\n",
+  "repo_source_matches_deployed": {
+    "recognize_tracked.py": true,
+    "live_tracked.py": true
+  },
+  "services": {
+    "chess-robot-xiangqi-preview-20261031.service": {
+      "MainPID": "3683649",
+      "Id": "chess-robot-xiangqi-preview-20261031.service",
+      "ActiveState": "active"
+    },
+    "chess-robot-xiangqi-render-20261031.service": {
+      "MainPID": "3608756",
+      "Id": "chess-robot-xiangqi-render-20261031.service",
+      "ActiveState": "active"
+    },
+    "chess_robot_preview.service": {
+      "MainPID": "2991306",
+      "Id": "chess_robot_preview.service",
+      "ActiveState": "active"
+    }
+  },
+  "robot_commands_audit_unchanged": true
+}

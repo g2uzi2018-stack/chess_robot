@@ -1,0 +1,79 @@
+{
+  "name": "raised_250mm_down",
+  "operator_selected_height_lift_m": 0.25,
+  "target_flange_mm_deg": [
+    30.349101875959843,
+    -576.5241928640787,
+    475.34325808458215,
+    -180,
+    0,
+    173.1391
+  ],
+  "controller_joint_deg": [
+    79.4902,
+    16.9599,
+    83.3852,
+    -10.3451,
+    -90.0,
+    -3.6489
+  ],
+  "controller_fk_mm_deg": [
+    30.349,
+    -576.5242,
+    475.3434,
+    180.0,
+    0.0,
+    173.1391
+  ],
+  "model_joint_limit_margin_deg": [
+    280.32729534215696,
+    162.94884767107848,
+    76.47002484149968,
+    349.472395342157,
+    269.817495342157,
+    356.16859534215695
+  ],
+  "max_joint_displacement_from_zero_deg": 90.0,
+  "fk_position_error_mm": 0.00017484169520734058,
+  "target_selected": true,
+  "physically_taught_or_reached": true,
+  "path_collision_checked": false,
+  "automatic_execution_enabled": false,
+  "reference_to_previous_study": "runs/20261024_home_vbymdwlg",
+  "mechanical_zero": {
+    "operator_reported_zero": true,
+    "evidence": "runs/20261024_taught_zero_eg5wCl",
+    "frames": 368,
+    "reference_joint_deg_median": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "max_absolute_sample_deg": 0.00016479492478538305,
+    "joint_span_deg": [
+      0.00030212402634788305,
+      0.0002197265566792339,
+      0.0001373291015625,
+      0.00016479492478538305,
+      0.00010986327833961695,
+      0.00019226074073230848
+    ],
+    "controller_mode_raw": [
+      5
+    ]
+  },
+  "cable_limits_deg": null,
+  "actual_reference": "config/arm/home_reference.json",
+  "actual_joint_positions_deg": [
+    79.4900131225586,
+    16.960006713867188,
+    83.3899917602539,
+    -10.350000381469727,
+    -90.0,
+    -3.6499876976013184
+  ],
+  "actual_capture": "runs/20261024_confirmed_home_66bQPq"
+}

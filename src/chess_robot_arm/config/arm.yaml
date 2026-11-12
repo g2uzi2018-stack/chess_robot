@@ -1,0 +1,101 @@
+chess_robot_arm:
+  ros__parameters:
+    motion: {paused: true}
+    # Opt in on the installation with an absolute persistent path and explicit
+    # policy that no external/unobserved movement occurs while powered down.
+    checkpoint:
+      file: ""
+      period_s: 10.0
+      stopped_dwell_s: 1.0
+      endpoint_tolerance_rad: 0.005
+      auto_restore: false
+      no_unobserved_motion: false
+      enable_after_restore: false
+    audit:
+      directory: ""
+      max_file_bytes: 67108864
+      keep_files: 16
+    backend: read_only
+    test_fixture: false
+    # Loopback is deliberate. Supply the controller IPv4 explicitly on AGX.
+    controller:
+      protocol_family: v4
+      firmware_version: 4.6.2.4-stable-d9efa2ce0-202509261512
+      ip: 127.0.0.1
+      dashboard_port: 29999
+      feedback_port: 30004
+      timeout_ms: 500
+      stop_ack_timeout_ms: 1500
+    # Nominal URDF transform, NOT a measured physical TCP calibration.
+    tcp:
+      translation_m: [0.0, 0.0, 0.2]
+      rpy_rad: [1.5707963267948966, -1.5707963267948966, 0.0]
+    grasp_axis: [1.0, 0.0, 0.0]
+    approach_clearance_m: 0.25
+    workspace:
+      min_m: [-0.8, -0.8, 0.0]
+      max_m: [0.8, 0.8, 1.2]
+    limits:
+      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]
+      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]
+    profiles:
+      default: low
+      names: [low, high, conservative]
+      low: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
+      high: {speed_rad_s: 2.36, acceleration_rad_s2: 4.72}
+      conservative:
+        speed_rad_s: 0.708
+        acceleration_rad_s2: 1.416
+    capture: {max_age_s: 1.0, future_tolerance_s: 0.05}
+    feedback: {freshness_s: 0.25}
+    reference:
+      power_cycle_handoff: false
+      power_cycle_stopped_join_file: ""
+      power_cycle_fault_restart_file: ""
+      power_cycle_fault_restart_offset_bytes: -1
+      power_cycle_fault_restart_sha256: ""
+      # Final live near-Home handoff only; unchanged strict default.
+      power_cycle_endpoint_tolerance_rad: 0.001
+      home_tolerance_rad: 0.03
+      max_joint_step_rad: 0.1
+      max_phase_step_rad: 1.5707963267948966
+    tolerances:
+      downward_rad: 0.15
+      stationary_rad_s: 0.01
+      dwell_s: 0.3
+      position_m: 0.003
+      rotation_rad: 0.03
+      joint_rad: 0.015
+      tracking_rad: 0.15
+    twist:
+      # Total twist, then absolute net; time is considered only inside deadbands.
+      neutral_band_rad: 0.08726646259971647
+      switch_hysteresis_rad: 0.03490658503988659
+      duration_hysteresis_s: 1.0
+      # Legacy weights accepted for configuration compatibility; no ranking effect.
+      cost_duration: 1.0
+      cost_net: 1.0
+      cost_total: 1.0
+      cost_energy: 0.01
+      net_limit_rad: 6.283185307179586
+      total_limit_rad: 6.283185307179586
+    sampling:
+      joint_step_rad: 0.025
+      cartesian_step_m: 0.002
+      period_s: 0.03
+      max_samples: 20000
+    servo: {aheadtime: 50.0, gain: 500.0, ack_timeout_s: 0.15, max_pending: 6}
+    planning_timeout_s: 30.0
+    gripper_timeout_s: 15.0
+    arrival_timeout_s: 10.0
+    stop_timeout_s: 4.0
+    hardware:
+      enable: false
+      tcp_verified: false
+      limits_verified: false
+      execution_profile_verified: false
+      servoj_certified: false
+    # Optional sampled collision/Jacobian guard exported from this robot URDF.
+    # An explicit matching file is mandatory for backend=commissioning.
+    safety: {model_file: ""}
+    commissioning: {joint_radius_rad: 0.1, tcp_radius_m: 0.03}

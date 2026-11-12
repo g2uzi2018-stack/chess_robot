@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "domain": 120,
+  "scene_first_wait": true,
+  "camera_without_arm": true,
+  "feedback_late_recovery": true,
+  "source_loss_revokes_coordinates": true,
+  "perception_restart_retires_ids": true,
+  "new_two_second_snapshot": true,
+  "malformed_measurements_rejected_then_source_recovered": true,
+  "physical_commands": 0
+}

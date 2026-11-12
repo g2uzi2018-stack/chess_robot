@@ -1,0 +1,19 @@
+{
+  "schema": "operator_tool_observation/v1",
+  "date": "2026-11-04",
+  "source": "user reply: 3cm左右",
+  "pose": "table_contact_empty_alignment",
+  "reported_distance_m": 0.03,
+  "distance_reference_assumption": "lowest fingertip to bare table; answer did not explicitly distinguish table from piece top",
+  "measurement_quality": "approximate operator observation; uncertainty unknown",
+  "nominal_tcp_base_z_m": -0.004243465651177253,
+  "nominal_tcp_to_table_m": 0.005756534348822747,
+  "apparent_fingertip_above_nominal_tcp_m": 0.02424346565117725,
+  "previous_reported_tip_to_table_m": 0.053,
+  "measured_descent_m": 0.02391712376235189,
+  "predicted_tip_to_table_from_previous_report_m": 0.02908287623764811,
+  "xy_alignment_newly_confirmed": false,
+  "is_grasp_tcp_calibration": false,
+  "new_robot_commands_sent": 0,
+  "new_gripper_commands_sent": 0
+}

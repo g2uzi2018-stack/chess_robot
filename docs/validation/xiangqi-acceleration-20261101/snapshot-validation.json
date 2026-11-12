@@ -1,0 +1,19 @@
+{
+  "notifications": 22,
+  "unique_ids": 22,
+  "all_four_targets": true,
+  "minimum_frames": 56,
+  "maximum_frames": 61,
+  "minimum_span_s": 2.000000971,
+  "maximum_span_s": 2.064572852,
+  "max_observation_gap_s": 0.16497667200000002,
+  "minimum_target_valid_fraction": 0.8,
+  "maximum_target_base_radial_p95_m": 0.0009424213128470967,
+  "all_non_motion": true,
+  "status_reason_counts": {
+    "collecting independent RGB-D frames": 1742,
+    "two second immutable snapshot locked": 15,
+    "immutable snapshot; one operation only": 17,
+    "scene changed or scene identity ambiguous": 3
+  }
+}

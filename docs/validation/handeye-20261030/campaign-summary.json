@@ -1,0 +1,228 @@
+{
+  "status": "48_points_completed_and_stopped",
+  "sampling_groups": 3,
+  "points": 48,
+  "training_observations": 36,
+  "heldout_observations": 12,
+  "unique_training_poses": 24,
+  "unique_heldout_poses": 4,
+  "new_fixed_board_placement_only": true,
+  "old52_raw_excluded": true,
+  "group_sampling_motion_retries": 0,
+  "lift_actual_goal_attempts": 2,
+  "lift_first_goal_canceled_before_ServoJ": true,
+  "lift_intermediate_plan_only_attempt_hit_UUID_serialization_error": true,
+  "lift_second_actual_goal_completed": true,
+  "common_H": {
+    "A_only": {
+      "max_translation_mm": 0.34855561597006085,
+      "max_rotation_deg": 0.12167610375308273
+    },
+    "B_only": {
+      "max_translation_mm": 0.3560763420018444,
+      "max_rotation_deg": 0.11288229722491223
+    },
+    "C_only": {
+      "max_translation_mm": 0.330963534359398,
+      "max_rotation_deg": 0.11237100889142967
+    },
+    "A_plus_C": {
+      "max_translation_mm": 0.3363091279225356,
+      "max_rotation_deg": 0.11117902752569346
+    },
+    "all_three": {
+      "max_translation_mm": 0.33925695969526937,
+      "max_rotation_deg": 0.11131713803549188
+    },
+    "balanced_unique_pose": {
+      "max_translation_mm": 0.33594929581670196,
+      "max_rotation_deg": 0.1141034420064177
+    }
+  },
+  "A_C_repeat_external_transform_difference": {
+    "translation_mm": 0.3946768493858391,
+    "rotation_deg": 0.08819386881051088
+  },
+  "A_C_measured_pair_max": {
+    "joint_rad": 4.8402952812165445e-05,
+    "flange_translation_mm": 0.029138699893535437,
+    "camera_board_translation_mm": 0.18663851827171368
+  },
+  "joint_vs_balanced_weight_sensitivity": {
+    "translation_mm": 0.11120557281559719,
+    "rotation_deg": 0.025534015319399597
+  },
+  "candidate_policy": "Use the predeclared all-qualified-training joint estimate as a physical-validation candidate; do not select a fit by heldout score.",
+  "limitations": [
+    "Internal consistency and repeatability are not absolute gripper/table accuracy.",
+    "A/C is a combined repeat/time/path-direction comparison, not a unique cable backlash measurement.",
+    "Only4 unique heldout poses were sampled3 times; observations are correlated.",
+    "The minimum normalized rotation singular-value proxy improves only modestly in B despite larger yaw.",
+    "No production TF was published and the physical TCP remains unverified."
+  ],
+  "final_arm": {
+    "header": {
+      "stamp": {
+        "sec": 1793332972,
+        "nanosec": 148324041
+      },
+      "frame_id": "base_link"
+    },
+    "backend": "exploration",
+    "phase": "IDLE",
+    "job_id": "",
+    "busy": false,
+    "feedback_fresh": true,
+    "reference_valid": true,
+    "hardware_certified": false,
+    "simulated": false,
+    "controller_mode": 5,
+    "tcp": {
+      "header": {
+        "stamp": {
+          "sec": 1793332972,
+          "nanosec": 148324041
+        },
+        "frame_id": "base_link"
+      },
+      "pose": {
+        "position": {
+          "x": 0.018121615985605397,
+          "y": -0.585289433032813,
+          "z": 0.12303749935579134
+        },
+        "orientation": {
+          "x": 0.45926013705246277,
+          "y": 0.5701796534725095,
+          "z": -0.46298511735295217,
+          "w": 0.49961992593390026
+        }
+      }
+    },
+    "signed_twist_rad": -0.3013129358170529,
+    "total_twist_rad": 0.4891041606534504,
+    "twist_energy_rad2_per_m": 0.5058701745659048,
+    "diagnostic": "explicit recorded power epoch replayed; winding retained without zeroing; endpoint_delta_rad=[0,0,5.32632218331e-07,4.99342704408e-07,0,9.65395895142e-07]; endpoint_max_delta_rad=9.65395895142e-07; endpoint_tolerance_rad=0.001; power_cycle_handoff=false; expanded_power_cycle_handoff_used=false; accumulated_twist_retained=true; historical_twist_net_rad=-0.05033500278; historical_twist_total_rad=0.295139381102; restored_twist_net_rad=-0.0503337182841; restored_twist_total_rad=0.295138528801; recorded_stopped_join_committed=true; recorded_expanded_stopped_join_used=true; recorded_stopped_join_delta_rad=[3.32895136279e-06,0.00270027889777,0.00140401852669,0.00113753597011,-1.01200121421e-05,-2.39684498106e-06]; recorded_stopped_join_max_delta_rad=0.00270027889777; recorded_stopped_join_tolerance_rad=0.005; recorded_stopped_join_stationary_dwell_s=0.620084227; recorded_stopped_join_required_dwell_s=0.4; accepted_host_freshness_s=0.2; fault_restart_committed=true; fault_restart_offset_bytes=970581368; fault_restart_delta_rad=5.17651936884e-05; fault_anchor_max_delta_rad=0.00320268423742; fault_prehealthy_dwell_s=5337.91730252; fault_raw_frames=2; fault_nonstationary_frames=1; healthy_twist_total_rad=0.294923837762; fault_twist_total_rad=0.295132896439; fault_restart_sha256=1a219cb39e9d0eaf2e4d227f66e2f67fd3b36e7e852f20a8185051ac828dc413"
+  },
+  "rotation_information": {
+    "A_only": {
+      "training_pose_count": 12,
+      "relative_pair_count": 66,
+      "relative_rotation_max_rad": 0.7000469139110704,
+      "relative_rotation_median_rad": 0.23267207133697698,
+      "translation_design_singular_values": [
+        2.327266598602115,
+        2.286924848045053,
+        1.2049290434621036
+      ],
+      "per_pair_normalized_singular_values": [
+        0.2864667155283346,
+        0.2815009893035495,
+        0.14831651248405153
+      ],
+      "condition_number": 1.9314553095302744,
+      "interpretation": "Geometry-only information proxy from (R_A-I); pair rows are correlated, not a covariance or absolute accuracy guarantee."
+    },
+    "B_only": {
+      "training_pose_count": 12,
+      "relative_pair_count": 66,
+      "relative_rotation_max_rad": 0.9000052371127775,
+      "relative_rotation_median_rad": 0.2856208823136116,
+      "translation_design_singular_values": [
+        2.9492510782076584,
+        2.9182207848368207,
+        1.263341715136112
+      ],
+      "per_pair_normalized_singular_values": [
+        0.3630277124889853,
+        0.3592081474124428,
+        0.15550661533249147
+      ],
+      "condition_number": 2.334484045664484,
+      "interpretation": "Geometry-only information proxy from (R_A-I); pair rows are correlated, not a covariance or absolute accuracy guarantee."
+    },
+    "C_only": {
+      "training_pose_count": 12,
+      "relative_pair_count": 66,
+      "relative_rotation_max_rad": 0.7000019057554682,
+      "relative_rotation_median_rad": 0.232681640863997,
+      "translation_design_singular_values": [
+        2.327198169862654,
+        2.286850550940978,
+        1.2049285171730273
+      ],
+      "per_pair_normalized_singular_values": [
+        0.2864582925327685,
+        0.2814918439622335,
+        0.14831644770234445
+      ],
+      "condition_number": 1.9313993624473815,
+      "interpretation": "Geometry-only information proxy from (R_A-I); pair rows are correlated, not a covariance or absolute accuracy guarantee."
+    },
+    "A_plus_C": {
+      "training_pose_count": 24,
+      "relative_pair_count": 276,
+      "relative_rotation_max_rad": 0.7000469139110704,
+      "relative_rotation_median_rad": 0.23266562236665422,
+      "translation_design_singular_values": [
+        4.654464770244686,
+        4.573775400226182,
+        2.40985756492314
+      ],
+      "per_pair_normalized_singular_values": [
+        0.2801658560117826,
+        0.2753089266894672,
+        0.14505637938423332
+      ],
+      "condition_number": 1.9314273332968273,
+      "interpretation": "Geometry-only information proxy from (R_A-I); pair rows are correlated, not a covariance or absolute accuracy guarantee."
+    },
+    "all_three": {
+      "training_pose_count": 36,
+      "relative_pair_count": 630,
+      "relative_rotation_max_rad": 0.9000052371127775,
+      "relative_rotation_median_rad": 0.2597392103224296,
+      "translation_design_singular_values": [
+        7.654654703523307,
+        7.547618597465375,
+        3.679199233577488
+      ],
+      "per_pair_normalized_singular_values": [
+        0.3049687432075713,
+        0.3007043226678316,
+        0.14658280611376628
+      ],
+      "condition_number": 2.080521933594845,
+      "interpretation": "Geometry-only information proxy from (R_A-I); pair rows are correlated, not a covariance or absolute accuracy guarantee."
+    },
+    "balanced_unique_pose": {
+      "training_pose_count": 24,
+      "relative_pair_count": 276,
+      "relative_rotation_max_rad": 0.9000052371127775,
+      "relative_rotation_median_rad": 0.28014986429265626,
+      "translation_design_singular_values": [
+        5.313360921520992,
+        5.245136043837938,
+        2.4723952696304052
+      ],
+      "per_pair_normalized_singular_values": [
+        0.31982674364494673,
+        0.31572008859417333,
+        0.14882070684983834
+      ],
+      "condition_number": 2.1490742143004016,
+      "interpretation": "Geometry-only information proxy from (R_A-I); pair rows are correlated, not a covariance or absolute accuracy guarantee."
+    }
+  },
+  "joint_independent_review": "PASS",
+  "source_analysis_sha256": "e0e68c9a68d95152ef21181fae216726df462c6b46bf6c577afcd5475ba757c7",
+  "independent_final_review": {
+    "path": "independent-final-review.md",
+    "sha256": "c89bc85df79717e78e2b1d832043178978d0129e56d55812917f224674c23ab5",
+    "summary_sha256": "59126ffe43e5d6605f4805c4f176576bf020c8ccc65091e14f8a626f2c4537cc",
+    "raw_checks_per_group": 564,
+    "math_checks": 394,
+    "final_checks": 69,
+    "final_static_dwell_s": 0.645498
+  }
+}

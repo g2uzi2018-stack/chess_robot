@@ -1,0 +1,23 @@
+{
+  "scope": "Only staged vision source export; no physical nodes or device commands",
+  "stable_observation_tests": 16,
+  "decoupling_tests": 9,
+  "tracker_self_test": "PASS",
+  "python_syntax_files": 25,
+  "shell_syntax_files": 5,
+  "unrelated_dirty_files_preserved": 75,
+  "cpp_build": "PASS 1 package in 42.8 seconds",
+  "isolated_renderer_domain119": {
+    "passed": true,
+    "domain": 119,
+    "fresh_track_marker": true,
+    "moving_arm_base_id_suppressed": true,
+    "camera_only_without_arm": true,
+    "stale_xyz_suppressed": true,
+    "video_frames_while_fresh": 17,
+    "video_frames_while_moving": 17,
+    "video_frames_while_stale": 20,
+    "real_robot_commands": 0
+  },
+  "physical_devices_started": false
+}

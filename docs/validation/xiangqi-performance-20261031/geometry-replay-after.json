@@ -1,0 +1,13 @@
+{
+  "kind": "saved_input_replay_not_live",
+  "frames": 108,
+  "wall_s": 5.690732313989429,
+  "throughput_hz": 18.978225304062445,
+  "geometry_median_ms": 15.16286849800963,
+  "detector_median_ms": 48.387681497843005,
+  "same_fixed_sequence": true,
+  "precision": "FP32",
+  "imgsz": 640,
+  "source_stamps_are_historical": true,
+  "robot_commands": 0
+}

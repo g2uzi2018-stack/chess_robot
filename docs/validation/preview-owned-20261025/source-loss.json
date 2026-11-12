@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "checks": [
+    "adding a YAML channel requires no frontend edits; JSON escaping supports quotes/newlines",
+    "missing publisher: explicit no_data and no cached image",
+    "new channel receives and encodes a live ROS image",
+    "source stops: old cached JPEG is not returned after freshness timeout",
+    "replayed stale image timestamps rejected",
+    "source resumes: live preview recovers",
+    "publisher exits: old display becomes no_data again",
+    "expired lease releases dynamically added channel"
+  ]
+}

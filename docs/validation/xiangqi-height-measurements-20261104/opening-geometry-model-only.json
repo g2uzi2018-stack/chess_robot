@@ -1,0 +1,50 @@
+{
+  "schema": "gripper_opening_geometry_offline/v1",
+  "actual_raw_to_angle_calibrated": false,
+  "model_only": true,
+  "robot_commands_sent": 0,
+  "recorded_nominal_tcp_z_m": 0.019670188602212646,
+  "user_open_finger_to_bare_table_m": 0.053,
+  "rows": [
+    {
+      "model_joint_angle_rad": 0.0,
+      "model_pad_gap_m": 0.09520009494934423,
+      "nominal_grasp_link_z_m": 0.019670188602212757,
+      "model_lowest_pad_z_m": 0.035137983301544384,
+      "model_lowest_pad_to_table_m": 0.045137983301544386,
+      "model_pad_z_minus_nominal_tcp_z_m": 0.015467794699331627
+    },
+    {
+      "model_joint_angle_rad": 0.3,
+      "model_pad_gap_m": 0.06884562566731764,
+      "nominal_grasp_link_z_m": 0.019670188602212757,
+      "model_lowest_pad_z_m": 0.025327794991413743,
+      "model_lowest_pad_to_table_m": 0.035327794991413745,
+      "model_pad_z_minus_nominal_tcp_z_m": 0.0056576063892009865
+    },
+    {
+      "model_joint_angle_rad": 0.5,
+      "model_pad_gap_m": 0.048538136032809084,
+      "nominal_grasp_link_z_m": 0.019670188602212757,
+      "model_lowest_pad_z_m": 0.02115776097785374,
+      "model_lowest_pad_to_table_m": 0.031157760977853742,
+      "model_pad_z_minus_nominal_tcp_z_m": 0.001487572375640983
+    },
+    {
+      "model_joint_angle_rad": 0.7,
+      "model_pad_gap_m": 0.02697332043901588,
+      "nominal_grasp_link_z_m": 0.019670188602212757,
+      "model_lowest_pad_z_m": 0.01908913595468195,
+      "model_lowest_pad_to_table_m": 0.029089135954681954,
+      "model_pad_z_minus_nominal_tcp_z_m": -0.0005810526475308053
+    },
+    {
+      "model_joint_angle_rad": 0.94,
+      "model_pad_gap_m": 0.0006478686373593749,
+      "nominal_grasp_link_z_m": 0.019670188602212757,
+      "model_lowest_pad_z_m": 0.01949064334304096,
+      "model_lowest_pad_to_table_m": 0.02949064334304096,
+      "model_pad_z_minus_nominal_tcp_z_m": -0.0001795452591717983
+    }
+  ]
+}

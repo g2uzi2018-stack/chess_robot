@@ -1,0 +1,28 @@
+{
+  "GetAngle": {
+    "count": 500,
+    "wall_ms_percentiles": [
+      2.11587,
+      2.864005299999999,
+      3.48393
+    ],
+    "thread_cpu_ms_percentiles": [
+      0.263904,
+      0.4036825599999999,
+      0.424416
+    ]
+  },
+  "PositiveKin": {
+    "count": 500,
+    "wall_ms_percentiles": [
+      7.33266,
+      9.637032699999999,
+      12.0739
+    ],
+    "thread_cpu_ms_percentiles": [
+      0.587248,
+      0.67036864,
+      0.692288
+    ]
+  }
+}

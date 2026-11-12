@@ -1,0 +1,61 @@
+# NOVA5 + AG95 TEMPLATE ONLY. Home, frames and TCP below are installation-specific.
+# Edit a copy, not this template; use a NEW output directory for every run.
+mode: validate                  # validate: no ROS IO; plan: plans only; execute: motion/capture
+output_directory: handeye_REPLACE_WITH_NEW_RUN # relative to this YAML file
+execution:
+  enabled: false
+  fixture: false
+  poses_confirmed: false
+arm:
+  action: /arm/move
+  state_topic: /arm/state
+  joint_topic: /arm/joint_states
+  parameter_node: /chess_robot_arm
+  profile: low
+  expected_approach_clearance_m: 0.25  # MUST match running node; no parameters are changed
+model:
+  urdf: package://chess_robot_description/urdf/nova5_with_ag95.urdf
+  base_frame: base_link
+  flange_frame: Link6
+  home_rad: [1.3873624514421463, 0.29600795831732624, 1.4554299194273725, -0.18064158423931584, -1.5707963267948966, -0.06370430298043014]
+  flange_to_tcp_translation_m: [0.0, 0.0, 0.2]
+  flange_to_tcp_rpy_rad: [1.5707963267948966, -1.5707963267948966, 0.0]
+vision:
+  image_topic: /vision/color/image_rect
+  camera_info_topic: /vision/color/camera_info
+  frame_info_topic: /vision/frame_info
+  optical_frame: d405_color_optical_frame
+board:
+  confirmed: false
+  # UNKNOWN: obtain factory pattern/measurements and verify image IDs before execute.
+  squares_x: 0
+  squares_y: 0
+  square_length_m: 0.0
+  marker_length_m: 0.0
+  dictionary_id: -1
+  legacy_pattern: true          # only legacy layout supported by AGX OpenCV 4.5.4
+  marker_ids: []                # empty = ascending from 0; verify against physical board
+quality:
+  stationary_dwell_s: 0.6
+  feedback_freshness_s: 0.1
+  maximum_feedback_gap_s: 0.1
+  pair_tolerance_s: 0.025
+  stationary_speed_rad_s: 0.002
+  settle_timeout_s: 10.0
+  capture_timeout_s: 10.0
+  action_timeout_s: 90.0
+  position_tolerance_m: 0.001
+  rotation_tolerance_rad: 0.005
+  minimum_corners: 12
+  maximum_reprojection_px: 1.0
+  minimum_rotation_rad: 0.05
+  minimum_axis_sine: 0.2
+  minimum_training: 8
+  minimum_validation: 3
+  validation_translation_m: 0.005  # provisional consistency limits, NOT physical task accuracy
+  validation_rotation_rad: 0.03
+# Position/quaternion are FINAL model TCP in base_link, not board location/flange.
+# PREGRASP target Z is reduced by verified arm.approach_clearance_m internally.
+# Existing downward policy (~0.15rad) can reject tilted poses. Never relax it here.
+# Populate only after checking real installation, board view and arm planning.
+poses: []

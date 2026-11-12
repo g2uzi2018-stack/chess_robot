@@ -1,0 +1,9 @@
+{
+  "status": "PASS",
+  "sampled_ground_checks": 64,
+  "ground_classifier_agreement": 64,
+  "cpp_python_fk_max_abs_error_m": 2.220446049250313e-16,
+  "subset_invariants": true,
+  "production_planner_singular_endpoints_accepted": 7,
+  "not_hardware_validation": true
+}
