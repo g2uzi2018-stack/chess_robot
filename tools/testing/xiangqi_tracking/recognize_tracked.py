@@ -60,7 +60,7 @@ class Experiment:
     def __init__(self,imgsz=640,half=False,geometry_only=False,camera_only=False):
         import torch,ultralytics
         from ultralytics import YOLO
-        torch.set_num_threads(2); cv2.setNumThreads(1)
+        torch.set_num_threads(2); cv2.setNumThreads(1 if geometry_only else 4)
         if MODEL_ARTIFACT.suffix not in ('.pt','.engine'):raise ValueError('Only PT and TensorRT artifacts are supported')
         self.inference_backend='tensorrt' if MODEL_ARTIFACT.suffix=='.engine' else 'pytorch'
         artifact_sha=hashlib.sha256(MODEL_ARTIFACT.read_bytes()).hexdigest()

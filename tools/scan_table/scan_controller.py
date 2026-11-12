@@ -387,9 +387,8 @@ class Controller:
             else:raise RuntimeError('fresh qualified scene unavailable')
             initial=[dict(id='home')] if self.c.get('initial_home',True) else []
             for v in initial+self.c['views']:
-                self.action(v,True)
+                self.action(v,not self.execute)
                 if self.execute:
-                    self.action(v,False)
                     if v['id']!='home':
                         qualified=self.collect(v)
                         if not qualified and self.c.get('extra_rescan_per_missing_view',0):
@@ -397,8 +396,7 @@ class Controller:
                             self.arrived_monotonic=time.monotonic();self.arrived_ns=self.now()
                             self.collect(v,attempt=1)
             self.phase('RETURN_HOME')
-            self.action(dict(id='home'),True)
-            if self.execute:self.action(dict(id='home'),False)
+            self.action(dict(id='home'),not self.execute)
             self.report['returned_home']=bool(self.execute)
             self.report['status']='PARTIAL' if self.execute else 'PLAN_READY'
             self.report['completion_reason']='finite scan sequence completed; physical coverage/identity not fully verified' if self.execute else 'current-start plans only; no movement'

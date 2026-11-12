@@ -201,7 +201,7 @@ def main():
             state,_=io.pair();start=position(state).tolist();target=[start[0],start[1],.14]
             for operation,point in (('DESCEND',target),('RETREAT',start)):
                 begin=time.monotonic()
-                io.arm_request(operation,point,True);io.arm_request(operation,point,False)
+                io.arm_request(operation,point,False)
                 print(operation+' seconds: '+str(round(time.monotonic()-begin,3)),flush=True)
             io.home()
         io.report['status']='READY' if args.mode!='vertical' else 'EMPTY_VERTICAL_RETURNED_HOME'

@@ -592,8 +592,9 @@ class RealIO(PlanInspector):
         if before_send is not None:
             before_send()
         request=self.arm_goal(operation,xyz,plan)
-        self.observation_window=None
-        self.stationary_history_after_ns=self.now()
+        if not plan:
+            self.observation_window=None
+            self.stationary_history_after_ns=self.now()
         self.pending = self.client.send_goal_async(request)
         self.goal = self.wait(self.pending, 8); self.pending = None
         if not self.goal.accepted:
