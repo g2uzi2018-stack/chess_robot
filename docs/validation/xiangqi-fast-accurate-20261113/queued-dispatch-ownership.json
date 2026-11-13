@@ -1,0 +1,8 @@
+{
+  "bounded_slots": true,
+  "max_gpu_jobs": 2,
+  "ordered_release": true,
+  "inflight_slot_ownership": true,
+  "gpu_failure_releases_slot": true,
+  "submit_failure_releases_slot": true
+}

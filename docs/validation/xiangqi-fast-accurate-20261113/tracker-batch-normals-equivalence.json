@@ -1,0 +1,39 @@
+{
+  "frames": 100,
+  "qualifications_identical": true,
+  "persisted_state_equivalent": true,
+  "max_numeric_delta": {
+    "confidence": 0.0,
+    "*": 4.440892098500626E-16,
+    "piece_classifier_confidence": 0.0,
+    "inner_valid_depth_fraction": 0.0,
+    "plane_rms_m": 0.0,
+    "depth_median_m": 0.0,
+    "track_class_vote_fraction": 0.0,
+    "surface_tilt_deg": 5.88418203051333E-13,
+    "normal_spread_deg": 8.537736462515939E-07,
+    "black_horse": 0.0,
+    "red_elephant": 0.0,
+    "black_advisor": 0.0,
+    "black_elephant": 0.0,
+    "black_pawn": 0.0,
+    "red_pawn": 0.0,
+    "black_cannon": 0.0,
+    "red_rook": 0.0,
+    "black_king": 0.0,
+    "red_horse": 0.0,
+    "red_advisor": 0.0,
+    "red_cannon": 0.0,
+    "black_rook": 0.0
+  },
+  "old_ms_p50_p95": [
+    9.766178001882508,
+    10.20780139733688
+  ],
+  "new_ms_p50_p95": [
+    3.9815839991206303,
+    4.705552644009003
+  ],
+  "old_bytes": 51278,
+  "new_bytes": 29133
+}

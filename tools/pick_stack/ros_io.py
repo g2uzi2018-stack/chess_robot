@@ -720,9 +720,10 @@ class RealIO(PlanInspector):
             # arm_request after its final stopped/parameter checks, immediately
             # before sending the descent goal. Never reuse the pre-plan stamp.
             def refresh():
-                from demo import qualified_target, distance
+                from demo import qualified_target, distance, pick_target_observation
                 try:
-                    latest=self.qualify_pick_target(self.target_measurement,self.observe(reuse_recent=True),allow_motion=False)
+                    n,s=pick_target_observation(self.demo)
+                    latest=self.qualify_pick_target(self.target_measurement,self.observe(reuse_recent=True,duration_s=s,min_frames=n),allow_motion=False)
                 except RuntimeError as e:
                     from demo import TargetUnavailable,ObservationUnavailable
                     if not isinstance(e,ObservationUnavailable) and str(e) not in (
@@ -761,7 +762,7 @@ class RealIO(PlanInspector):
         self.at_home=operation=='HOME'
 
     def observe(self, frame_filter=None, timeout_s=None, duration_s=2., window_validator=None,
-                reuse_recent=False):
+                reuse_recent=False, min_frames=20):
         saved=(self.observation_window if reuse_recent and self.demo.get('business_mode')=='row' else None)
         self.observation_window=None
         self.stopped()
@@ -872,15 +873,15 @@ class RealIO(PlanInspector):
                     frames.clear()
                     continue
                 frames.append(r)
-            if (len(frames)>=20 and frames[-1]['stamp_ns']>start
+            if (len(frames)>=min_frames and frames[-1]['stamp_ns']>start
                     and (frames[-1]['stamp_ns']-frames[0]['stamp_ns'])*1e-9>=duration_s):
                 if reused_stamps:
-                    while len(frames)>20 and (frames[-1]['stamp_ns']-frames[1]['stamp_ns'])*1e-9>=duration_s:
+                    while len(frames)>min_frames and (frames[-1]['stamp_ns']-frames[1]['stamp_ns'])*1e-9>=duration_s:
                         frames.pop(0)
                 if window_validator is not None:
                     from demo import ObservationUnavailable
                     # 在原截止时间内滚动寻找完整合格窗口，不能拼接缺失前后的测量。
-                    while len(frames)>20 and (frames[-1]['stamp_ns']-frames[1]['stamp_ns'])*1e-9>=duration_s:
+                    while len(frames)>min_frames and (frames[-1]['stamp_ns']-frames[1]['stamp_ns'])*1e-9>=duration_s:
                         frames.pop(0)
                     try:
                         window_validator(frames)
@@ -901,7 +902,7 @@ class RealIO(PlanInspector):
                 reason=str(window_error),samples=len(frames),duration_s=duration_s))
             raise window_error
         from demo import ObservationUnavailable
-        raise ObservationUnavailable('two seconds of fresh independent scene frames unavailable')
+        raise ObservationUnavailable('fresh independent scene frames unavailable')
 
     def check_descent_age(self, t):
         self.descent_stamp = t
@@ -1005,23 +1006,25 @@ class RealIO(PlanInspector):
         if self.demo.get('business_mode')!='row':
             from demo import qualified_target
             return qualified_target(self.demo,seed,frames,allow_reclassify=allow_reclassify)
+        from demo import pick_target_observation, qualified_scene_window
+        n,s=pick_target_observation(self.demo)
         first=True
         def window():
             nonlocal first
-            current_frames=frames if first else self.observe()
+            current_frames=frames if first else self.observe(duration_s=s,min_frames=n)
             first=False
             return self.qualify_pick_target_window(seed,current_frames,allow_reclassify)
-        from demo import qualified_scene_window
-        source=dict(scene_identity=qualified_scene_window(frames)['scene_identity'])
+        source=dict(scene_identity=qualified_scene_window(frames,min_frames=n,min_span_s=s)['scene_identity'])
         ceiling=(self.demo['transfer_tcp_base_z_m'] if self.demo.get('pick_neighbor_policy')=='finger_model'
                  else self.demo['hover_tcp_base_z_m'])
         return self.observe_with_approach(window,source,'pick_target',ceiling,
             focus_xy=seed['base_surface_center_m'][:2],allow_motion=allow_motion)
 
     def qualify_pick_target_window(self, seed, frames, allow_reclassify=False):
-        from demo import qualified_target
+        from demo import qualified_target, pick_target_observation
         if self.demo.get('business_mode')!='row':
             return qualified_target(self.demo,seed,frames,allow_reclassify=allow_reclassify)
+        n,s=pick_target_observation(self.demo)
         attempts=1 if self.demo.get('active_observation',{}).get('enabled') else 6
         for attempt in range(attempts):
             envelope=self.pick_envelope if self.demo.get('pick_neighbor_policy')=='finger_model' else None
@@ -1035,7 +1038,8 @@ class RealIO(PlanInspector):
             try:
                 return qualified_target(self.demo,seed,frames,geometry_only=True,
                     unlocated_overlap=lambda frame,detection:detection_overlaps_roi(detection,rois[id(frame)]),
-                    neighbor_conflict=neighbor_conflict if envelope else None)
+                    neighbor_conflict=neighbor_conflict if envelope else None,
+                    min_frames=n,min_span_s=s)
             except RuntimeError as error:
                 if str(error)!='unlocated/incomplete observation in target view' or attempt==attempts-1:
                     raise
@@ -1043,7 +1047,7 @@ class RealIO(PlanInspector):
                     attempt=attempt+1,first_stamp_ns=frames[0]['stamp_ns'],
                     last_stamp_ns=frames[-1]['stamp_ns'],reason=str(error)))
                 # Restart a complete stationary window; never remove bad frames.
-                frames=self.observe()
+                frames=self.observe(duration_s=s,min_frames=n)
 
     def pick_view_bounds(self):
         # 三维近邻用棋子中心判断，二维外框已经包含棋子半径，只扩展完整指体和姿态误差。
@@ -1181,13 +1185,13 @@ class RealIO(PlanInspector):
                 return observe_window()
             except RuntimeError as error:
                 if not isinstance(error,ObservationUnavailable) and str(error) not in (
-                        'two seconds of fresh independent scene frames unavailable',
+                        'fresh independent scene frames unavailable',
                         'unlocated/incomplete observation in target view',
                         'released row piece not independently visible/unique',
                         'target absent, displaced or association ambiguous'):
                     raise
                 if str(error) in ('observation window exhausted while requalifying stationary feedback',
-                                  'two seconds of fresh independent scene frames unavailable') and qualification_rechecks<2:
+                                  'fresh independent scene frames unavailable') and qualification_rechecks<2:
                     qualification_rechecks+=1
                     row=dict(purpose=purpose,attempt=qualification_rechecks,reason=str(error),stamp_ns=self.now())
                     self.report.setdefault('observation_qualification_rechecks',[]).append(row)

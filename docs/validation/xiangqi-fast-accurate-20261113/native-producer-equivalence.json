@@ -1,0 +1,15 @@
+{
+  "frames": 163,
+  "wire_identical": true,
+  "wire_boundary_validation": true,
+  "ms_p50_p95": {
+    "True": [
+      6.610561002162285,
+      7.142302754800767
+    ],
+    "False": [
+      3.3644625000306405,
+      3.689331153873354
+    ]
+  }
+}

@@ -4,6 +4,28 @@ from pathlib import Path
 import numpy as np
 from scipy.optimize import linear_sum_assignment
 
+def update_surface_normals(pairs):
+    if not pairs:return []
+    normals=np.array([d['base_surface_normal'] for t,d in pairs])
+    normals/=np.linalg.norm(normals,axis=1)[:,None]
+    histories=np.zeros((len(pairs),12,3));counts=[]
+    for i,((t,d),normal) in enumerate(zip(pairs,normals)):
+        history=(t.get('normal_history',[])+[normal.tolist()])[-12:]
+        t['normal_history']=history;counts.append(len(history))
+        histories[i,:len(history)]=history
+    counts=np.array(counts)
+    mean=histories.sum(axis=1)/counts[:,None]
+    mean/=np.linalg.norm(mean,axis=1)[:,None]
+    angles=np.degrees(np.arccos(np.clip((histories*mean[:,None,:]).sum(axis=2),-1,1)))
+    angles[np.arange(12)[None,:]>=counts[:,None]]=0.
+    spread=np.sqrt((angles**2).sum(axis=1)/counts)
+    blended=.7*np.array([t['normal'] for t,d in pairs])+.3*normals
+    unit=blended/np.linalg.norm(blended,axis=1)[:,None]
+    tilt=np.degrees(np.arccos(np.clip(unit[:,2],-1,1)))
+    for (t,d),normal in zip(pairs,blended):t['normal']=normal.tolist()
+    return zip(unit,tilt,spread,counts)
+
+
 class PieceTracker:
     def __init__(self,path=None):
         self.path=Path(path) if path else None;self.tracks={};self.next_id=1
@@ -16,17 +38,20 @@ class PieceTracker:
                  and d.get('classification_valid',True) and 'base_surface_center_m' in d]
         active=[t for t in self.tracks.values() if 0<=(stamp_ns-t['last_ns'])*1e-9 and ((stamp_ns-t['last_ns'])*1e-9<60 or (self.startup_frames_left>0 and t['id'] in self.startup_ids))]
         costs=np.full((len(active),len(current)),1000.)
-        for i,t in enumerate(active):
-            dt=(stamp_ns-t['last_ns'])*1e-9
-            resuming=dt>=60 and t['id'] in self.startup_ids
-            predicted=np.array(t['position_m']) if resuming else np.array(t['position_m'])+np.array(t['velocity_m_s'])*min(dt,.3)
-            gate=.005 if resuming else min(.085,.018+.20*dt)
-            for j,d in enumerate(current):
-                p=np.array(d['base_surface_center_m']);distance=float(np.linalg.norm(p-predicted))
-                if distance>gate or abs(p[2]-t['position_m'][2])>.025:continue
-                old=max(t['class_votes'],key=t['class_votes'].get);new=d['class_name']
-                camp_penalty=.02 if old.split('_')[0]!=new.split('_')[0] else 0.
-                costs[i,j]=distance+camp_penalty
+        if active and current:
+            dt=np.array([(stamp_ns-t['last_ns'])*1e-9 for t in active])
+            resuming=np.array([d>=60 and t['id'] in self.startup_ids for d,t in zip(dt,active)])
+            previous=np.array([t['position_m'] for t in active])
+            velocities=np.array([t['velocity_m_s'] for t in active])
+            predicted=previous+velocities*np.where(resuming,0.,np.minimum(dt,.3))[:,None]
+            gate=np.where(resuming,.005,np.minimum(.085,.018+.20*dt))
+            positions=np.array([d['base_surface_center_m'] for d in current])
+            distances=np.linalg.norm(positions[None,:,:]-predicted[:,None,:],axis=2)
+            height_gap=np.abs(positions[None,:,2]-previous[:,None,2])
+            old_camps=np.array([max(t['class_votes'],key=t['class_votes'].get).split('_')[0] for t in active])
+            new_camps=np.array([d['class_name'].split('_')[0] for d in current])
+            costs=np.where((distances<=gate[:,None]) & (height_gap<=.025),
+                           distances+.02*(old_camps[:,None]!=new_camps[None,:]),1000.)
         matched=set();pairs=[]
         if costs.size:
             rows,cols=linear_sum_assignment(costs)
@@ -42,7 +67,8 @@ class PieceTracker:
             if d.get('identity_ambiguous'):continue
             track=dict(id=self.next_id,position_m=d['base_surface_center_m'],velocity_m_s=[0.,0.,0.],first_ns=stamp_ns,last_ns=stamp_ns,hits=0,class_votes={},normal=[0.,0.,1.])
             self.tracks[self.next_id]=track;self.next_id+=1;pairs.append((track,d))
-        for t,d in pairs:
+        surface=update_surface_normals(pairs)
+        for (t,d),(n,tilt,spread,normal_count) in zip(pairs,surface):
             dt=(stamp_ns-t['last_ns'])*1e-9;p=np.array(d['base_surface_center_m'])
             d['reacquired_by_position_after_restart']=bool(dt>=60 and t['id'] in self.startup_ids)
             self.startup_ids.discard(t['id'])
@@ -53,19 +79,13 @@ class PieceTracker:
             t['position_m']=p.tolist();t['last_ns']=stamp_ns;t['hits']+=1
             votes={k:v*.94 for k,v in t['class_votes'].items()};name=d['class_name'];votes[name]=votes.get(name,0)+float(d['confidence']);t['class_votes']=votes
             label=max(votes,key=votes.get);fraction=votes[label]/sum(votes.values())
-            normal=np.array(d['base_surface_normal']);normal/=np.linalg.norm(normal)
-            history=t.get('normal_history',[])+[normal.tolist()];t['normal_history']=history[-12:]
-            normals=np.array(t['normal_history']);mean_normal=normals.mean(0);mean_normal/=np.linalg.norm(mean_normal)
-            spread=float(np.sqrt(np.mean(np.degrees(np.arccos(np.clip(normals@mean_normal,-1,1)))**2)))
-            t['normal']=(.7*np.array(t['normal'])+.3*normal).tolist();n=np.array(t['normal']);n/=np.linalg.norm(n)
-            tilt=math.degrees(math.acos(float(np.clip(n[2],-1,1))))
-            d.update(track_id=t['id'],track_confirmed=t['hits']>=3,track_hits=t['hits'],track_class_name=label,track_class_vote_fraction=fraction,position_stamp_ns=stamp_ns,orientation_observed='experimental_depth_surface_normal_only',surface_normal_base=n.tolist(),surface_tilt_deg=tilt,normal_spread_deg=spread,normal_temporally_stable=len(history)>=8 and spread<1.5,orientation_valid_for_motion=False,yaw_observed=False,yaw_rad=None)
+            d.update(track_id=t['id'],track_confirmed=t['hits']>=3,track_hits=t['hits'],track_class_name=label,track_class_vote_fraction=fraction,position_stamp_ns=stamp_ns,orientation_observed='experimental_depth_surface_normal_only',surface_normal_base=n.tolist(),surface_tilt_deg=float(tilt),normal_spread_deg=float(spread),normal_temporally_stable=bool(normal_count>=8 and spread<1.5),orientation_valid_for_motion=False,yaw_observed=False,yaw_rad=None)
         for d in detections:
             d.setdefault('track_id',None);d.setdefault('track_confirmed',False)
         if current:self.startup_frames_left=max(0,self.startup_frames_left-1)
         if self.path:
             data=dict(schema='xiangqi_tracks/v1',next_id=self.next_id,tracks=list(self.tracks.values()))
-            tmp=self.path.with_suffix('.tmp');tmp.write_text(json.dumps(data,indent=2,allow_nan=False));tmp.replace(self.path)
+            tmp=self.path.with_suffix('.tmp');tmp.write_text(json.dumps(data,separators=(',', ':'),allow_nan=False));tmp.replace(self.path)
         return detections
 
 def check():

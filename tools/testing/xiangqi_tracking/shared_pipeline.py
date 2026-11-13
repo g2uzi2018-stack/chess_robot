@@ -83,27 +83,27 @@ class Pipeline:
     def __init__(self,width=1280,height=720,camera_only=False):
         self.slots=FrameSlots(width,height);context=multiprocessing.get_context('spawn');configuration=self.slots.configuration()
         self.gpu=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_gpu,initargs=(configuration,camera_only))
-        self.geometry=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_geometry,initargs=(configuration,camera_only))
-        self.gpu_job=None;self.geometry_jobs=[];self.free=list(range(self.slots.count));self.next_id=0;self.last_returned=-1
-    def can_submit(self):return self.gpu_job is None and bool(self.free)
+        geometry_workers=2 if os.environ.get("XIANGQI_PIECE_CLASSIFIER") else 1
+        self.geometry=ProcessPoolExecutor(max_workers=geometry_workers,mp_context=context,initializer=initialize_geometry,initargs=(configuration,camera_only))
+        # One queued GPU frame hides parent dispatch latency; three owned slots bound all work.
+        self.gpu_jobs=[];self.geometry_jobs=[];self.free=list(range(self.slots.count));self.next_id=0;self.last_returned=-1
+    def can_submit(self):return len(self.gpu_jobs)<2 and bool(self.free)
     def submit(self,color,depth,metadata,roi=None,draw=False,context=None):
         assert self.can_submit(),'Pipeline full; never overwrite an in-flight frame'
         slot=self.free.pop(0);job=dict(slot=slot,job_id=self.next_id,metadata=metadata,roi=roi,draw=draw,context=context,started=time.monotonic());self.next_id+=1
         try:
             self.slots.write(slot,job['job_id'],metadata['stamp_ns'],color,depth)
-            future=self.gpu.submit(detect_slot,job);self.gpu_job=(job,future)
+            future=self.gpu.submit(detect_slot,job);self.gpu_jobs.append((job,future))
         except BaseException:
             self.free.append(slot);raise
         return job['job_id']
     def poll(self):
-        if self.gpu_job is not None:
-            job,future=self.gpu_job
-            if future.done():
-                self.gpu_job=None
-                try:
-                    detection=future.result();self.geometry_jobs.append((job,self.geometry.submit(geometry_slot,job,detection)))
-                except BaseException:
-                    self.free.append(job['slot']);raise
+        while self.gpu_jobs and self.gpu_jobs[0][1].done():
+            job,future=self.gpu_jobs.pop(0)
+            try:
+                detection=future.result();self.geometry_jobs.append((job,self.geometry.submit(geometry_slot,job,detection)))
+            except BaseException:
+                self.free.append(job['slot']);raise
         ready=[]
         while self.geometry_jobs and self.geometry_jobs[0][1].done():
             job,future=self.geometry_jobs.pop(0)
@@ -113,7 +113,7 @@ class Pipeline:
                 self.last_returned=job['job_id'];ready.append((job,record,overlay))
             finally:self.free.append(job['slot'])
         return ready
-    def busy(self):return self.gpu_job is not None or bool(self.geometry_jobs)
+    def busy(self):return bool(self.gpu_jobs or self.geometry_jobs)
     def close(self):
         try:
             try:self.gpu.shutdown(wait=True,cancel_futures=True)

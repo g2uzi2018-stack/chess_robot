@@ -197,8 +197,19 @@ def select_target(config, candidates, retired, slot_index=0, unavailable=()):
     raise RuntimeError('no isolated search seed; retain ambiguous/unknown hypotheses for review')
 
 
+def pick_target_observation(config):
+    if config.get('business_mode')!='row':
+        return 20, 2.
+    spec=config.get('pick_target_observation') or {}
+    count=spec.get('min_frames',20);span=spec.get('window_s',2.)
+    if type(count) is not int or count<6 or not math.isfinite(span) or span<.25:
+        raise ValueError('pick observation requires at least six independent frames spanning 0.25 seconds')
+    return count,span
+
+
 def qualified_target(config, seed, frames, allow_reclassify=False, observation_only=False,
-                     geometry_only=False, unlocated_overlap=None, neighbor_conflict=None):
+                     geometry_only=False, unlocated_overlap=None, neighbor_conflict=None,
+                     min_frames=20, min_span_s=2):
     """Check a contiguous fresh stationary window; do not reuse track_id."""
     points = []
     confirmed_class = None if allow_reclassify else seed['class_name']
@@ -240,8 +251,8 @@ def qualified_target(config, seed, frames, allow_reclassify=False, observation_o
                     d['base_surface_center_m'][:2])<config['neighbor_clearance_m']) for other in detections):
             raise RuntimeError('neighbor/unknown too close for reviewed finger envelope')
         points.append(d['base_surface_center_m'])
-    if len(points) < 20 or (stamps[-1]-stamps[0])*1e-9 < 2:
-        raise RuntimeError('need at least 20 independent frames spanning two seconds')
+    if len(points) < min_frames or (stamps[-1]-stamps[0])*1e-9 < min_span_s:
+        raise RuntimeError('need at least '+str(min_frames)+' independent frames spanning '+str(min_span_s)+' seconds')
     if any(not 0 < (b-a)*1e-9 <= .3 for a, b in zip(stamps, stamps[1:])):
         raise RuntimeError('scene frame gap')
     center = [sum(p[i] for p in points)/len(points) for i in range(3)]
@@ -252,7 +263,7 @@ def qualified_target(config, seed, frames, allow_reclassify=False, observation_o
                 samples=len(points), scene_identity=identity, classification_required=not (observation_only or geometry_only))
 
 
-def qualified_scene_window(frames):
+def qualified_scene_window(frames, min_frames=20, min_span_s=2):
     """Independent stationary full-image window, including zero detections."""
     seen=set();stamps=[];identity=None
     for frame in frames:
@@ -266,8 +277,8 @@ def qualified_scene_window(frames):
         if identity is None:identity=signature
         if signature!=identity:raise RuntimeError('scene epoch/configuration changed')
         stamps.append(frame['stamp_ns'])
-    if len(stamps)<20 or (stamps[-1]-stamps[0])*1e-9<2:
-        raise RuntimeError('need 20 independent full-scene frames over two seconds')
+    if len(stamps)<min_frames or (stamps[-1]-stamps[0])*1e-9<min_span_s:
+        raise RuntimeError('need '+str(min_frames)+' independent full-scene frames over '+str(min_span_s)+' seconds')
     if any(not 0<(b-a)*1e-9<=.3 for a,b in zip(stamps,stamps[1:])):
         raise RuntimeError('scene frame gap')
     return dict(first_stamp_ns=stamps[0],last_stamp_ns=stamps[-1],samples=len(stamps),scene_identity=identity)
@@ -414,9 +425,11 @@ class Demo:
             'neighbor/unknown too close for reviewed finger envelope',
             'target label unresolved/changed','target moved / repeatability exceeds 3mm')
         observation_attempts=2+(len(self.c.get('pick_yaw_rechecks_deg',[])) if row else 0)
+        n,s=pick_target_observation(self.c)
+        pick_observe=dict(duration_s=s,min_frames=n) if row else {}
         for attempt in range(observation_attempts):
             try:
-                measured = qualify(seed, io.observe(),allow_reclassify=self.c.get('calibration_mode')=='supervised_flat_table')
+                measured = qualify(seed, io.observe(**pick_observe),allow_reclassify=self.c.get('calibration_mode')=='supervised_flat_table')
                 break
             except RuntimeError as e:
                 if not isinstance(e,ObservationUnavailable) and str(e) not in observation_errors:
@@ -446,7 +459,7 @@ class Demo:
                 check=None
                 for attempt in range(observation_attempts):
                     try:
-                        check=qualify(measured,io.observe())
+                        check=qualify(measured,io.observe(**pick_observe))
                         break
                     except RuntimeError as error:
                         if not isinstance(error,ObservationUnavailable) and str(error) not in observation_errors:

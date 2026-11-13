@@ -5,6 +5,8 @@ import math
 import re
 from collections import deque
 from candidate_roi import POLICY, DEPTH_POLICY, LITE_POLICY, MAX_CROPS
+from fast_recognition import FAST_POLICY, overlap
+from piece_classifier import crop_window
 
 CAMERA_FRAME = 'd405_color_optical_frame'
 SCHEMA = 'xiangqi_camera_measurements/v2'
@@ -42,24 +44,32 @@ def vector(value, length):
 
 
 def check_json(value):
-    """Iterative whole-value checks also cover optional/invalid-frame metadata."""
+    """Check container bounds and leaf types once without allocating per-leaf stack entries."""
     stack = [(value, 0)]
-    count = 0
+    count = 1
     while stack:
         item, depth = stack.pop()
-        count += 1
-        if depth > MAX_JSON_DEPTH or count > MAX_JSON_NODES:
+        if depth > MAX_JSON_DEPTH:
             raise ContractError('JSON structure exceeds bounded depth/node count')
         if isinstance(item, dict):
             if not all(isinstance(k, str) for k in item):
                 raise ContractError('JSON object keys must be strings')
-            stack.extend((v, depth+1) for v in item.values())
+            values = item.values()
         elif isinstance(item, list):
-            stack.extend((v, depth+1) for v in item)
-        elif type(item) is float and not math.isfinite(item):
-            raise ContractError('non-finite JSON number')
-        elif item is not None and type(item) not in (str, int, float, bool):
-            raise ContractError('unsupported JSON value type')
+            values = item
+        else:
+            values = (item,)
+            count -= 1
+        count += len(values)
+        if count > MAX_JSON_NODES or (depth == MAX_JSON_DEPTH and len(values) and isinstance(item, (dict, list))):
+            raise ContractError('JSON structure exceeds bounded depth/node count')
+        for child in values:
+            if isinstance(child, (dict, list)):
+                stack.append((child, depth+1))
+            elif type(child) is float and not math.isfinite(child):
+                raise ContractError('non-finite JSON number')
+            elif child is not None and type(child) not in (str, int, float, bool):
+                raise ContractError('unsupported JSON value type')
 
 
 def encode_json(record, max_bytes=MAX_MESSAGE_BYTES):
@@ -77,24 +87,6 @@ def decode_json(wire, max_bytes=MAX_MESSAGE_BYTES):
     try:
         if not isinstance(wire, str) or len(wire.encode()) > max_bytes:
             raise ContractError('JSON exceeds bounded payload')
-        depth = 0
-        quoted = escaped = False
-        for character in wire:
-            if quoted:
-                if escaped:
-                    escaped = False
-                elif character == '\\':
-                    escaped = True
-                elif character == '"':
-                    quoted = False
-            elif character == '"':
-                quoted = True
-            elif character in '[{':
-                depth += 1
-                if depth > MAX_JSON_DEPTH:
-                    raise ContractError('JSON exceeds bounded depth')
-            elif character in ']}':
-                depth -= 1
         def finite_float(text):
             value = float(text)
             if not math.isfinite(value):
@@ -154,7 +146,7 @@ def producer_json_value(value):
     return convert(value, 0)
 
 
-def camera_measurement(record, metadata, source_epoch, sequence, published_ns, configuration_valid=True):
+def camera_measurement(record, metadata, source_epoch, sequence, published_ns, configuration_valid=True, *, normalize=True):
     """Copy small scalars/vectors only; no full masks, robot state or stable IDs."""
     if not record.get('detection_valid') or not configuration_valid:
         # Invalid camera data (including NaN K) is an event, not a valid model
@@ -170,9 +162,9 @@ def camera_measurement(record, metadata, source_epoch, sequence, published_ns, c
                       motion_ready=False, grasp_ready=False, robot_commands=0,
                       reason=str(record.get('reason', 'camera image/configuration rejected'))[:256])
         packet = producer_json_value(packet)
-        encode(packet)
         return packet
-    packet = copy.deepcopy(record)
+    packet = dict(record)
+    packet['detections'] = [dict(d) for d in record.get('detections', [])]
     for key in list(packet):
         if key.startswith(('base_', 'source_joint_', 'track_')) or key in ('fk_tcp_error_m', 'masks', 'mask', 'color', 'depth'):
             packet.pop(key, None)
@@ -195,7 +187,7 @@ def camera_measurement(record, metadata, source_epoch, sequence, published_ns, c
             detection['mask_outline_xy'] = [outline[int(i*stride)] for i in range(MAX_OUTLINE_POINTS)]
     packet.update(schema=SCHEMA, frame_id=CAMERA_FRAME, camera_frame_id=CAMERA_FRAME,
                   source_epoch=source_epoch, sequence=sequence, perception_publish_ns=published_ns,
-                  source_K=metadata.get('K'), rgbd_frame_key=metadata['rgbd_frame_key'],
+                  image_received_ns=metadata.get('image_received_ns'), source_K=metadata.get('K'), rgbd_frame_key=metadata['rgbd_frame_key'],
                   camera_epoch=metadata['camera_epoch'], configuration_valid=bool(configuration_valid),
                   motion_ready=False, grasp_ready=False, robot_commands=0)
     packet['camera_geometry_valid'] = bool(packet.get('detection_valid') and
@@ -203,9 +195,8 @@ def camera_measurement(record, metadata, source_epoch, sequence, published_ns, c
     if not configuration_valid:
         packet.update(detection_valid=False, camera_geometry_valid=False, detections=[],
                       reason='on-disk perception configuration changed; restart required')
-    packet = producer_json_value(packet)
-    encode(packet)
-    return packet
+    # Native production records already contain JSON scalars; encode() validates the wire boundary.
+    return producer_json_value(packet) if normalize else packet
 
 
 def validate(packet, now):
@@ -257,7 +248,6 @@ def validate(packet, now):
     if not packet['detection_valid']:
         if detections or packet.get('camera_geometry_valid'):
             raise ContractError('invalid image must not carry valid detections')
-        encode(packet)
         return packet
     if not packet['configuration_valid']:
         raise ContractError('changed configuration cannot produce valid observations')
@@ -270,7 +260,7 @@ def validate(packet, now):
         raise ContractError('invalid measurement ROI')
     if not isinstance(packet.get('identity'), dict) or not isinstance(packet.get('compute'), dict):
         raise ContractError('missing model identity/compute evidence')
-    if packet.get('recognition_policy') not in (POLICY, DEPTH_POLICY, LITE_POLICY):
+    if packet.get('recognition_policy') not in (POLICY, DEPTH_POLICY, LITE_POLICY, FAST_POLICY):
         raise ContractError('missing full-candidate/ROI-class policy')
     if packet.get('candidate_scan_stamp_ns') != packet['stamp_ns'] or roi != [0, 0, 1280, 720]:
         raise ContractError('missing same-stamp full-image candidate scan')
@@ -347,6 +337,27 @@ def validate(packet, now):
               or any(type(size) is not int or not 1 <= size <= declared for size in sizes)
               or sum(sizes)!=len(crops)):
             raise ContractError('incomplete ROI batch provenance')
+    if packet['recognition_policy'] == FAST_POLICY:
+        identity=packet['identity'];compute=packet['compute']
+        sha=identity.get('piece_classifier_sha256')
+        if (identity.get('recognition_mode')!='fast' or not isinstance(sha,str)
+                or re.fullmatch('[0-9a-f]{64}',sha) is None
+                or compute.get('piece_classifier_sha256')!=sha
+                or compute.get('candidate_artifact_sha256')!=identity.get('candidate_artifact_sha256')
+                or compute.get('candidate_network_calls')!=1 or compute.get('full_mask_network_calls')!=1
+                or compute.get('classifier_min_conf')!=.5):
+            raise ContractError('missing fast recognition model provenance')
+        if packet['full_scene_coverage']:
+            boxes=compute.get('raw_candidate_boxes');links=compute.get('candidate_assignments')
+            if (not isinstance(boxes,list) or len(boxes)>MAX_DETECTIONS
+                    or not isinstance(links,list) or len(boxes)!=len(links)
+                    or packet['full_candidate_count']!=len(detections)):
+                raise ContractError('incomplete fused candidate coverage')
+            for box,representatives in zip(boxes,links):
+                if (not vector(box,4) or not isinstance(representatives,list) or not representatives
+                        or any(not vector(rep,4) or rep not in [d['box_xyxy'] for d in detections]
+                               or overlap(box,rep)<=.3 for rep in representatives)):
+                    raise ContractError('full candidate lacks a current-image representative')
     indices = set()
     for d in detections:
         if not isinstance(d, dict) or not integer(d.get('instance_index')):
@@ -366,7 +377,13 @@ def validate(packet, now):
             raise ContractError('box outside original image')
         if type(d.get('classification_valid')) is not bool or d.get('classification_stamp_ns') != packet['stamp_ns']:
             raise ContractError('missing same-image class evidence')
-        if d['classification_valid']:
+        if d['classification_valid'] and packet['recognition_policy']==FAST_POLICY:
+            if (d.get('classification_source')!='piece_classifier' or d['class_name']=='unknown'
+                    or not integer(d.get('class_id')) or d['class_id']>=14 or confidence<.5
+                    or d.get('classification_roi_xyxy')!=crop_window(box)
+                    or not (2<=box[0] and 2<=box[1] and box[2]<=1278 and box[3]<=718)):
+                raise ContractError('class lacks a complete same-frame piece crop')
+        elif d['classification_valid']:
             crop = d.get('classification_roi_xyxy')
             if d.get('classification_source') != 'roi' or crop not in crops or d['class_name'] == 'unknown':
                 raise ContractError('class did not originate in an admitted ROI')
@@ -395,6 +412,17 @@ def validate(packet, now):
                     mask_crop[0]+2 <= box[0] and mask_crop[1]+2 <= box[1]
                     and box[2] <= mask_crop[2]-2 and box[3] <= mask_crop[3]-2):
                 raise ContractError('ROI geometry crop does not cover lite candidate')
+        if packet['recognition_policy'] == FAST_POLICY:
+            source=d.get('geometry_source');mask_crop=d.get('geometry_roi_xyxy')
+            if source=='same_frame_full_mask':
+                if mask_crop!=[0,0,1280,720]:raise ContractError('full mask source changed')
+            elif source=='same_frame_roi_mask':
+                if mask_crop not in crops:raise ContractError('repair mask lacks same-frame crop')
+                if not (mask_crop[0]<=box[0] and mask_crop[1]<=box[1]
+                        and box[2]<=mask_crop[2] and box[3]<=mask_crop[3]):
+                    raise ContractError('repair mask crop truncates candidate')
+            elif source!='missing_roi_mask' or d['camera_geometry_valid'] or mask_crop is not None:
+                raise ContractError('candidate rectangle cannot qualify geometry')
         if packet['recognition_policy'] == DEPTH_POLICY:
             if (type(d.get('candidate_geometry_valid')) is not bool or type(d.get('roi_eligible')) is not bool
                     or d.get('candidate_geometry_source') not in ('aligned_depth','unadmitted_roi')
@@ -426,7 +454,6 @@ def validate(packet, now):
         raise ContractError('inconsistent classification completeness')
     if packet['full_scene_coverage'] and packet['full_candidate_count'] > len(detections):
         raise ContractError('full candidates silently discarded')
-    encode(packet)
     return packet
 
 

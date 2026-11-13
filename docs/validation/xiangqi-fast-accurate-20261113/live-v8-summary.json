@@ -1,0 +1,56 @@
+{
+  "perception": {
+    "messages": 3116,
+    "unique_frames": 3116,
+    "valid_frames": 3116,
+    "unique_fps": 25.963916718056417,
+    "all32": 3114,
+    "count_histogram": {
+      "32": 3116
+    },
+    "host_entry_to_receipt_ms": [
+      96.34640049999999,
+      120.49038174999998
+    ],
+    "host_entry_to_publish_ms": [
+      91.046562,
+      114.71499549999999
+    ],
+    "acquisition_to_receipt_ms": [
+      126.5840205,
+      150.51285875
+    ],
+    "one_second_p50_p05": [
+      26.0,
+      24.0
+    ],
+    "windows_at_least28": 0.025423728813559324
+  },
+  "scene": {
+    "messages": 3116,
+    "unique_frames": 3116,
+    "valid_frames": 3116,
+    "unique_fps": 25.963936250598692,
+    "all32": 3114,
+    "count_histogram": {
+      "32": 3116
+    },
+    "host_entry_to_receipt_ms": [
+      156.51117649999998,
+      205.40510725
+    ],
+    "host_entry_to_publish_ms": [
+      91.046562,
+      114.71499549999999
+    ],
+    "acquisition_to_receipt_ms": [
+      186.54791849999998,
+      235.32097075
+    ],
+    "one_second_p50_p05": [
+      26.0,
+      24.0
+    ],
+    "windows_at_least28": 0.03389830508474576
+  }
+}

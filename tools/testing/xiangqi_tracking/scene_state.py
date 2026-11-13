@@ -103,7 +103,9 @@ class SceneState:
                 self.source_configuration_fault = True
         if not packet['configuration_valid']:
             self.source_configuration_fault = True
-        self.last_measurement = copy.deepcopy(packet)
+        # The decoded input is owned by this consumer. Only the output's
+        # top level and individual detection dictionaries are mutated below.
+        self.last_measurement = packet
         safe = self.tick(now, feedback, raw_good, audit_token)
         t = packet['stamp_ns']
         check = feedback.at(t, now)
@@ -118,7 +120,8 @@ class SceneState:
             metadata.update(arm=row['arm'], joint=row['joint'], joint_age_s=(t-row['t'])*1e-9)
         transform, error, reason = self.base.base_transform(metadata)
         base_valid = bool(transform is not None and packet['detection_valid'])
-        record = copy.deepcopy(packet)
+        record = dict(packet)
+        record['detections'] = [dict(d) for d in packet['detections']]
         record.update(schema='xiangqi_measurements/v2', frame_id='base_link', base_frame_id='base_link',
                       base_transform_valid=base_valid, base_transform_reason=reason, fk_tcp_error_m=error,
                       source_joint_position_rad=metadata.get('joint', {}).get('position', []),
@@ -204,7 +207,7 @@ class SceneState:
         record['publish_latency_s'] = (now-t)*1e-9
         record['pipeline'] = 'bounded_shared_memory_gpu_cpu_overlap_then_scene_topic'
         record['motion_ready'] = record['grasp_ready'] = False
-        self.last_record = copy.deepcopy(record)
+        self.last_record = dict(record)
         return record
 
     def hint(self, now):

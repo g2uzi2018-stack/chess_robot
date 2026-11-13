@@ -1,0 +1,16 @@
+{
+  "frames": 24,
+  "identical_records": true,
+  "input_unchanged": true,
+  "expire_does_not_mutate_retained_record": true,
+  "ms": {
+    "old": [
+      23.11133250623243,
+      24.40223794837948
+    ],
+    "new": [
+      11.847672503790818,
+      12.773984341765754
+    ]
+  }
+}

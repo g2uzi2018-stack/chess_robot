@@ -1,5 +1,9 @@
 # 停稳两秒观测、锁定与单次消费
 
+## 2026-11-13 当前类别来源与逐目标窗口
+
+当前 `full_masks_batched_glyphs/v1` 使用同一图像的完整棋子小图分类及分割几何，取代历史 ROI 分割模型的类别来源；整盘完整性、未决目标、新鲜度、停稳与快照消费规则保留。本文的整盘两秒锁定接口不变。row 动作链的逐目标再观察单独采用至少 6 帧、跨度 0.25 秒，详见[本轮验收](../../../docs/validation/xiangqi-fast-accurate-20261113/README.md)。
+
 实时检测独立运行；相机图像无需机械臂 reference_valid 或 mode5。旧 `frame_id=base_link` 与 `valid=基座几何有效` 保持原义，相机坐标不冒充基座坐标。所有 motion_ready/grasp_ready 仍为 false。本模块只有视觉数据接口，不控制机械臂。
 
 ## 节点归属（2026-11-01）

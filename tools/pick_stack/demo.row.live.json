@@ -48,6 +48,7 @@
   "hover_tcp_base_z_m": 0.14,
   "transfer_tcp_base_z_m": 0.143,
   "business_mode": "row",
+  "pick_target_observation": {"min_frames": 6, "window_s": 0.25},
   "row_slots_m": [
     [
       0.045,

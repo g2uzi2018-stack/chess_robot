@@ -1,0 +1,23 @@
+{
+  "messages": 875,
+  "first": {
+    "t": 76336.829093963,
+    "stamp": 1794543167481704510,
+    "color": 2253393,
+    "depth": 2253393,
+    "stream_ok": true
+  },
+  "last": {
+    "t": 76365.960677647,
+    "stamp": 1794543196612930415,
+    "color": 2254267,
+    "depth": 2254267,
+    "stream_ok": true
+  },
+  "arrival_fps": 30.001801806600707,
+  "source_stamp_fps": 30.002170277701534,
+  "color_frame_delta": 874,
+  "depth_frame_delta": 874,
+  "stream_ok": true,
+  "full_rows_location": "runs/fast_accurate_20261113_01/camera-source-rate.json on Jetson"
+}

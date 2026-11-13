@@ -1,0 +1,15 @@
+{
+  "frames": 100,
+  "detector_outputs_identical": true,
+  "persisted_state_identical": true,
+  "old_ms_p50_p95": [
+    9.859969504759647,
+    10.538905051362235
+  ],
+  "new_ms_p50_p95": [
+    7.810533497831784,
+    8.369331154244719
+  ],
+  "old_bytes": 53178,
+  "new_bytes": 30202
+}

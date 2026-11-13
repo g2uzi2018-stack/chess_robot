@@ -1,4 +1,4 @@
-"""Build an exact-shape-profile TensorRT 10 FP32 engine from dynamic ONNX."""
+"""Build an exact-shape-profile TensorRT 10 engine with explicit internal precision from dynamic ONNX."""
 from __future__ import annotations
 
 import ast
@@ -31,6 +31,7 @@ def main() -> int:
     parser.add_argument("report", type=Path)
     parser.add_argument("--workspace-gib", type=float, default=1.0)
     parser.add_argument("--max-batch", type=int, choices=(2,4), default=4)
+    parser.add_argument("--precision", choices=("fp32","tf32","fp16"), default="fp32")
     args = parser.parse_args()
     if args.engine.exists():raise ValueError("Choose a new external engine path; do not replace a deployed artifact")
     args.engine.parent.mkdir(parents=True, exist_ok=True)
@@ -43,7 +44,8 @@ def main() -> int:
             metadata[item.key] = json.loads(item.value)
         except (ValueError, TypeError):
             metadata[item.key] = item.value
-    metadata.update({"task": "segment", "batch": args.max_batch, "imgsz": [640, 640], "precision": "FP32-no-TF32"})
+    precision_label={"fp32":"FP32-no-TF32","tf32":"TF32","fp16":"FP16-mixed"}[args.precision]
+    metadata.update({"task": "segment", "batch": args.max_batch, "imgsz": [640, 640], "precision": precision_label})
     names = metadata.get("names")
     if isinstance(names, str):
         try:
@@ -71,6 +73,9 @@ def main() -> int:
         if flag is not None:
             config.clear_flag(flag)
             cleared.append(flag_name)
+
+    if args.precision != "fp32":
+        config.set_flag(trt.BuilderFlag.TF32 if args.precision=="tf32" else trt.BuilderFlag.FP16)
 
     onnx_parser = trt.OnnxParser(network, logger)
     if not onnx_parser.parse_from_file(str(args.onnx)):

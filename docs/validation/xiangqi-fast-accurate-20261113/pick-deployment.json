@@ -1,0 +1,14 @@
+{
+  "tools/pick_stack/demo.py": {
+    "before": "64d0e435bdd55603cde9a075cd8ce5d14c05697758be3af08a577b3afbd34c80",
+    "after": "9f1e4ae32e238b5c28eefa1116b23b13669e0e775d5d011596a38ba8bdb7fa0d"
+  },
+  "tools/pick_stack/ros_io.py": {
+    "before": "6eecdab0caf42e3b011140a0638e2da5e2efd97cb6fa13f41449429ffcacd8d5",
+    "after": "885ba2c337bb4213cf10bdfdaecd30bfeedc1332be19c1f9dfea338c8d04a147"
+  },
+  "tools/pick_stack/demo.row.live.json": {
+    "before": "407c4c1f102b1dbe89b959c6459e9035159c43c583ff059a426b75af5895c8a7",
+    "after": "62b320b66492ba4e24b914d550b722dea10d5df690ae3dea5d28de44676b9486"
+  }
+}

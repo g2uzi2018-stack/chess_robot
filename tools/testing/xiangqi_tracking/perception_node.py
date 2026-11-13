@@ -54,6 +54,7 @@ def main():
     lease = BenchmarkLease()
     lock = threading.RLock()
     cache = {k: {} for k in ('color', 'depth', 'info', 'frame')}
+    color_received = {}
     hints = deque(maxlen=1)
     source_epoch = uuid.uuid4().hex
     hint = RoiHint()
@@ -73,9 +74,15 @@ def main():
 
     def receive(kind, message):
         with lock:
-            cache[kind][stamp(message)] = message
+            t=stamp(message)
+            cache[kind][t] = message
+            if kind=='color':
+                color_received[t]=node.get_clock().now().nanoseconds
             while len(cache[kind]) > 8:
-                del cache[kind][min(cache[kind])]
+                retired=min(cache[kind])
+                del cache[kind][retired]
+                if kind=='color':
+                    color_received.pop(retired)
 
     def receive_hint(message):
         try:
@@ -115,7 +122,8 @@ def main():
             except OSError:
                 config_changed=True
         try:
-            packet = camera_measurement(record, metadata, source_epoch, sequence, now, not config_changed)
+            packet = camera_measurement(record, metadata, source_epoch, sequence, now, not config_changed, normalize=False)
+            packet['perception_publish_ns']=node.get_clock().now().nanoseconds
             wire = encode(packet)
         except (ContractError, ValueError, TypeError, OverflowError, RecursionError) as error:
             rejects['camera payload rejected'] += 1
@@ -149,6 +157,15 @@ def main():
                 if os.environ.get('XIANGQI_CANDIDATE_MODE')=='lite':
                     paths.append(Path(os.environ['XIANGQI_CANDIDATE_ARTIFACT']))
                     paths.append(Path(__file__).with_name('roi_batch.py'))
+                if os.environ.get('XIANGQI_PIECE_CLASSIFIER'):
+                    paths.extend([Path(os.environ['XIANGQI_PIECE_CLASSIFIER']),
+                                  Path(__file__).with_name('piece_classifier.py'),
+                                  Path(__file__).with_name('classifier_engine.py'),
+                                  Path(__file__).with_name('fast_recognition.py'),
+                                  Path(__file__).with_name('native_mask_predictor.py')])
+                if os.environ.get('XIANGQI_SURFACE_FIT'):
+                    paths.extend([Path(os.environ['XIANGQI_SURFACE_FIT']),
+                                  Path(__file__).with_name('surface_fit.py')])
                 if depth_config_path is not None:
                     paths.append(Path(__file__).with_name('depth_candidates.py'))
                     paths.append(depth_config_path)
@@ -189,7 +206,7 @@ def main():
                             hint = RoiHint()
                             published.clear()
                         last_rgbd = rgbd
-                        metadata = dict(stamp_ns=t, K=[float(v) for v in info.k], base_eligible=False,
+                        metadata = dict(stamp_ns=t, image_received_ns=color_received[t], K=[float(v) for v in info.k], base_eligible=False,
                                         rgbd_frame_key=[source_epoch, *rgbd], camera_epoch=source_epoch)
                         if image_qualified(image, depth, info, frame) and not repeated:
                             chosen = (image, depth, metadata)

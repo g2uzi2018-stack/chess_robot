@@ -14,7 +14,7 @@ def iou(a,b):
     lo=np.maximum(a[:2],b[:2]); hi=np.minimum(a[2:],b[2:]); inter=np.maximum(hi-lo,0).prod()
     return float(inter/max(1e-9,np.prod(a[2:]-a[:2])+np.prod(b[2:]-b[:2])-inter))
 
-def surface_position(mask,depth,K):
+def surface_position(mask,depth,K,fit=None):
     """Estimate depth at mask centroid from robust visible-surface plane, in metres."""
     # A zero rim preserves distanceTransform values inside a complete mask.
     # Keep image-edge masks on the original path: their boundary semantics differ.
@@ -41,6 +41,8 @@ def surface_position(mask,depth,K):
     if len(points)<50:return dict(out,reason='insufficient robust depth')
     # Deterministic subsampling bounds runtime without selecting only one side of the mask.
     points=points[::max(1,len(points)//3000)]
+    if fit is not None:
+        return fit(points,np.linalg.inv(K)@np.r_[uv,1.],out,median)
     kept=points
     for _ in range(3):
         mean=kept.mean(0);centered=kept-mean;_,vectors=np.linalg.eigh(centered.T@centered);normal=vectors[:,0]
@@ -69,8 +71,12 @@ class Experiment:
         source_sha=hashlib.sha256(WEIGHTS.read_bytes()).hexdigest()
         expected_source=os.environ.get('XIANGQI_SOURCE_WEIGHTS_SHA256')
         if expected_source and source_sha!=expected_source:raise ValueError('Source weights changed; rebuild/validate the engine')
+        self.engine_precision=None
         if self.inference_backend=='tensorrt':
-            if half:raise ValueError('The deployed TensorRT policy requires FP32')
+            with MODEL_ARTIFACT.open('rb') as stream:
+                size=int.from_bytes(stream.read(4),'little')
+                self.engine_precision=json.loads(stream.read(size)).get('precision','unspecified')
+            if half:raise ValueError('TensorRT runtime expects FLOAT input/output; internal precision is selected at build time')
             torch.set_float32_matmul_precision('highest')
             torch.backends.cuda.matmul.allow_tf32=False
             torch.backends.cudnn.allow_tf32=False
@@ -116,8 +122,33 @@ class Experiment:
             base=BaseGeometry()
             self.X,self.robot,self.fk=base.X,base.robot,base.fk
             self.base_model_reason=base.base_model_reason;base_identity=base.identity
-        self.identity=dict(weights=str(WEIGHTS),weights_sha256=source_sha,ultralytics=ultralytics.__version__,torch=torch.__version__,imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
+        self.identity=dict(weights=str(WEIGHTS),weights_sha256=source_sha,ultralytics=ultralytics.__version__,torch=str(torch.__version__),imgsz=imgsz,inference_backend=self.inference_backend,inference_artifact=str(MODEL_ARTIFACT),inference_artifact_sha256=self.artifact_sha256)
         self.identity.update(base_identity)
+        self.identity['engine_precision']=self.engine_precision
+        self.surface_fit=None
+        self.piece_classifier=None
+        self.predictor_class=None
+        classifier_path=os.environ.get('XIANGQI_PIECE_CLASSIFIER')
+        if classifier_path:
+            if self.candidate_mode!='lite':raise ValueError('Fast recognition requires the lite candidate model')
+            classifier_sha=hashlib.sha256(Path(classifier_path).read_bytes()).hexdigest()
+            if classifier_sha!=os.environ['XIANGQI_PIECE_CLASSIFIER_SHA256']:
+                raise ValueError('Piece classifier artifact SHA256 mismatch')
+            self.identity.update(piece_classifier_artifact=classifier_path,piece_classifier_sha256=classifier_sha,recognition_mode='fast',piece_classifier_preprocess='gpu_bilinear_5bit/v1')
+            if not geometry_only:
+                from piece_classifier import PieceClassifier
+                self.piece_classifier=PieceClassifier(classifier_path)
+                self.identity['piece_classifier_precision']=self.piece_classifier.precision
+                from native_mask_predictor import NativeMaskPredictor
+                self.predictor_class=NativeMaskPredictor
+        fitter_path=os.environ.get('XIANGQI_SURFACE_FIT')
+        if fitter_path:
+            fitter_sha=hashlib.sha256(Path(fitter_path).read_bytes()).hexdigest()
+            if fitter_sha!=os.environ['XIANGQI_SURFACE_FIT_SHA256']:
+                raise ValueError('Surface fitter artifact SHA256 mismatch')
+            from surface_fit import SurfaceFit
+            self.surface_fit=SurfaceFit(fitter_path)
+            self.identity.update(surface_fit_artifact=fitter_path,surface_fit_sha256=fitter_sha)
         if self.candidate_mode=='lite':
             self.identity.update(candidate_mode='lite',candidate_artifact=str(self.candidate_artifact),
                                  candidate_artifact_sha256=self.candidate_sha256,
@@ -134,33 +165,35 @@ class Experiment:
         from base_geometry import base_transform
         return base_transform(self,metadata)
 
-    def detect(self,color,roi=None):
+    def detect(self,color,roi=None,conf=.25):
         assert self.model is not None
         start=time.monotonic()
         x1,y1,x2,y2=roi if roi is not None else (0,0,color.shape[1],color.shape[0])
-        result=self.model.predict(color[y1:y2,x1:x2],device=0,imgsz=self.imgsz,conf=.25,verbose=False,retina_masks=True,half=self.half,rect=True,batch=1)[0]
+        result=self.model.predict(color[y1:y2,x1:x2],device=0,imgsz=self.imgsz,conf=conf,verbose=False,retina_masks=True,half=self.half,rect=True,batch=1,predictor=self.predictor_class)[0]
         return self._detection_packet(result,color,[x1,y1,x2,y2],time.monotonic()-start)
 
     def _detection_packet(self,result,color,roi,detector_s):
         conversion_started=time.monotonic()
         x1,y1,x2,y2=roi
         predictions=result.boxes.data.cpu().numpy()
-        masks=None
+        masks=None;bounds=None
         if result.masks is not None:
             masks=result.masks.data.cpu().numpy()
             # Native Ultralytics masks are already binary uint8 tensors.
             if masks.dtype!=np.uint8:
                 masks=(masks>.5).astype(np.uint8)
+            bounds=getattr(result,'native_mask_bounds',None)
+
         parameter_device=None
         if hasattr(self.model.model,'parameters'):
             try:parameter_device=str(next(self.model.model.parameters()).device)
             except StopIteration:pass
         fp16=bool(self.model.predictor.model.fp16)
-        if self.inference_backend=='tensorrt' and fp16:raise ValueError('TensorRT engine is not FP32')
+        if self.inference_backend=='tensorrt' and fp16:raise ValueError('TensorRT input/output is not FLOAT')
         compute=dict(predictor_device=str(self.model.predictor.device),model_parameter_device=parameter_device,boxes_device=str(result.boxes.data.device),masks_device=str(result.masks.data.device) if result.masks is not None else None,fp16=fp16,inference_backend=self.inference_backend,inference_artifact_sha256=self.artifact_sha256)
         if self.inference_backend=='tensorrt':
-            compute.update(matmul_allow_tf32=bool(__import__('torch').backends.cuda.matmul.allow_tf32),cudnn_allow_tf32=bool(__import__('torch').backends.cudnn.allow_tf32))
-        return dict(predictions=predictions,masks=masks,names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=detector_s+time.monotonic()-conversion_started,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
+            compute.update(engine_precision=self.engine_precision,matmul_allow_tf32=bool(__import__('torch').backends.cuda.matmul.allow_tf32),cudnn_allow_tf32=bool(__import__('torch').backends.cudnn.allow_tf32))
+        return dict(predictions=predictions,masks=masks,mask_bounds_xyxy=None if bounds is None else (bounds+np.array([x1,y1,x1,y1])).tolist(),names=dict(result.names),compute=compute,inference_speed_ms=result.speed,detector_s=detector_s+time.monotonic()-conversion_started,identity=self.identity,roi_xyxy=[x1,y1,x2,y2],image_size=[color.shape[1],color.shape[0]])
 
     def detect_rois(self,color,crops):
         from roi_batch import roi_batches
@@ -201,6 +234,9 @@ class Experiment:
                     detector_s=time.monotonic()-start,roi_xyxy=[0,0,1280,720],image_size=[1280,720])
 
     def detect_candidates(self,color,hint=None,depth=None,metadata=None):
+        if self.piece_classifier is not None:
+            from fast_recognition import recognize_fast
+            return recognize_fast(color,self,self.piece_classifier)
         from candidate_roi import recognize, recognize_depth, recognize_lite
         if getattr(self,'candidate_mode','yolo')=='lite':
             planner=None
@@ -257,12 +293,25 @@ class Experiment:
                 record.update(valid=False,reason='missing same-frame ROI mask')
             elif masks is None:record.update(valid=False,reason='no instance mask')
             else:
-                mask=masks[i]
+                mask_index=detection['mask_indices'][i] if 'mask_indices' in detection else i
+                mask=masks[mask_index]
                 if mask.dtype!=np.uint8:
                     mask=(mask>.5).astype(np.uint8)
-                assert mask.shape==depth[y1:y2,x1:x2].shape
-                record.update(surface_position(mask,depth[y1:y2,x1:x2],roi_K))
-                if 'center_pixel' in record:record['center_pixel']=(np.array(record['center_pixel'])+[x1,y1]).tolist()
+                ox,oy=x1,y1;surface_K=roi_K
+                surface_depth=depth[y1:y2,x1:x2]
+                bounds=detection.get('mask_bounds_xyxy')
+                if bounds is not None:
+                    left,top,right,bottom=bounds[mask_index]
+                    pad_left=int(left>0);pad_top=int(top>0)
+                    pad_right=int(right<color.shape[1]);pad_bottom=int(bottom<color.shape[0])
+                    mask=cv2.copyMakeBorder(mask[:bottom-top,:right-left],pad_top,pad_bottom,
+                                           pad_left,pad_right,cv2.BORDER_CONSTANT,value=0)
+                    ox,oy=left-pad_left,top-pad_top
+                    surface_depth=depth[oy:bottom+pad_bottom,ox:right+pad_right]
+                    surface_K=K.copy();surface_K[0,2]-=ox;surface_K[1,2]-=oy
+                assert mask.shape==surface_depth.shape
+                record.update(surface_position(mask,surface_depth,surface_K,self.surface_fit))
+                if 'center_pixel' in record:record['center_pixel']=(np.array(record['center_pixel'])+[ox,oy]).tolist()
                 bx,by,bw,bh=cv2.boundingRect(mask)
                 contours=[]
                 if bw and bh:
@@ -270,8 +319,8 @@ class Experiment:
                                                cv2.CHAIN_APPROX_SIMPLE,offset=(bx,by))
                 if contours:
                     outline=max(contours,key=cv2.contourArea);outline=cv2.approxPolyDP(outline,1.5,True)
-                    record['mask_outline_xy']=(outline.reshape(-1,2)+[x1,y1]).tolist()
-                if draw:cv2.drawContours(overlay,contours,-1,(0,230,0),2,offset=(x1,y1))
+                    record['mask_outline_xy']=(outline.reshape(-1,2)+[ox,oy]).tolist()
+                if draw:cv2.drawContours(overlay,contours,-1,(0,230,0),2,offset=(ox,oy))
             if record.get('candidate_geometry_valid') is False:
                 # Class evidence and geometry qualification are independent:
                 # a large depth component with holes still deserves an ROI
