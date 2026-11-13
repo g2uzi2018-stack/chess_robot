@@ -1,0 +1,15 @@
+{
+  "samples": 2880,
+  "qualification_changes": 0,
+  "max_xyz_component_difference_m": 1.1102230246251565e-16,
+  "max_normal_component_difference": 7.771561172376096e-15,
+  "max_diagnostic_difference_m": 8.179221189230645e-16,
+  "qr_fit_ms_p50_p95": [
+    0.8186229970306158,
+    0.9537896068650296
+  ],
+  "sufficient_statistics_fit_ms_p50_p95": [
+    0.3963525014114566,
+    0.4577896026603412
+  ]
+}

@@ -445,7 +445,18 @@ def validate(packet, now):
                 raise ContractError('invalid camera surface normal')
             if not vector(d.get('center_pixel'), 2):
                 raise ContractError('missing center pixel')
-            if type(d.get('plane_rms_m')) not in (int, float) or not 0 <= d['plane_rms_m'] <= .002:
+            if not number(d.get('plane_rms_m')) or d['plane_rms_m']<0:
+                raise ContractError('invalid surface residual')
+            method=d.get('method','surface_plane')
+            if method=='inverse_depth_center':
+                if (packet['identity'].get('surface_fit_method')!='center_recovery'
+                        or d.get('version')!='v2'):
+                    raise ContractError('center estimator provenance mismatch')
+                bounds=(('depth_rms_m',0,.004), ('center_subset_spread_m',0,.0015),
+                        ('half_center_spread_m',0,.004), ('close_inlier_fraction',.2,1))
+                if any(not number(d.get(key)) or not lo<=d[key]<=hi for key,lo,hi in bounds):
+                    raise ContractError('unqualified surface center')
+            elif method!='surface_plane' or d['plane_rms_m']>.002:
                 raise ContractError('unqualified surface plane')
         d['camera_complete_center_target'] = bool(d['camera_geometry_valid'] and not d.get('touches_image_edge')
                                                 and not d.get('touches_processing_edge'))

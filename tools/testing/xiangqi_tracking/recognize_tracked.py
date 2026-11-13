@@ -146,9 +146,17 @@ class Experiment:
             fitter_sha=hashlib.sha256(Path(fitter_path).read_bytes()).hexdigest()
             if fitter_sha!=os.environ['XIANGQI_SURFACE_FIT_SHA256']:
                 raise ValueError('Surface fitter artifact SHA256 mismatch')
-            from surface_fit import SurfaceFit
-            self.surface_fit=SurfaceFit(fitter_path)
-            self.identity.update(surface_fit_artifact=fitter_path,surface_fit_sha256=fitter_sha)
+            method=os.environ.get('XIANGQI_SURFACE_FIT_METHOD','plane')
+            if method=='center_recovery':
+                from surface_center import SurfaceCenter
+                self.surface_fit=SurfaceCenter(fitter_path)
+            elif method=='plane':
+                from surface_fit import SurfaceFit
+                self.surface_fit=SurfaceFit(fitter_path)
+            else:
+                raise ValueError('Unknown surface fitting method: '+method)
+            self.identity.update(surface_fit_artifact=fitter_path,surface_fit_sha256=fitter_sha,
+                                 surface_fit_method=method)
         if self.candidate_mode=='lite':
             self.identity.update(candidate_mode='lite',candidate_artifact=str(self.candidate_artifact),
                                  candidate_artifact_sha256=self.candidate_sha256,

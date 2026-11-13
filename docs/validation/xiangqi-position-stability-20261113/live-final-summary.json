@@ -1,0 +1,86 @@
+{
+  "perception": {
+    "frames": 2651,
+    "fps": 22.095496832529275,
+    "frame_valid_pct": 100.0,
+    "base_valid_pct": null,
+    "count_histogram": {
+      "32": 2651
+    },
+    "geometry_valid_pct": 98.25419652961148,
+    "classification_complete_pct": 63.90041493775933,
+    "image_age_ms_p50_p95": [
+      90.145545,
+      102.70283949999998
+    ],
+    "source_age_ms_p50_p95": [
+      121.71529,
+      135.36184099999997
+    ]
+  },
+  "scene": {
+    "frames": 2653,
+    "fps": 22.11215525960046,
+    "frame_valid_pct": 100.0,
+    "base_valid_pct": null,
+    "count_histogram": {
+      "32": 2653
+    },
+    "geometry_valid_pct": 98.25669053901244,
+    "classification_complete_pct": 63.889935921598195,
+    "image_age_ms_p50_p95": [
+      129.41410399999998,
+      176.5666712
+    ],
+    "source_age_ms_p50_p95": [
+      161.096249,
+      208.7001392
+    ]
+  },
+  "preview": {
+    "number_observations": 88523,
+    "pred_observations": 2421,
+    "pred_edge": 0,
+    "pred_classification": 1016,
+    "pred_camera_geometry": 1405,
+    "pred_base_geometry": 0,
+    "pred_track_confirmation": 0,
+    "pred_render_feedback": 0,
+    "geometry_pred_pct": 1.5449067558057705
+  },
+  "http": {
+    "202": 1,
+    "200": 1708,
+    "204": 10,
+    "release_200": 1
+  },
+  "unique_preview_frames": 1708,
+  "camera_xy_repeatability_p95_mm": 0.513451820176272,
+  "camera_z_repeatability_p95_mm": 1.1196449259242847,
+  "robot_commands": 0,
+  "measurement_notes": [
+    "Final observer mistakenly queried packet base_geometry_valid instead of base_transform_valid; this field was not measured and is null, not 0%. A subsequent current-packet check found base_transform_valid=true.",
+    "Source counts are this extra Python observer reception counts while subscribing to four topics plus result topics. They are not camera publisher FPS; a separate color-only measurement previously observed 30.0088 fps.",
+    "Position repeatability is accepted samples about each fixed piece median, not externally measured absolute accuracy."
+  ],
+  "source_subscriber_observed": {
+    "color": {
+      "frames": 3069,
+      "fps": 25.580263456228373
+    },
+    "depth": {
+      "frames": 2732,
+      "fps": 22.78361831821042
+    },
+    "info": {
+      "frames": 3388,
+      "fps": 28.231667697872492
+    },
+    "frame": {
+      "frames": 3388,
+      "fps": 28.231667697872492
+    },
+    "four_topic_matched_frames": 2470
+  },
+  "duration_s": 120
+}

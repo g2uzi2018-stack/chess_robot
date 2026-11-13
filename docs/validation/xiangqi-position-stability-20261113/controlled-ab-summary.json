@@ -1,0 +1,69 @@
+{
+  "candidate_before": {
+    "frames": 588,
+    "fps": 24.490494629462972,
+    "geometry_pct": 98.25680272108843,
+    "class_complete_pct": 67.17687074829932,
+    "geom_ms": [
+      34.97243599849753,
+      38.29547895002179
+    ],
+    "gpu_ms": [
+      26.831865499843843,
+      28.819601501891157
+    ],
+    "age_ms": [
+      116.0235635,
+      124.93511544999998
+    ],
+    "counts": {
+      "32": 588
+    }
+  },
+  "baseline": {
+    "frames": 561,
+    "fps": 23.33063944063601,
+    "geometry_pct": 83.9126559714795,
+    "class_complete_pct": 68.09269162210339,
+    "geom_ms": [
+      32.24315399711486,
+      35.25308500684332
+    ],
+    "gpu_ms": [
+      26.93803599686362,
+      28.790481999749318
+    ],
+    "age_ms": [
+      113.41533899999999,
+      121.567911
+    ],
+    "counts": {
+      "32": 561
+    }
+  },
+  "candidate_after": {
+    "frames": 555,
+    "fps": 23.08672113554762,
+    "geometry_pct": 98.20382882882883,
+    "class_complete_pct": 65.04504504504504,
+    "geom_ms": [
+      35.19421399687417,
+      38.86657710245345
+    ],
+    "gpu_ms": [
+      26.969372003804892,
+      29.06985230220016
+    ],
+    "age_ms": [
+      116.19887899999999,
+      124.54895579999997
+    ],
+    "counts": {
+      "32": 555
+    }
+  },
+  "http": {
+    "HTTPError": 973
+  },
+  "http_note": "Observer used console port 8089 instead of preview port 8088; all its image requests were 404. This A/B measures ROS recognition with identical observer load, not successful own-viewer delivery."
+}

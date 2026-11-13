@@ -1,0 +1,239 @@
+{
+  "plane_sigma_0": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.4
+    ],
+    "camera_surface_normal": [
+      -0.11877113736973384,
+      -0.07918075824648965,
+      -0.9897594780811197
+    ],
+    "depth_median_m": 0.4,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 3.3008065017699656e-17,
+    "depth_rms_m": 3.603662564745232e-17,
+    "center_subset_spread_m": 0.0,
+    "close_inlier_fraction": 1.0,
+    "half_center_spread_m": 0.0
+  },
+  "plane_sigma_0.001": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.4000363239788114
+    ],
+    "camera_surface_normal": [
+      -0.11470474305610973,
+      -0.07155731609636591,
+      -0.9908190412146493
+    ],
+    "depth_median_m": 0.40002085381894015,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 0.0008295274860540112,
+    "depth_rms_m": 0.000837339629758539,
+    "center_subset_spread_m": 2.1952612681008787e-05,
+    "close_inlier_fraction": 0.708397733127254,
+    "half_center_spread_m": 7.906920145178686e-05
+  },
+  "plane_sigma_0.002": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.3999870406692814
+    ],
+    "camera_surface_normal": [
+      -0.11977963969819987,
+      -0.07839417315240617,
+      -0.9897005564965193
+    ],
+    "depth_median_m": 0.3999780890015222,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 0.0017160982150077992,
+    "depth_rms_m": 0.0017338016464136167,
+    "center_subset_spread_m": 3.3453705245212184e-05,
+    "close_inlier_fraction": 0.3930963420917053,
+    "half_center_spread_m": 0.00030966006901217424
+  },
+  "plane_sigma_0.003": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.39998166004193614
+    ],
+    "camera_surface_normal": [
+      -0.11261498256161225,
+      -0.07141588923196925,
+      -0.9910689362843813
+    ],
+    "depth_median_m": 0.40006857117931444,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 0.0025256847612020548,
+    "depth_rms_m": 0.0025483842170095903,
+    "center_subset_spread_m": 6.445089842149754e-05,
+    "close_inlier_fraction": 0.26584234930448225,
+    "half_center_spread_m": 0.0003794233416934967
+  },
+  "step_0.006_0": {
+    "valid": false,
+    "reason": "opposite half center inconsistent",
+    "plane_rms_m": 0.0015602396802909628,
+    "depth_rms_m": 0.0015861605962051884,
+    "center_subset_spread_m": 0.0004481198688313093,
+    "close_inlier_fraction": 0.40030911901081917,
+    "half_center_spread_m": 0.004970170837494625
+  },
+  "step_0.006_1": {
+    "valid": false,
+    "reason": "opposite half center inconsistent",
+    "plane_rms_m": 0.001593076834062277,
+    "depth_rms_m": 0.001609954156724733,
+    "center_subset_spread_m": 0.00019299188699645198,
+    "close_inlier_fraction": 0.39464193714580115,
+    "half_center_spread_m": 0.005817249118467649
+  },
+  "interleaved_0.006": {
+    "valid": false,
+    "reason": "insufficient close depth inliers",
+    "plane_rms_m": 0.0029699989847266095,
+    "depth_rms_m": 0.0030009592997180382,
+    "close_inlier_fraction": 0.0
+  },
+  "step_0.008_0": {
+    "valid": false,
+    "reason": "opposite half center inconsistent",
+    "plane_rms_m": 0.0020484783107979146,
+    "depth_rms_m": 0.0021225039352130437,
+    "center_subset_spread_m": 0.0005948021093565847,
+    "close_inlier_fraction": 0.29675425038639874,
+    "half_center_spread_m": 0.006669406709682191
+  },
+  "step_0.008_1": {
+    "valid": false,
+    "reason": "opposite half center inconsistent",
+    "plane_rms_m": 0.002073313959395861,
+    "depth_rms_m": 0.002131971669278885,
+    "center_subset_spread_m": 0.00025299620351487695,
+    "close_inlier_fraction": 0.29314786192684184,
+    "half_center_spread_m": 0.007674241782108737
+  },
+  "interleaved_0.008": {
+    "valid": false,
+    "reason": "surface depth rms too high",
+    "plane_rms_m": 0.003961749748779987,
+    "depth_rms_m": 0.0040027377839528784,
+    "close_inlier_fraction": 0.0
+  },
+  "step_0.01_0": {
+    "valid": false,
+    "reason": "opposite half center inconsistent",
+    "plane_rms_m": 0.002486401527951204,
+    "depth_rms_m": 0.0026461490399671815,
+    "center_subset_spread_m": 0.0007377532531138709,
+    "close_inlier_fraction": 0.24214322514167955,
+    "half_center_spread_m": 0.008319241009857037
+  },
+  "step_0.01_1": {
+    "valid": false,
+    "reason": "opposite half center inconsistent",
+    "plane_rms_m": 0.0025261273850295312,
+    "depth_rms_m": 0.002662637993620997,
+    "center_subset_spread_m": 0.0003218433425677958,
+    "close_inlier_fraction": 0.23647604327666152,
+    "half_center_spread_m": 0.009557809777726134
+  },
+  "interleaved_0.01": {
+    "valid": false,
+    "reason": "surface depth rms too high",
+    "plane_rms_m": 0.004957497809386396,
+    "depth_rms_m": 0.00500845102265561,
+    "close_inlier_fraction": 0.0
+  },
+  "one_side": {
+    "valid": false,
+    "reason": "insufficient quadrant support"
+  },
+  "narrow_strip": {
+    "valid": false,
+    "reason": "insufficient quadrant support"
+  },
+  "depth_step_0": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.4
+    ],
+    "camera_surface_normal": [
+      -0.11877113736973384,
+      -0.07918075824648965,
+      -0.9897594780811197
+    ],
+    "depth_median_m": 0.4,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 3.3008065017699656e-17,
+    "depth_rms_m": 3.603662564745232e-17,
+    "center_subset_spread_m": 0.0,
+    "close_inlier_fraction": 1.0,
+    "half_center_spread_m": 0.0
+  },
+  "depth_step_0.01": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.41000000000000003
+    ],
+    "camera_surface_normal": [
+      -0.11877113736973385,
+      -0.07918075824648974,
+      -0.9897594780811197
+    ],
+    "depth_median_m": 0.41000000000000003,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 3.4889568717812505e-17,
+    "depth_rms_m": 3.7631358232547327e-17,
+    "center_subset_spread_m": 0.0,
+    "close_inlier_fraction": 1.0,
+    "half_center_spread_m": 0.0
+  },
+  "depth_step_-0.01": {
+    "valid": true,
+    "camera_surface_center_m": [
+      0.0,
+      0.0,
+      0.39
+    ],
+    "camera_surface_normal": [
+      -0.11877113736973384,
+      -0.07918075824648962,
+      -0.9897594780811197
+    ],
+    "depth_median_m": 0.39,
+    "method": "inverse_depth_center",
+    "version": "v2",
+    "point_semantics": "visible top surface center; not cylinder center or grasp TCP",
+    "plane_rms_m": 3.2693470402175235e-17,
+    "depth_rms_m": 3.4735556617781126e-17,
+    "center_subset_spread_m": 0.0,
+    "close_inlier_fraction": 1.0,
+    "half_center_spread_m": 0.0
+  }
+}

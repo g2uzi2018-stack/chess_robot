@@ -164,8 +164,12 @@ def main():
                                   Path(__file__).with_name('fast_recognition.py'),
                                   Path(__file__).with_name('native_mask_predictor.py')])
                 if os.environ.get('XIANGQI_SURFACE_FIT'):
+                    fitter_module=('surface_center.py' if os.environ.get('XIANGQI_SURFACE_FIT_METHOD')
+                                   =='center_recovery' else 'surface_fit.py')
                     paths.extend([Path(os.environ['XIANGQI_SURFACE_FIT']),
                                   Path(__file__).with_name('surface_fit.py')])
+                    if fitter_module!='surface_fit.py':
+                        paths.append(Path(__file__).with_name(fitter_module))
                 if depth_config_path is not None:
                     paths.append(Path(__file__).with_name('depth_candidates.py'))
                     paths.append(depth_config_path)

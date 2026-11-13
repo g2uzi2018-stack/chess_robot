@@ -1,0 +1,21 @@
+{
+  "samples": 2880,
+  "old_valid": 2410,
+  "hybrid_valid": 2828,
+  "recovered": 418,
+  "legacy_qualified_position_max_change_m": 0.0,
+  "hybrid_fit_ms_p50_p95": [
+    0.21205599477980286,
+    0.6471125467214731
+  ],
+  "complete_packets_validated": 90,
+  "invalid_contract_cases_rejected": [
+    "depth_rms_m",
+    "center_subset_spread_m",
+    "half_center_spread_m",
+    "close_inlier_fraction",
+    "version",
+    "method",
+    "identity"
+  ]
+}

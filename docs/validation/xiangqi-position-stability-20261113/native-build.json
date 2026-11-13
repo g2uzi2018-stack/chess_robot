@@ -1,0 +1,20 @@
+{
+  "source_sha256": "4e4d0e46622bf0b89849a1339787f5c66eb7ba0cf7efd4c6849836da81f06685",
+  "legacy_source_sha256": "907f206ce55f687b497e67cb0923845c6f6ca219bde4b05ca413a6365924525e",
+  "artifact_sha256": "f226c32b970a7e9a74ba44a05a1f8694b4a3edabc59f4410d97b2ee64eec0d0b",
+  "architecture": "aarch64",
+  "command": [
+    "g++",
+    "-O3",
+    "-std=c++17",
+    "-march=native",
+    "-fPIC",
+    "-shared",
+    "-I/usr/include/eigen3",
+    "/home/kuang/workspace/chess_robot/runs/position_stability_20261113_01/candidate-src/surface_center.cpp",
+    "/home/kuang/workspace/chess_robot/runs/position_stability_20261113_01/candidate-src/surface_fit.cpp",
+    "-o",
+    "/home/kuang/workspace/chess_robot/runs/position_stability_20261113_01/candidate-v4/surface_center.so"
+  ],
+  "compiler": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04.3) 11.4.0"
+}
