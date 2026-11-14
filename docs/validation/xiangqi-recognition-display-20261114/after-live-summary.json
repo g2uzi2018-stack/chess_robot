@@ -1,0 +1,71 @@
+{
+  "perception": {
+    "frames": 1785,
+    "source_hz": 29.899446763606363,
+    "received_hz": 29.898439410838417,
+    "all_32_fraction": 1.0,
+    "all_classified_fraction": 0.9994397759103641,
+    "camera_valid_fraction": 0.9842962184873949,
+    "base_valid_fraction": 0.0,
+    "age_p50_ms": 116.58416899999999,
+    "age_p95_ms": 133.425824
+  },
+  "scene": {
+    "frames": 1679,
+    "source_hz": 28.15510892472806,
+    "received_hz": 28.16951617377542,
+    "all_32_fraction": 1.0,
+    "all_classified_fraction": 0.9994044073853484,
+    "camera_valid_fraction": 0.9843098570577725,
+    "base_valid_fraction": 0.9843098570577725,
+    "age_p50_ms": 267.64382,
+    "age_p95_ms": 292.033564
+  },
+  "metrics": {
+    "samples": 28,
+    "video_hz_mean": 30.0005,
+    "recognition_hz_mean": 28.230392857142856,
+    "first": {
+      "stamp_ns": 1794633107828992976,
+      "video_hz": 30.0633,
+      "recognition_hz": 28.0919,
+      "published_frames": 2846,
+      "overlay_valid": true,
+      "visible_tracks": 32,
+      "number_observations": 1919,
+      "pred_observations": 33,
+      "pred_edge": 0,
+      "pred_classification": 0,
+      "pred_camera_geometry": 33,
+      "pred_base_geometry": 0,
+      "pred_track_confirmation": 0,
+      "pred_render_feedback": 0,
+      "recognition_overlay_valid": true,
+      "base_overlay_valid": true,
+      "classified_count": 32,
+      "camera_geometry_count": 32,
+      "base_display_count": 32
+    },
+    "last": {
+      "stamp_ns": 1794633162330897197,
+      "video_hz": 29.9683,
+      "recognition_hz": 28.4944,
+      "published_frames": 4481,
+      "overlay_valid": true,
+      "visible_tracks": 32,
+      "number_observations": 1921,
+      "pred_observations": 31,
+      "pred_edge": 0,
+      "pred_classification": 0,
+      "pred_camera_geometry": 31,
+      "pred_base_geometry": 0,
+      "pred_track_confirmation": 0,
+      "pred_render_feedback": 0,
+      "recognition_overlay_valid": true,
+      "base_overlay_valid": true,
+      "classified_count": 32,
+      "camera_geometry_count": 31,
+      "base_display_count": 31
+    }
+  }
+}

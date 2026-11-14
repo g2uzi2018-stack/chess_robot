@@ -4,6 +4,7 @@
   <description>Fresh camera preview with timestamped experimental piece tracks.</description>
   <maintainer email="robot@example.com">Chess Robot</maintainer><license>Apache-2.0</license>
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <depend>rclcpp</depend><depend>sensor_msgs</depend><depend>std_msgs</depend><depend>cv_bridge</depend><depend>yaml-cpp</depend>
+  <depend>rclcpp</depend><depend>sensor_msgs</depend><depend>std_msgs</depend><depend>cv_bridge</depend><depend>yaml-cpp</depend><depend>jsoncpp</depend><depend>libopencv-dev</depend>
+  <exec_depend>fonts-noto-cjk</exec_depend>
   <export><build_type>ament_cmake</build_type></export>
 </package>

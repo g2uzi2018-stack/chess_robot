@@ -1,0 +1,22 @@
+{
+  "deployed_utc_ns": 1794633012251985496,
+  "before": {
+    "chess-robot-xiangqi-render-20261031.service": "MainPID=1427302\nActiveState=active\n",
+    "chess_robot_preview.service": "MainPID=1427291\nActiveState=active\n",
+    "chess-robot-xiangqi-preview-20261031.service": "MainPID=1430972\nActiveState=active\n",
+    "chess-robot-arm-contact-2mm-20261105.service": "MainPID=83687\nActiveState=active\n"
+  },
+  "after": {
+    "chess-robot-xiangqi-render-20261031.service": "MainPID=1527196\nActiveState=active\n",
+    "chess_robot_preview.service": "MainPID=1427291\nActiveState=active\n",
+    "chess-robot-xiangqi-preview-20261031.service": "MainPID=1430972\nActiveState=active\n",
+    "chess-robot-arm-contact-2mm-20261105.service": "MainPID=83687\nActiveState=active\n"
+  },
+  "sha256": {
+    "/home/kuang/workspace/chess_robot/runs/recognition_display_20261114_01/start-renderer-v1.sh": "42bf20a347897b46aee55cc4cfdea42274aa8afb06573c4d987dd226eb52efa3",
+    "/home/kuang/workspace/chess_robot/runs/recognition_display_20261114_01/install-v1/lib/chess_robot_tracking_preview/tracking_preview": "29babfe0d565790faa72afa3b59d48f6c48aa8cb158799080ac54feee3bc9272",
+    "/home/kuang/workspace/chess_robot/runs/recognition_display_20261114_01/source-v1/src/node.cpp": "68a1d3225b410a94dd4ec14fdda38dca0299f3495f83e1e03520f50ad5051770",
+    "/home/kuang/.config/systemd/user/chess-robot-xiangqi-render-20261031.service.d/zzzzzzzz-recognition-display-20261114.conf": "21423edd418212d546017db391080c4485afd6a87e214fd76cc2e66f483e508d"
+  },
+  "rollback": "Remove only /home/kuang/.config/systemd/user/chess-robot-xiangqi-render-20261031.service.d/zzzzzzzz-recognition-display-20261114.conf; systemctl --user daemon-reload; systemctl --user restart chess-robot-xiangqi-render-20261031.service"
+}
