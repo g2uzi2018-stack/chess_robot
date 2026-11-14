@@ -1,0 +1,44 @@
+[
+  {
+    "local": "src/chess_robot_vision/include/chess_robot_vision/calibration.hpp",
+    "remote_relative": "camera-source-v1/src/chess_robot_vision/include/chess_robot_vision/calibration.hpp",
+    "sha256": "08313bf0c1ce3792c9591974567d9605587a1a06903e3a0715b2ca720498a901",
+    "exact_match": true
+  },
+  {
+    "local": "src/chess_robot_vision/src/calibration.cpp",
+    "remote_relative": "camera-source-v1/src/chess_robot_vision/src/calibration.cpp",
+    "sha256": "8fa94f29b091c5759bfaab20efdca226a36b8faba219397a8e4963b357843681",
+    "exact_match": true
+  },
+  {
+    "local": "src/chess_robot_vision/src/node.cpp",
+    "remote_relative": "camera-source-v1/src/chess_robot_vision/src/node.cpp",
+    "sha256": "c6ba37fb73c30c5ee9d83c72e0074d553986dfddbbc982ec99619096047a65dd",
+    "exact_match": true
+  },
+  {
+    "local": "tools/testing/xiangqi_tracking/base_geometry.py",
+    "remote_relative": "vision-source-v1/base_geometry.py",
+    "sha256": "16821eabc51f7d8f174356bd12f9c03e66d84aa95829cc586eec667212697f01",
+    "exact_match": true
+  },
+  {
+    "local": "tools/testing/xiangqi_tracking/measurement_contract.py",
+    "remote_relative": "vision-source-v1/measurement_contract.py",
+    "sha256": "c65ed7bae01841a4da00b40d37dc6987de421fd1a53082a797259b1e3d0c7878",
+    "exact_match": true
+  },
+  {
+    "local": "tools/testing/xiangqi_tracking/piece_tracker.py",
+    "remote_relative": "vision-source-v1/piece_tracker.py",
+    "sha256": "f56d906c6d570207d1ed4fb4b67c9cd06ad2b2564d306e5ba699778a25744ff6",
+    "exact_match": true
+  },
+  {
+    "local": "tools/testing/xiangqi_tracking/scene_node.py",
+    "remote_relative": "vision-source-v1/scene_node.py",
+    "sha256": "4eae8d2978fdbb968d2170a61de2d8c751957d6029b2935d2e81b99e32c159e3",
+    "exact_match": true
+  }
+]

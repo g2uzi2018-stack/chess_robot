@@ -55,8 +55,45 @@ class BaseGeometry:
             robot_raw = Path(urdf).read_bytes()
             robot = ET.fromstring(robot_raw)
             sys.path.insert(0, str(ROOT/'tools/description'))
-            from rigid_geometry import fk
-            self.X, self.robot, self.fk = X, robot, fk
+            from rigid_geometry import numbers, origin, rotation, joint_values
+            joints = {j.get('name'): j for j in robot.findall('joint')}
+            roots = {l.get('name') for l in robot.findall('link')} - {j.find('child').get('link') for j in joints.values()}
+            assert len(roots) == 1
+            root = next(iter(roots))
+            known, pending, chain = {root}, list(joints.values()), []
+            while pending:
+                ready = [j for j in pending if j.find('parent').get('link') in known]
+                assert ready, 'Disconnected or cyclic joint graph'
+                for joint in ready:
+                    parent, child = joint.find('parent').get('link'), joint.find('child').get('link')
+                    kind = joint.get('type')
+                    if kind not in ('revolute', 'continuous', 'prismatic', 'fixed'):
+                        raise ValueError('Unsupported joint type: '+kind)
+                    axis = joint.find('axis')
+                    axis = numbers(axis.get('xyz', '1 0 0')) if axis is not None else (1, 0, 0)
+                    chain.append((joint.get('name'), parent, child, kind,
+                                  np.array(origin(joint.find('origin'))), axis))
+                    known.add(child)
+                    pending.remove(joint)
+
+            def cached_fk(robot, supplied):
+                # Static origins/topology are cached; every call uses current joints.
+                values = joint_values(joints, supplied)
+                poses = {root: np.eye(4)}
+                for name, parent, child, kind, fixed, axis in chain:
+                    transform = fixed
+                    if kind in ('revolute', 'continuous'):
+                        transform = fixed @ np.array(rotation(axis, values[name]))
+                    elif kind == 'prismatic':
+                        length = np.linalg.norm(axis)
+                        assert length > 0, 'Zero joint axis'
+                        motion = np.eye(4)
+                        motion[:3, 3] = np.array(axis)/length*values[name]
+                        transform = fixed @ motion
+                    poses[child] = poses[parent] @ transform
+                return poses
+
+            self.X, self.robot, self.fk = X, robot, cached_fk
             self.base_model_reason = 'model loaded; live qualification required'
             self.identity.update(calibration_sha256=hashlib.sha256(raw).hexdigest(),
                                  urdf_sha256=hashlib.sha256(robot_raw).hexdigest())

@@ -27,12 +27,19 @@ def update_surface_normals(pairs):
 
 
 class PieceTracker:
-    def __init__(self,path=None):
+    def __init__(self,path=None,checkpoint_interval=0):
         self.path=Path(path) if path else None;self.tracks={};self.next_id=1
+        self.checkpoint_interval=checkpoint_interval;self.last_checkpoint_ns=0;self.dirty=False
         if self.path and self.path.exists():
             data=json.loads(self.path.read_text());assert data['schema']=='xiangqi_tracks/v1'
             self.tracks={int(t['id']):t for t in data['tracks']};self.next_id=data['next_id']
         self.startup_ids=set(self.tracks);self.startup_frames_left=3
+    def save(self,force=False):
+        if not self.path:return
+        if not force and not self.dirty:return
+        data=dict(schema='xiangqi_tracks/v1',next_id=self.next_id,tracks=list(self.tracks.values()))
+        tmp=self.path.with_suffix('.tmp');tmp.write_text(json.dumps(data,separators=(',', ':'),allow_nan=False));tmp.replace(self.path)
+        self.dirty=False
     def update(self,detections,stamp_ns):
         current=[d for d in detections if d.get('valid') and d.get('complete_center_target')
                  and d.get('classification_valid',True) and 'base_surface_center_m' in d]
@@ -66,7 +73,7 @@ class PieceTracker:
             d=current[j]
             if d.get('identity_ambiguous'):continue
             track=dict(id=self.next_id,position_m=d['base_surface_center_m'],velocity_m_s=[0.,0.,0.],first_ns=stamp_ns,last_ns=stamp_ns,hits=0,class_votes={},normal=[0.,0.,1.])
-            self.tracks[self.next_id]=track;self.next_id+=1;pairs.append((track,d))
+            self.tracks[self.next_id]=track;self.next_id+=1;pairs.append((track,d));self.dirty=True
         surface=update_surface_normals(pairs)
         for (t,d),(n,tilt,spread,normal_count) in zip(pairs,surface):
             dt=(stamp_ns-t['last_ns'])*1e-9;p=np.array(d['base_surface_center_m'])
@@ -76,7 +83,7 @@ class PieceTracker:
                 velocity=(p-np.array(t['position_m']))/dt
                 if np.linalg.norm(velocity)<.4:t['velocity_m_s']=(.5*np.array(t['velocity_m_s'])+.5*velocity).tolist()
             else:t['velocity_m_s']=[0.,0.,0.]
-            t['position_m']=p.tolist();t['last_ns']=stamp_ns;t['hits']+=1
+            t['position_m']=p.tolist();t['last_ns']=stamp_ns;t['hits']+=1;self.dirty=True
             votes={k:v*.94 for k,v in t['class_votes'].items()};name=d['class_name'];votes[name]=votes.get(name,0)+float(d['confidence']);t['class_votes']=votes
             label=max(votes,key=votes.get);fraction=votes[label]/sum(votes.values())
             d.update(track_id=t['id'],track_confirmed=t['hits']>=3,track_hits=t['hits'],track_class_name=label,track_class_vote_fraction=fraction,position_stamp_ns=stamp_ns,orientation_observed='experimental_depth_surface_normal_only',surface_normal_base=n.tolist(),surface_tilt_deg=float(tilt),normal_spread_deg=float(spread),normal_temporally_stable=bool(normal_count>=8 and spread<1.5),orientation_valid_for_motion=False,yaw_observed=False,yaw_rad=None)
@@ -84,8 +91,12 @@ class PieceTracker:
             d.setdefault('track_id',None);d.setdefault('track_confirmed',False)
         if current:self.startup_frames_left=max(0,self.startup_frames_left-1)
         if self.path:
-            data=dict(schema='xiangqi_tracks/v1',next_id=self.next_id,tracks=list(self.tracks.values()))
-            tmp=self.path.with_suffix('.tmp');tmp.write_text(json.dumps(data,separators=(',', ':'),allow_nan=False));tmp.replace(self.path)
+            if self.checkpoint_interval<=0:
+                self.save(force=True)
+            elif self.dirty:
+                interval_ns=int(self.checkpoint_interval*1e9)
+                if self.last_checkpoint_ns==0 or (stamp_ns-self.last_checkpoint_ns)>=interval_ns or stamp_ns<self.last_checkpoint_ns:
+                    self.save(force=True);self.last_checkpoint_ns=stamp_ns
         return detections
 
 def check():

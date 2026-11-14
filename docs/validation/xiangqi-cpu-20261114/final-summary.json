@@ -1,0 +1,97 @@
+{
+  "label": "final",
+  "elapsed_s": 60.052515888004564,
+  "total_cpu_pct": 54.158400732488936,
+  "observer_cpu_cores": 0.21181460613111147,
+  "processes": [
+    {
+      "pid": 1571265,
+      "cpu_cores": 0.8812286915454732,
+      "rss_mib": 187.46484375,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python /home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/vision-source-v1/scene_node.py "
+    },
+    {
+      "pid": 1571266,
+      "cpu_cores": 0.5744971628556089,
+      "rss_mib": 319.08984375,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python /home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/vision-source-v1/perception_node.py "
+    },
+    {
+      "pid": 1571407,
+      "cpu_cores": 0.5420255840855093,
+      "rss_mib": 562.4921875,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=54) --multiprocessing-fork "
+    },
+    {
+      "pid": 1571410,
+      "cpu_cores": 0.5401938540010421,
+      "rss_mib": 564.58203125,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=56) --multiprocessing-fork "
+    },
+    {
+      "pid": 1571350,
+      "cpu_cores": 0.5265391388259233,
+      "rss_mib": 1258.24609375,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=50) --multiprocessing-fork "
+    },
+    {
+      "pid": 1571353,
+      "cpu_cores": 0.5220430740731403,
+      "rss_mib": 1260.796875,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=52) --multiprocessing-fork "
+    },
+    {
+      "pid": 1570907,
+      "cpu_cores": 1.7519665653344525,
+      "rss_mib": 248.91796875,
+      "cmd": "/home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/camera-install-v1/chess_robot_vision/lib/chess_robot_vision/vision_node --ros-args -r __node:=vision_node --params-file /home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/camera-install-v1/chess_robot_vision/share/chess_robot_vision/config/d405.yaml "
+    },
+    {
+      "pid": 1527196,
+      "cpu_cores": 0.32837924786993067,
+      "rss_mib": 146.31640625,
+      "cmd": "/home/kuang/workspace/chess_robot/runs/recognition_display_20261114_01/install-v1/lib/chess_robot_tracking_preview/tracking_preview "
+    },
+    {
+      "pid": 1570909,
+      "cpu_cores": 0.001831730084467159,
+      "rss_mib": 147.23828125,
+      "cmd": "/home/kuang/workspace/chess_robot/runs/vision_hardware_20261105_01/install/chess_robot_preview/lib/chess_robot_preview/preview_node --ros-args -r __node:=preview_node --params-file /tmp/launch_params_14we55h9 "
+    }
+  ],
+  "streams": {
+    "perception": {
+      "messages": 1796,
+      "unique_frames": 1796,
+      "hz": 29.916180964006436,
+      "n_counts": {
+        "32": 1796
+      },
+      "all32_class_valid_fraction": 0.7962138084632516,
+      "all32_geometry_valid_fraction": 0.6302895322939867,
+      "latency_ms_p50": 118.313007,
+      "latency_ms_p95": 149.469939,
+      "tracking_ms_p50": null
+    },
+    "scene": {
+      "messages": 1796,
+      "unique_frames": 1796,
+      "hz": 29.921633545629113,
+      "n_counts": {
+        "32": 1796
+      },
+      "all32_class_valid_fraction": 0.7956570155902004,
+      "all32_geometry_valid_fraction": 0.6302895322939867,
+      "latency_ms_p50": 154.579772,
+      "latency_ms_p95": 203.769764,
+      "tracking_ms_p50": 4.29082298069261
+    }
+  },
+  "vision_cpu_cores": 5.668705048675547,
+  "camera": {
+    "n": 1801,
+    "ok": 1801,
+    "hz": 30.015561419741296,
+    "color_gap": 0
+  }
+}

@@ -3,7 +3,7 @@
 #include <librealsense2/rs.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
-#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/msg/image.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <chrono>
@@ -92,6 +92,13 @@ class VisionNode final : public rclcpp::Node {
       profile_.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>().height(),
       profile_.get_stream(RS2_STREAM_COLOR).fps());
     scale_=profile_.get_device().first<rs2::depth_sensor>().get_depth_scale();
+    depth_lookup_=vision::depth_metres_lookup(scale_);
+    color_message_.width=depth_message_.width=width_;
+    color_message_.height=depth_message_.height=height_;
+    color_message_.encoding="bgr8"; depth_message_.encoding="32FC1";
+    color_message_.step=width_*3; depth_message_.step=width_*sizeof(float);
+    color_message_.data.resize(color_message_.step*height_);
+    depth_message_.data.resize(depth_message_.step*height_);
     source_intrinsics_=profile_.get_stream(RS2_STREAM_COLOR).as<rs2::video_stream_profile>().get_intrinsics();
     vision::rectification_maps(source_intrinsics_,rectify_x_,rectify_y_);
     // Preconvert once using OpenCV's own interpolation tables. Depth needs its
@@ -138,10 +145,21 @@ class VisionNode final : public rclcpp::Node {
       const auto intrinsics=vision::pinhole_intrinsics(source_intrinsics);
       cv::Mat source_bgr(height_,width_,CV_8UC3,const_cast<void *>(color.get_data()),color.get_stride_in_bytes());
       cv::Mat source_z16(height_,width_,CV_16UC1,const_cast<void *>(depth.get_data()),depth.get_stride_in_bytes());
-      cv::Mat bgr,z16;
-      cv::remap(source_bgr,bgr,linear_map_,linear_weights_,cv::INTER_LINEAR,cv::BORDER_CONSTANT);
-      // Nearest-neighbour preserves Z16 units/holes, avoiding depth blending across object edges.
-      cv::remap(source_z16,z16,nearest_map_,cv::Mat(),cv::INTER_NEAREST,cv::BORDER_CONSTANT);
+      const bool publish_color=publish_raw_ && color_pub_->get_subscription_count()>0;
+      const bool publish_depth=publish_raw_ && depth_pub_->get_subscription_count()>0;
+      const bool save_frame=!evidence_dir_.empty() &&
+          (count_+1==30 || (max_frames_>0 && count_+1==max_frames_));
+      // publish(const Image&) copies into ROS transport; these node-owned buffers
+      // are reused only after that call returns, never handed out as shared buffers.
+      cv::Mat bgr(height_,width_,CV_8UC3,color_message_.data.data());
+      cv::Mat metres(height_,width_,CV_32FC1,depth_message_.data.data());
+      if(publish_color || save_frame)
+        cv::remap(source_bgr,bgr,linear_map_,linear_weights_,cv::INTER_LINEAR,cv::BORDER_CONSTANT);
+      if(publish_depth)
+        vision::remap_depth_metres(source_z16,nearest_map_,depth_lookup_,metres);
+      // The evidence image retains the original Z16 representation.
+      cv::Mat z16;
+      if(save_frame) cv::remap(source_z16,z16,nearest_map_,cv::Mat(),cv::INTER_NEAREST,cv::BORDER_CONSTANT);
       std_msgs::msg::Header header; header.stamp=received; header.frame_id=frame_id_;
       vision::msg::FrameInfo result;
       result.header=header; result.color_frame_number=color.get_frame_number();
@@ -174,18 +192,16 @@ class VisionNode final : public rclcpp::Node {
       have_frame_=true; last_color_number_=color.get_frame_number(); last_depth_number_=depth.get_frame_number();
       frame_pub_->publish(result);
       info_pub_->publish(info);
-      if (publish_raw_ && color_pub_->get_subscription_count()>0) {
-        color_pub_->publish(*cv_bridge::CvImage(header,"bgr8",bgr).toImageMsg());
+      if (publish_color) {
+        color_message_.header=header;
+        color_pub_->publish(color_message_);
       }
-      if (publish_raw_ && depth_pub_->get_subscription_count()>0) {
-        // Convert SDK Z16 units to metres; 0 denotes missing depth.
-        cv::Mat metres; z16.convertTo(metres,CV_32F,scale_);
-        metres.setTo(std::numeric_limits<float>::quiet_NaN(),z16==0);
-        depth_pub_->publish(*cv_bridge::CvImage(header,"32FC1",metres).toImageMsg());
+      if (publish_depth) {
+        depth_message_.header=header;
+        depth_pub_->publish(depth_message_);
       }
       ++count_;
-      if (!evidence_dir_.empty() && (count_==30 || (max_frames_>0 && count_==max_frames_)))
-        save(bgr,z16,info,result,intrinsics);
+      if (save_frame) save(bgr,z16,info,result,intrinsics);
       if (max_frames_>0 && count_>=max_frames_) {
         RCLCPP_INFO(get_logger(),"completed %d frames",count_); rclcpp::shutdown();
       }
@@ -222,7 +238,8 @@ class VisionNode final : public rclcpp::Node {
   std::string serial_,frame_id_,evidence_dir_;
   std::string exposure_mode_; double exposure_us_{10000.0},gain_{16.0};
   rs2_intrinsics source_intrinsics_{}; cv::Mat rectify_x_,rectify_y_;
-  cv::Mat linear_map_,linear_weights_,nearest_map_;
+  cv::Mat linear_map_,linear_weights_,nearest_map_,depth_lookup_;
+  sensor_msgs::msg::Image color_message_,depth_message_;
   std::chrono::steady_clock::time_point last_frame_,last_warning_{};
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_;

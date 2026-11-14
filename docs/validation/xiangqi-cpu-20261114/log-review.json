@@ -1,0 +1,10 @@
+{
+  "camera-service.log": {
+    "lines": 10,
+    "fatal_matches": []
+  },
+  "vision-service.log": {
+    "lines": 665,
+    "fatal_matches": []
+  }
+}

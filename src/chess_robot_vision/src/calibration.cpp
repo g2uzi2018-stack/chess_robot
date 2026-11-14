@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <limits>
 namespace chess_robot_vision {
 rs2_intrinsics pinhole_intrinsics(rs2_intrinsics source) {
   source.model=RS2_DISTORTION_NONE;
@@ -31,4 +32,30 @@ void rectification_maps(const rs2_intrinsics &s,cv::Mat &map_x,cv::Mat &map_y) {
     map_x.at<float>(y,x)=pixel[0]; map_y.at<float>(y,x)=pixel[1];
   }
 }
+cv::Mat depth_metres_lookup(double scale) {
+  cv::Mat units(1,65536,CV_16UC1),lookup;
+  for(int value=0;value<65536;++value) units.at<uint16_t>(value)=static_cast<uint16_t>(value);
+  units.convertTo(lookup,CV_32F,scale);
+  lookup.at<float>(0)=std::numeric_limits<float>::quiet_NaN();
+  return lookup;
+}
+void remap_depth_metres(const cv::Mat &source,const cv::Mat &map,
+                        const cv::Mat &lookup,cv::Mat &metres) {
+  metres.create(map.size(),CV_32FC1);
+  const auto *values=lookup.ptr<float>();
+  cv::parallel_for_(cv::Range(0,map.rows),[&](const cv::Range &rows) {
+    for(int y=rows.start;y<rows.end;++y) {
+      const auto *coordinates=map.ptr<cv::Vec2s>(y);
+      auto *output=metres.ptr<float>(y);
+      for(int x=0;x<map.cols;++x) {
+        const int sx=coordinates[x][0],sy=coordinates[x][1];
+        const auto sample=static_cast<unsigned>(sx)<static_cast<unsigned>(source.cols) &&
+                          static_cast<unsigned>(sy)<static_cast<unsigned>(source.rows)
+                          ? source.ptr<uint16_t>(sy)[sx] : 0;
+        output[x]=values[sample];
+      }
+    }
+  });
+}
+
 }

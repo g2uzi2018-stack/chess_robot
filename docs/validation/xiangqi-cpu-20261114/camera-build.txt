@@ -1,0 +1,4 @@
+Starting >>> chess_robot_vision
+Finished <<< chess_robot_vision [27.0s]
+
+Summary: 1 package finished [27.5s]

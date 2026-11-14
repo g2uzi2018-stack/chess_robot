@@ -1,0 +1,7 @@
+{
+  "time_ns": 1794637356218642948,
+  "dropins": [
+    "/home/kuang/.config/systemd/user/chess_robot_preview.service.d/99-cpu-optimization-20261114.conf",
+    "/home/kuang/.config/systemd/user/chess-robot-xiangqi-preview-20261031.service.d/zzzzzzzzzzzzz-cpu-optimization-20261114.conf"
+  ]
+}

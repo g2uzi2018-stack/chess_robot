@@ -1,0 +1,18 @@
+{
+  "fk_pose_cases": 250,
+  "fk_link_count": 20,
+  "fk_max_matrix_delta": 4.440892098500626e-16,
+  "contract_cases": 14,
+  "contract_outcomes_equal": true,
+  "accepted_cases": 1,
+  "tracker_frames": 160,
+  "tracker_outputs_exact": true,
+  "checkpoint_updates_observed": 6,
+  "forced_flush_matches": true,
+  "timings": {
+    "old_decode_validate_ms": 8.340357151610078,
+    "new_parse_validate_ms": 5.356006538204383,
+    "old_fk_ms": 1.8820052249793662,
+    "new_fk_ms": 0.20780073682544753
+  }
+}

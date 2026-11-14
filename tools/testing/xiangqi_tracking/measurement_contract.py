@@ -78,28 +78,29 @@ def encode_json(record, max_bytes=MAX_MESSAGE_BYTES):
         wire = json.dumps(record, allow_nan=False, separators=(',', ':'))
     except (ValueError, TypeError, RecursionError) as error:
         raise ContractError('invalid measurement values') from error
-    if len(wire.encode()) > max_bytes:
+    if len(wire) > max_bytes:  # json.dumps uses ASCII escaping by default.
         raise ContractError('JSON exceeds bounded payload')
     return wire
 
 
-def decode_json(wire, max_bytes=MAX_MESSAGE_BYTES):
+def parse_json_object(wire, max_bytes=MAX_MESSAGE_BYTES):
+    """Parse bounded wire data; callers must validate before using its fields."""
     try:
         if not isinstance(wire, str) or len(wire.encode()) > max_bytes:
             raise ContractError('JSON exceeds bounded payload')
-        def finite_float(text):
-            value = float(text)
-            if not math.isfinite(value):
-                raise ContractError('non-finite JSON number')
-            return value
-        value = json.loads(wire, parse_float=finite_float,
-                           parse_constant=lambda text: (_ for _ in ()).throw(ContractError('non-finite JSON')))
-        check_json(value)
+        value = json.loads(wire)
         if not isinstance(value, dict):
             raise ContractError('JSON topic root must be an object')
         return value
     except (ValueError, TypeError, OverflowError, RecursionError) as error:
-        raise ContractError('invalid, non-finite or unbounded JSON') from error
+        raise ContractError('invalid or unbounded JSON') from error
+
+
+def decode_json(wire, max_bytes=MAX_MESSAGE_BYTES):
+    value = parse_json_object(wire, max_bytes)
+    # This walk also catches NaN, Infinity and overflowing decimal exponents.
+    check_json(value)
+    return value
 
 
 def encode(record):

@@ -1,0 +1,35 @@
+[
+  {
+    "cases": 5,
+    "pixel_mismatches": 0,
+    "max_depth_delta": 0,
+    "old_wall_ms": 14.9868,
+    "new_wall_ms": 10.5057,
+    "old_cpu_ms": 41.3986,
+    "new_cpu_ms": 35.282,
+    "lookup_bytes": 262144,
+    "threads": 4
+  },
+  {
+    "cases": 5,
+    "pixel_mismatches": 0,
+    "max_depth_delta": 0,
+    "old_wall_ms": 23.5523,
+    "new_wall_ms": 18.6758,
+    "old_cpu_ms": 41.8448,
+    "new_cpu_ms": 35.748,
+    "lookup_bytes": 262144,
+    "threads": 2
+  },
+  {
+    "cases": 5,
+    "pixel_mismatches": 0,
+    "max_depth_delta": 0,
+    "old_wall_ms": 40.6913,
+    "new_wall_ms": 33.8362,
+    "old_cpu_ms": 40.5713,
+    "new_cpu_ms": 33.7386,
+    "lookup_bytes": 262144,
+    "threads": 1
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "checked_ns": 1794638316053539547,
+  "frozen_sources_unchanged": true,
+  "camera_binary_sha256": "800c53d052ec07e2629ae17cf78c80a9c43c7a0b36c7a85ba50277ca74be4427",
+  "launchers": {
+    "start_camera_v1.sh": "495395cfc9577fcb7b722520cb450837a9b36c1f6438533c15a1e5caca5edb31",
+    "start_visual_v1.sh": "b6387bdc73b4ed93066a75606b6e50856e31324d74fee937ef9f72109d50e489"
+  },
+  "dropins": {
+    "/home/kuang/.config/systemd/user/chess_robot_preview.service.d/99-cpu-optimization-20261114.conf": "[Service]\nExecStart=\nExecStart=/bin/bash /home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/start_camera_v1.sh\nStandardOutput=append:/home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/camera-service.log\nStandardError=inherit\n",
+    "/home/kuang/.config/systemd/user/chess-robot-xiangqi-preview-20261031.service.d/zzzzzzzzzzzzz-cpu-optimization-20261114.conf": "[Service]\nExecStart=\nExecStart=/bin/bash /home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/start_visual_v1.sh\nStandardOutput=append:/home/kuang/workspace/chess_robot/runs/cpu_optimization_20261114_01/vision-service.log\nStandardError=inherit\n"
+  },
+  "previous_camera_launcher": "/home/kuang/workspace/chess_robot/runs/vision_hardware_20261105_01/start_camera.sh",
+  "previous_vision_launcher": "/home/kuang/workspace/chess_robot/runs/fps_audit_20261114_01/start_visual_v4.sh",
+  "live_source": "vision-source-v1",
+  "live_camera_install": "camera-install-v1",
+  "opencv_threads": 4,
+  "robot_commands_issued": 0,
+  "source_reference_commit": "c447d43",
+  "retained_candidate": "v1",
+  "rejected_options": [
+    "opencv_threads=2 (no CPU benefit)",
+    "opencv_threads=1 (frame budget exceeded)",
+    "CUDA blocking wait flag (no CPU benefit)"
+  ]
+}

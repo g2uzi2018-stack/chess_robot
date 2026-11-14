@@ -1,0 +1,97 @@
+{
+  "label": "before",
+  "elapsed_s": 60.056360223999945,
+  "total_cpu_pct": 55.407616987046126,
+  "observer_cpu_cores": 0.21296661922726398,
+  "processes": [
+    {
+      "pid": 1427361,
+      "cpu_cores": 1.8079683749567104,
+      "rss_mib": 258.87890625,
+      "cmd": "/home/kuang/workspace/chess_robot/runs/project_release_20261102_01/install/chess_robot_vision/lib/chess_robot_vision/vision_node --ros-args -r __node:=vision_node --params-file /home/kuang/workspace/chess_robot/runs/project_release_20261102_01/install/chess_robot_vision/share/chess_robot_vision/config/d405.yaml "
+    },
+    {
+      "pid": 1427363,
+      "cpu_cores": 0.0018316128315089164,
+      "rss_mib": 179.5546875,
+      "cmd": "/home/kuang/workspace/chess_robot/runs/vision_hardware_20261105_01/install/chess_robot_preview/lib/chess_robot_preview/preview_node --ros-args -r __node:=preview_node --params-file /tmp/launch_params_kufhkdop "
+    },
+    {
+      "pid": 1431527,
+      "cpu_cores": 0.5296691288208966,
+      "rss_mib": 1436.578125,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=50) --multiprocessing-fork "
+    },
+    {
+      "pid": 1431593,
+      "cpu_cores": 0.5308347006227659,
+      "rss_mib": 566.484375,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=54) --multiprocessing-fork "
+    },
+    {
+      "pid": 1431531,
+      "cpu_cores": 0.5373286006617521,
+      "rss_mib": 1438.765625,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=52) --multiprocessing-fork "
+    },
+    {
+      "pid": 1431500,
+      "cpu_cores": 1.0043898726965257,
+      "rss_mib": 190.53125,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python /home/kuang/workspace/chess_robot/runs/fps_audit_20261114_01/vision-source-v3/scene_node.py "
+    },
+    {
+      "pid": 1431501,
+      "cpu_cores": 0.5816203291327859,
+      "rss_mib": 311.22265625,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python /home/kuang/workspace/chess_robot/runs/fps_audit_20261114_01/vision-source-v3/perception_node.py "
+    },
+    {
+      "pid": 1431599,
+      "cpu_cores": 0.5399927647803106,
+      "rss_mib": 562.078125,
+      "cmd": "/home/kuang/workspace/xiangqi-yolo-training/20261031-yolo26s-seg-v1/.venv/bin/python -B -s -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=30, pipe_handle=56) --multiprocessing-fork "
+    },
+    {
+      "pid": 1527196,
+      "cpu_cores": 0.3303563507012445,
+      "rss_mib": 145.7890625,
+      "cmd": "/home/kuang/workspace/chess_robot/runs/recognition_display_20261114_01/install-v1/lib/chess_robot_tracking_preview/tracking_preview "
+    }
+  ],
+  "streams": {
+    "perception": {
+      "messages": 1794,
+      "unique_frames": 1794,
+      "hz": 29.88456987315789,
+      "n_counts": {
+        "32": 1794
+      },
+      "all32_class_valid_fraction": 0.6783723522853957,
+      "all32_geometry_valid_fraction": 0.6164994425863991,
+      "latency_ms_p50": 119.55007,
+      "latency_ms_p95": 151.784447,
+      "tracking_ms_p50": null
+    },
+    "scene": {
+      "messages": 1782,
+      "unique_frames": 1782,
+      "hz": 29.682253094234163,
+      "n_counts": {
+        "32": 1782
+      },
+      "all32_class_valid_fraction": 0.6784511784511784,
+      "all32_geometry_valid_fraction": 0.6167227833894501,
+      "latency_ms_p50": 242.868118,
+      "latency_ms_p95": 286.901091,
+      "tracking_ms_p50": 7.689021993428469
+    }
+  },
+  "vision_cpu_cores": 5.8639917352045,
+  "camera": {
+    "n": 1802,
+    "ok": 1802,
+    "hz": 30.023358257242972,
+    "color_gap": 0
+  }
+}

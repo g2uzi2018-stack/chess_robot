@@ -16,7 +16,7 @@ from std_msgs.msg import String
 from chess_robot_interfaces.msg import ArmState
 
 from base_geometry import BaseGeometry, CALIB, URDF
-from measurement_contract import ContractError, MAX_MESSAGE_BYTES, decode, decode_json, encode_json
+from measurement_contract import ContractError, MAX_MESSAGE_BYTES, parse_json_object, decode_json, encode_json
 from scene_state import SceneState
 from spin_guard import SpinGuard
 from stable_observation import AuditEpoch, FeedbackWindow, Policy
@@ -55,7 +55,7 @@ def main():
 
     from piece_tracker import PieceTracker
     state = SceneState(policy=policy, base=BaseGeometry(),
-                       tracker=PieceTracker(out/('track-state-v2-'+session+'.json')), save=save, session=session)
+                       tracker=PieceTracker(out/('track-state-v2-'+session+'.json'), checkpoint_interval=1.0), save=save, session=session)
     lock = threading.RLock()
     cache = {k: {} for k in ('arm', 'joint')}
     pairs = deque(maxlen=512)
@@ -188,7 +188,8 @@ def main():
                 state.observation.requested = True
             for wire in incoming:
                 try:
-                    packet = decode(wire)
+                    # process() validates the parsed packet before reading any fields.
+                    packet = parse_json_object(wire)
                     now = node.get_clock().now().nanoseconds
                     audit_evidence=audit.qualification(now,policy.state_age_s)
                     record = state.process(packet, now, feedback, audit_evidence['ok'], audit.token,audit_evidence)
@@ -224,10 +225,13 @@ def main():
                 last_hint = time.monotonic()
             time.sleep(.002)
     finally:
-        audit.close()
-        rclpy.shutdown()
-        spin.join(timeout=2)
-        node.destroy_node()
+        try:
+            state.tracker.save(force=True)
+        finally:
+            audit.close()
+            rclpy.shutdown()
+            spin.join(timeout=2)
+            node.destroy_node()
 
 
 if __name__ == '__main__':
