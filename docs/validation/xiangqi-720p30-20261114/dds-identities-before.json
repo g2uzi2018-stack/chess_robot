@@ -1,0 +1,34 @@
+{
+  "/vision/color/image_rect": {
+    "publishers": [
+      {
+        "node": "vision_node",
+        "gid": "010f67109b48c9cf00000000000013030000000000000000"
+      }
+    ],
+    "subscribers": [
+      {
+        "node": "xiangqi_tracking_preview",
+        "gid": "010f6710d546859900000000000016040000000000000000"
+      },
+      {
+        "node": "xiangqi_perception",
+        "gid": "010febdb9cacabd800000000000013040000000000000000"
+      }
+    ]
+  },
+  "/vision/aligned_depth/image_rect": {
+    "publishers": [
+      {
+        "node": "vision_node",
+        "gid": "010f67109b48c9cf00000000000014030000000000000000"
+      }
+    ],
+    "subscribers": [
+      {
+        "node": "xiangqi_perception",
+        "gid": "010febdb9cacabd800000000000014040000000000000000"
+      }
+    ]
+  }
+}

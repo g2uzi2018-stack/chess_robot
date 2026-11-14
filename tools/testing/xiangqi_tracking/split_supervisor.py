@@ -25,7 +25,7 @@ def cleanup_slots(path, token, owner_pid):
     if data.get('token') != token or data.get('owner_pid') != owner_pid:
         raise RuntimeError('shared-memory cleanup ownership mismatch')
     names = data.get('names')
-    if not isinstance(names, list) or len(names) != 3 or not all(
+    if not isinstance(names, list) or len(names) not in (3, 4) or not all(
             isinstance(name, str) and re.fullmatch(r'psm_[a-zA-Z0-9_]{1,48}', name) for name in names):
         raise RuntimeError('invalid owned shared-memory manifest')
     from multiprocessing import shared_memory

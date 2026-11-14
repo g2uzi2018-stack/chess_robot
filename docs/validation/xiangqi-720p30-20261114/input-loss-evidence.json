@@ -1,0 +1,16 @@
+{
+  "observed_input_window_s": 12.125342018989613,
+  "source": "Main tool read of production perception-latest.json counters, before visual transport rejoin",
+  "received_hz": {
+    "info": 30.01977176643233,
+    "frame": 30.01977176643233,
+    "color": 25.97864864402798,
+    "depth": 26.308536245856907,
+    "selected_rgbd": 23.00966022756764,
+    "complete_frames_skipped_for_latest": 0.0
+  },
+  "published_hz": 22.927188327110407,
+  "udp_window_s": 8,
+  "udp_rcvbuf_errors_delta": 414,
+  "udp_in_datagrams_delta": 25701
+}

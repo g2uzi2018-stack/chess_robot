@@ -1,0 +1,15 @@
+{
+  "duration_s": 9.067593437997857,
+  "received_rates": {
+    "info": 29.996933790633,
+    "frame": 29.996933790633,
+    "depth": 29.996933790633,
+    "color": 29.996933790633,
+    "complete_frames_skipped_for_latest": 0.0,
+    "submitted_rgbd": 29.996933790633
+  },
+  "published_rate": 29.886650945814498,
+  "last_rejections": {
+    "image observation expired during pipeline": 4
+  }
+}

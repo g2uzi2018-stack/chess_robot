@@ -1,0 +1,180 @@
+{
+  "perception": {
+    "frames": 8973,
+    "unique_frames": 8973,
+    "fps": 29.909553457107233,
+    "epochs": 1,
+    "sequence_gaps": 0,
+    "one_second_min_p05_p50": [
+      23,
+      29.0,
+      30.0
+    ],
+    "one_second_ge28_pct": 97.9933110367893,
+    "valid_pct": 100.0,
+    "counts": {
+      "32": 8973
+    },
+    "class_complete_pct": 100.0,
+    "geometry_pct": 97.5318316059289,
+    "gpu_ms_p50_p95": [
+      46.20470802183263,
+      60.77587800682522
+    ],
+    "geometry_ms_p50_p95": [
+      35.46828401158564,
+      39.85966999316588
+    ],
+    "image_age_ms_p50_p95": [
+      105.607216,
+      127.06182479999998
+    ],
+    "source_age_ms_p50_p95": [
+      135.550008,
+      157.7274858
+    ],
+    "roi_counts": {
+      "2": 332,
+      "1": 4468,
+      "0": 4172,
+      "3": 1
+    },
+    "base_valid_pct": null
+  },
+  "scene": {
+    "frames": 8974,
+    "unique_frames": 8974,
+    "fps": 29.90956478024006,
+    "epochs": 1,
+    "sequence_gaps": 0,
+    "one_second_min_p05_p50": [
+      23,
+      29.0,
+      30.0
+    ],
+    "one_second_ge28_pct": 97.9933110367893,
+    "valid_pct": 100.0,
+    "counts": {
+      "32": 8974
+    },
+    "class_complete_pct": 100.0,
+    "geometry_pct": 97.53210664140852,
+    "gpu_ms_p50_p95": [
+      46.195238013751805,
+      60.774575507093694
+    ],
+    "geometry_ms_p50_p95": [
+      35.46832701249514,
+      39.85946624306962
+    ],
+    "image_age_ms_p50_p95": [
+      122.39339849999999,
+      146.74527659999998
+    ],
+    "source_age_ms_p50_p95": [
+      152.56444649999997,
+      177.29960025
+    ],
+    "roi_counts": {
+      "0": 4173,
+      "2": 332,
+      "1": 4468,
+      "3": 1
+    },
+    "base_valid_pct": 0.0
+  },
+  "producer_counters": {
+    "perception": {
+      "duration_s": 299.8070485990029,
+      "published": 8967,
+      "fps": 29.909236763787757,
+      "ingress_hz": {
+        "info": 29.995959207844688,
+        "frame": 29.995959207844688,
+        "color": 29.995959207844688,
+        "depth": 29.995959207844688,
+        "complete_frames_skipped_for_latest": 0.08672244405692893,
+        "submitted_rgbd": 29.909236763787757
+      },
+      "rejection_counts_before": {
+        "image observation expired during pipeline": 4
+      },
+      "rejection_counts_after": {
+        "image observation expired during pipeline": 4
+      }
+    },
+    "scene": {
+      "duration_s": 300.07327418902423,
+      "published": 8976,
+      "fps": 29.91269390537518,
+      "rejection_counts_before": {
+        "camera measurement expired or future stamped": 4
+      },
+      "rejection_counts_after": {
+        "camera measurement expired or future stamped": 4
+      }
+    }
+  },
+  "camera": {
+    "frames": 8999,
+    "fps": 29.996228366820755,
+    "hw_gaps": 0,
+    "diagnostics": {
+      "synchronized rectified RGB-D; no detection or pose estimation; exposure_us=25000; gain=16": 8999
+    }
+  },
+  "duration_s": 300,
+  "http": {
+    "202": 2,
+    "200": 3713,
+    "204": 7,
+    "release_200": 1
+  },
+  "unique_http_frames": 3713,
+  "udp_delta": {
+    "InDatagrams": 53357,
+    "NoPorts": 0,
+    "InErrors": 0,
+    "OutDatagrams": 41234,
+    "RcvbufErrors": 0,
+    "SndbufErrors": 0,
+    "InCsumErrors": 0,
+    "IgnoredMulti": 241,
+    "MemErrors": 0
+  },
+  "dds_identities": {
+    "/vision/color/image_rect": {
+      "pub": [
+        {
+          "node": "vision_node",
+          "gid": "010febdba1c7b92b00000000000013030000000000000000"
+        }
+      ],
+      "sub": [
+        {
+          "node": "xiangqi_tracking_preview",
+          "gid": "010febdb66c7987f00000000000016040000000000000000"
+        },
+        {
+          "node": "xiangqi_perception",
+          "gid": "010febdbcdd7257900000000000013040000000000000000"
+        }
+      ]
+    },
+    "/vision/aligned_depth/image_rect": {
+      "pub": [
+        {
+          "node": "vision_node",
+          "gid": "010febdba1c7b92b00000000000014030000000000000000"
+        }
+      ],
+      "sub": [
+        {
+          "node": "xiangqi_perception",
+          "gid": "010febdbcdd7257900000000000014040000000000000000"
+        }
+      ]
+    }
+  },
+  "robot_commands": 0
+}

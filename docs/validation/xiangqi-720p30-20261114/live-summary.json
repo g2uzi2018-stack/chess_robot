@@ -1,0 +1,118 @@
+{
+  "duration_s": 40,
+  "camera_frames": 1200,
+  "camera_fps": 30.00261211949587,
+  "camera_hw_frame_gaps": 0,
+  "camera_diagnostics": {
+    "synchronized rectified RGB-D; no detection or pose estimation; exposure_us=25000; gain=16": 1200
+  },
+  "perception_frames": 881,
+  "perception_fps": 22.076888034541152,
+  "perception_sequence_gaps": 0,
+  "detection_counts": {
+    "32": 881
+  },
+  "class_complete_pct": 100.0,
+  "geometry_pct": 98.46410329171397,
+  "gpu_ms_p05_p50_p95": [
+    25.932293996447697,
+    41.25652799848467,
+    49.38289200072177
+  ],
+  "geometry_ms_p05_p50_p95": [
+    32.34340201015584,
+    34.69123999821022,
+    37.77518498827703
+  ],
+  "source_age_ms_p05_p50_p95": [
+    113.473581,
+    136.465439,
+    182.863284
+  ],
+  "image_age_ms_p05_p50_p95": [
+    82.941931,
+    105.576228,
+    152.128326
+  ],
+  "gpu_worker_wall_time_pct": 81.86797737265537,
+  "roi_count_histogram": {
+    "0": 382,
+    "2": 58,
+    "1": 441
+  },
+  "latest_metrics": {
+    "stamp_ns": 1794621297326158681,
+    "video_hz": 27.813,
+    "recognition_hz": 20.8597,
+    "published_frames": 4412892,
+    "overlay_valid": false,
+    "visible_tracks": 32,
+    "number_observations": 0,
+    "pred_observations": 1792,
+    "pred_edge": 0,
+    "pred_classification": 0,
+    "pred_camera_geometry": 25,
+    "pred_base_geometry": 1767,
+    "pred_track_confirmation": 0,
+    "pred_render_feedback": 0
+  },
+  "stage": {
+    "image_decode": [
+      1.5044260071590543,
+      1.6799329896457493,
+      2.331402007257566
+    ],
+    "shared_memory_copy": [
+      0.835487007861957,
+      0.8987460169009864,
+      1.1233049735892564
+    ],
+    "image_age_at_processing_start": [
+      36.593016999999996,
+      37.844313,
+      56.155984999999994
+    ],
+    "analysis": [
+      59.876156999962404,
+      74.7713640157599,
+      83.6081989982631
+    ],
+    "gpu_stage": [
+      25.711962982313707,
+      41.02825000882149,
+      49.1307339980267
+    ],
+    "geometry_stage": [
+      32.257296988973394,
+      34.61191800306551,
+      37.68253399175592
+    ],
+    "tracking": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "frame_pipeline_elapsed": [
+      70.52524900063872,
+      90.44412898947485,
+      127.53404199611396
+    ]
+  },
+  "speed": {
+    "preprocess": [
+      1.2398359831422567,
+      1.549797976622358,
+      1.8378730164840817
+    ],
+    "inference": [
+      3.7078949972055852,
+      6.153880996862426,
+      6.92147298832424
+    ],
+    "postprocess": [
+      4.699409997556359,
+      4.925048007862642,
+      5.6580129894427955
+    ]
+  }
+}

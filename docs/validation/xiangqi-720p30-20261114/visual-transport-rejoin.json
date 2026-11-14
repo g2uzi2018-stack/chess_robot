@@ -1,0 +1,10 @@
+{
+  "reason": "Camera/renderer host GUID 010f6710 differs from perception 010febdb after WiFi IP changed; rejoin visual participants on current host identity.",
+  "units": [
+    "chess_robot_preview.service",
+    "chess-robot-xiangqi-render-20261031.service"
+  ],
+  "robot_commands": 0,
+  "started_ns": 1794622658488788033,
+  "finished_ns": 1794622658642574602
+}

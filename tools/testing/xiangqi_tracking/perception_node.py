@@ -63,6 +63,7 @@ def main():
     last = 0
     sequence = detection_count = count = 0
     rejects = Counter()
+    ingress = Counter()
     running = True
     config_check = written = 0
     initial_identity = None
@@ -76,6 +77,7 @@ def main():
         with lock:
             t=stamp(message)
             cache[kind][t] = message
+            ingress[kind] += 1
             if kind=='color':
                 color_received[t]=node.get_clock().now().nanoseconds
             while len(cache[kind]) > 8:
@@ -136,7 +138,7 @@ def main():
         count += 1
         if time.monotonic()-written > 3:
             packet.update(published_frames=count, running_seconds=time.monotonic()-begin,
-                          perception_rejection_counts=dict(rejects))
+                          perception_rejection_counts=dict(rejects), ingress_counts=dict(ingress))
             tmp = out/'perception-latest.json.tmp'
             tmp.write_text(json.dumps(packet, indent=2, allow_nan=False))
             tmp.replace(out/'perception-latest.json')
@@ -199,6 +201,8 @@ def main():
                     common = set.intersection(*(set(cache[k]) for k in cache))
                     eligible = [t for t in common if t > last and 0 <= (now-t)*1e-9 <= .2]
                     if eligible:
+                        ingress['complete_frames_skipped_for_latest'] += len(eligible)-1
+                        ingress['submitted_rgbd'] += 1
                         t = max(eligible)
                         last = t
                         image, depth, info, frame = (cache[k][t] for k in ('color', 'depth', 'info', 'frame'))

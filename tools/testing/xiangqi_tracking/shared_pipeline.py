@@ -1,4 +1,4 @@
-"""Three bounded slots: single GPU inference overlaps CPU geometry on the preceding frame."""
+"""Bounded RGB-D slots overlap independent inference and geometry workers."""
 import multiprocessing
 from multiprocessing import shared_memory
 from concurrent.futures import ProcessPoolExecutor
@@ -81,13 +81,16 @@ def geometry_slot(job,detection):
 
 class Pipeline:
     def __init__(self,width=1280,height=720,camera_only=False):
-        self.slots=FrameSlots(width,height);context=multiprocessing.get_context('spawn');configuration=self.slots.configuration()
-        self.gpu=ProcessPoolExecutor(max_workers=1,mp_context=context,initializer=initialize_gpu,initargs=(configuration,camera_only))
+        gpu_workers=2 if os.environ.get("XIANGQI_PIECE_CLASSIFIER") else 1
+        self.slots=FrameSlots(width,height,count=gpu_workers+2);context=multiprocessing.get_context('spawn');configuration=self.slots.configuration()
+        self.gpu=ProcessPoolExecutor(max_workers=gpu_workers,mp_context=context,initializer=initialize_gpu,initargs=(configuration,camera_only))
         geometry_workers=2 if os.environ.get("XIANGQI_PIECE_CLASSIFIER") else 1
         self.geometry=ProcessPoolExecutor(max_workers=geometry_workers,mp_context=context,initializer=initialize_geometry,initargs=(configuration,camera_only))
-        # One queued GPU frame hides parent dispatch latency; three owned slots bound all work.
+        # Two independent inference contexts absorb same-frame ROI repairs.
+        # One queued GPU job hides dispatch latency; owned slots bound all work.
+        self.max_gpu_jobs=gpu_workers+1
         self.gpu_jobs=[];self.geometry_jobs=[];self.free=list(range(self.slots.count));self.next_id=0;self.last_returned=-1
-    def can_submit(self):return len(self.gpu_jobs)<2 and bool(self.free)
+    def can_submit(self):return len(self.gpu_jobs)<self.max_gpu_jobs and bool(self.free)
     def submit(self,color,depth,metadata,roi=None,draw=False,context=None):
         assert self.can_submit(),'Pipeline full; never overwrite an in-flight frame'
         slot=self.free.pop(0);job=dict(slot=slot,job_id=self.next_id,metadata=metadata,roi=roi,draw=draw,context=context,started=time.monotonic());self.next_id+=1

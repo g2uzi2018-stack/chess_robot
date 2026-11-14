@@ -1,0 +1,15 @@
+{
+  "method": "inline standard-library shared-memory allocation, wrong-token rejection, owned cleanup and failed reopen; no retained source file",
+  "cases": [
+    {
+      "slots": 3,
+      "foreign_token_rejected": true,
+      "owned_blocks_removed": true
+    },
+    {
+      "slots": 4,
+      "foreign_token_rejected": true,
+      "owned_blocks_removed": true
+    }
+  ]
+}
