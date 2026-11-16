@@ -22,7 +22,7 @@ systemctl --user show chess_robot_console.service chess_robot_arm.service \
 cat /home/kuang/workspace/chess_robot/.runtime/arm-install-prefix
 ```
 
-本现场ROS环境为 `ROS_DOMAIN_ID=90`、`ROS_LOCALHOST_ONLY=1`，测试使用隔离domain。2026-11-02发布已将原arm/console/识别/渲染transient unit登记为同名持久user定义，相机沿用原持久unit加drop-in；本次没有enable操作，不承诺机器重启自动恢复。实际入口为 `runs/project_release_20261102_01/deployment/` 脚本；后续panel配对修复仅切换console中的panel到 `runs/panel_pairing_20261102_01/install`，其他节点继续使用整包版本；PID仍只作当前快照，不按历史PID操作或启动第二实例。配置备份和现场边界见[发布记录](../validation/project-release-20261102.md)。
+本现场ROS环境为 `ROS_DOMAIN_ID=90`、`ROS_LOCALHOST_ONLY=1`，测试使用隔离domain。2026-11-02发布已将原arm/console/识别/渲染transient unit登记为同名持久user定义，相机沿用原持久unit加drop-in；本次没有enable操作，不承诺机器重启自动恢复。实际入口为 `runs/project_release_20261102_01/deployment/` 脚本；后续panel配对修复仅切换console中的panel到 `runs/panel_pairing_20261102_01/install`，其他节点继续使用整包版本；PID仍只作当前快照，不按历史PID操作或启动第二实例。配置备份和现场边界见[发布记录](../../runs/records/validation/project-release-20261102.md)。
 
 本现场网页绑定AGX的LAN地址，不必同时监听127.0.0.1。诊断时绕过HTTP代理直连实际绑定地址；本机回环连接拒绝或代理连接失败不等于节点故障：
 
@@ -76,6 +76,6 @@ ssh -p 6021 -L 127.0.0.1:8088:192.168.30.26:8088 \
 原机械臂在新鲜、参考有效、模式5且连续停稳时重启，保留干净存档与线缆历史。部署后两个机械臂Action可用，夹爪保持原开度；没有以本次部署执行实机运动验收。
 该批次记录150项单元测试、6组机械臂loopback、9组面板HTTP/模拟ROS及9组夹爪接口回归通过；浏览器设备切换和关节/夹爪检查通过。真实LAN只读检查控制POST为0，不证明运动或夹持可靠性。
 
-夹爪更早的11点实机收窄、首版只读结果分别见[收窄报告](../validation/gripper-sweep-20261025/REPORT.md)和[首版报告](../validation/gripper-node-20261025/REPORT.md)。初始化瞬时位置1074/1925导致旧驱动误锁定的修复保留在源码和历史证据中，不把当时开度当成当前实物状态。
+夹爪更早的11点实机收窄、首版只读结果分别见[收窄报告](../../runs/records/validation/gripper-sweep-20261025/REPORT.md)和[首版报告](../../runs/records/validation/gripper-node-20261025/REPORT.md)。初始化瞬时位置1074/1925导致旧驱动误锁定的修复保留在源码和历史证据中，不把当时开度当成当前实物状态。
 
-原夹爪面板、初始化瞬时值修复与浏览器验证见[10月31日冻结记录](../validation/manual-panel-20261031.md)。
+原夹爪面板、初始化瞬时值修复与浏览器验证见[10月31日冻结记录](../../runs/records/validation/manual-panel-20261031.md)。

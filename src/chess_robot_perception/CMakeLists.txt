@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.8)
+project(chess_robot_perception)
+find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
+ament_python_install_package(${PROJECT_NAME})
+install(PROGRAMS scripts/perception_node scripts/scene_node scripts/live_tracked DESTINATION lib/${PROJECT_NAME})
+ament_package()

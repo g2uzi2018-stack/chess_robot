@@ -18,7 +18,7 @@ ArmState与JointState使用QoS深度20，各自缓存最多32帧。只使用完�
 
 最新尚未配对的状态一旦参考无效、忙、控制器未就绪、非静止，或包含NaN/非法时间戳、同一路输入的时间戳回退或重复，立即清空pair与缓存并封禁准入。故障后必须形成全新的完整安全pair才恢复，pair的source stamp须严格晚于观察到unsafe时的ROS时刻；故障前采集、故障后排队到达的旧pair不能解锁，单路safe样本也不能复活故障前缓存；同一路同stamp重复包不刷新或覆盖状态。机械臂source未来时间戳严格拒绝，旧包仍受原1秒界限约束。故障恢复锁也禁用夹爪互斥入口，直到新安全pair形成。缓存解决异步到达和短时丢单路，不掩盖持续缺帧或增加原时效上限。HTTP可达不等于can_move=true；每次发送仍通过底层Action和实际反馈检查。
 
-本次修复与部署前后采样见[项目发布记录](../../docs/validation/project-release-20261102.md)。该记录的只读准入检查没有发送真实关节或夹爪命令。
+本次修复与部署前后采样见[项目发布记录](../../runs/records/validation/project-release-20261102.md)。该记录的只读准入检查没有发送真实关节或夹爪命令。
 
 默认 `enable_arm_control=false`。启用必须同时满足 `enable_control=true`；实机还要求 `allow_hardware=true`。单次改变不超过 `arm_max_delta_deg`（上限 10°）；默认 profile 为 roundtrip_low，底层仍执行全部限位、几何、扭转及到位检查。参考有效、反馈新鲜且停稳、Action 可用才能发送。面板内夹爪和机械臂互斥，不自动 Home、初始化、使能、清错或重发。确定未执行的失败允许手动改值重试；执行结果不确定或超时保持锁定，迟到结果不能自动解锁。
 
@@ -30,7 +30,7 @@ ArmState与JointState使用QoS深度20，各自缓存最多32帧。只使用完�
 - [相机预览](http://192.168.30.26:8088)：页头“夹爪控制”返回8089，均在当前标签页跳转。
 - 页面跳转只切换网页，不会发送夹爪命令；离开控制页会结束连续点动的追加，最后已发出的步进仍可能走完。
 - 当前链接面向此AGX的局域网地址；仅有8089的SSH转发不会同时转发8088，需要分别配置或直接使用局域网地址。
-- 现场入口与维护见[双网页操作说明](../../docs/operations/web-panels.md)，原夹爪面板验收见[10月31日冻结记录](../../docs/validation/manual-panel-20261031.md)，六关节部署见[网页操作第6节](../../docs/operations/web-panels.md#6-六关节控制台部署验收2026-10-31)。
+- 现场入口与维护见[双网页操作说明](../../docs/operations/web-panels.md)，原夹爪面板验收见[10月31日冻结记录](../../runs/records/validation/manual-panel-20261031.md)，六关节部署见[网页操作第6节](../../docs/operations/web-panels.md#6-六关节控制台部署验收2026-10-31)。
 
 ## 操作
 
@@ -55,9 +55,9 @@ ArmState与JointState使用QoS深度20，各自缓存最多32帧。只使用完�
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon --log-base log_panel build --base-paths src/chess_robot_interfaces src/chess_robot_gripper src/chess_robot_panel \
-  --build-base build_panel --install-base install_panel --executor sequential
-source install_panel/setup.bash
+colcon --log-base build/colcon_logs build --base-paths src/chess_robot_interfaces src/chess_robot_gripper src/chess_robot_panel \
+  --build-base build/ros --install-base install/dev --executor sequential
+source install/dev/setup.bash
 export ROS_DOMAIN_ID=89 ROS_LOCALHOST_ONLY=1
 ros2 launch chess_robot_gripper gripper.launch.py
 # 另一终端，同样 source 和 ROS 环境
@@ -105,7 +105,7 @@ HTTP 使用 Boost.Beast，单独 I/O 线程与 ROS executor；输入体限制8Ki
 
 ## 2026-10-31 原夹爪版本现场部署历史
 
-代码位于夹爪工作区 `src/chess_robot_panel`，已在 AGX 编译到 `install_panel`。
+代码位于夹爪工作区 `src/chess_robot_panel`，已在 AGX 编译到 `install/dev`。
 现场配置在 `runs/manual_panel_20261031/`，手动服务为
 `chess_robot_manual_panel.service`（临时 user service，未设置开机自启）。
 局域网地址 `http://192.168.30.26:8089`；Windows 本机已建立
@@ -114,7 +114,7 @@ HTTP 使用 Boost.Beast，单独 I/O 线程与 ROS executor；输入体限制8Ki
 以页面实时反馈为准。初始化期间位置超范围误锁定已修复；正常状态的范围检查与不自动重发仍保留。
 Gemini 3.8 Flash提供布局初稿，已完成桌面/手机适配及点动交互回归；夹持效果仍由使用者目视判断。
 
-旧 `chess_robot_manual_panel.service` 和 `install_panel` 组合启动命令已经由机器人控制台入口替代，
+旧 `chess_robot_manual_panel.service` 和 `install/dev` 组合启动命令已经由机器人控制台入口替代，
 不再列为可复制的当前启动步骤。原始部署配置和脚本保留在上述历史目录；当前操作见[网页说明](../../docs/operations/web-panels.md)。
 
 该组合启动入口会启动一个夹爪驱动；已有夹爪驱动时只用 `panel.launch.py`。

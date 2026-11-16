@@ -13,7 +13,7 @@ references, clear errors, control the gripper, or publish production TF.
    - 停稳采样、ChArUco识别、PARK求解与留出一致性；不直接打开USB/调用SDK、不发夹爪命令、不发布生产TF。
 2. **入口**
    - 下节维护配置/模式，接口与目标转换随后说明；移植前读[PORTING](PORTING.md)。
-   - [现场结果](../../docs/validation/handeye-20261030.md)含48观测与后续激光多点粗检，实体毫米精度尚未量化。
+   - [现场结果](../../runs/records/validation/handeye-20261030.md)含48观测与后续激光多点粗检，实体毫米精度尚未量化。
 
 
 ## 2 Configuration and modes
@@ -110,12 +110,12 @@ Build without scanning ignored Python environments under `runs/`:
 ```bash
 # Run from the root of your workspace. Existing dependencies must be built/sourced.
 source /opt/ros/humble/setup.bash
-source install/setup.bash
-source install_vision/setup.bash
-colcon --log-base log_handeye build --base-paths src/chess_robot_handeye \
-  --build-base build_handeye --install-base install_handeye \
+source install/dev/local_setup.bash
+source install/dev/setup.bash
+colcon --log-base build/colcon_logs build --base-paths src/chess_robot_handeye \
+  --build-base build/ros --install-base install/dev \
   --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo
-source install_handeye/setup.bash
+source install/dev/setup.bash
 ros2 launch chess_robot_handeye handeye.launch.py config_file:=/absolute/reviewed.yaml
 ```
 
@@ -156,15 +156,15 @@ using the result for grasping. No result is automatically written to URDF or TF.
 ## 5 Tests (synthetic only)
 
 ```bash
-colcon --log-base log_handeye test --base-paths src/chess_robot_handeye \
-  --build-base build_handeye --install-base install_handeye \
+colcon --log-base build/colcon_logs test --base-paths src/chess_robot_handeye \
+  --build-base build/ros --install-base install/dev \
   --return-code-on-test-failure
-colcon test-result --test-result-base build_handeye --verbose
+colcon test-result --test-result-base build/ros --verbose
 python3 src/chess_robot_handeye/test/integration.py \
   --template src/chess_robot_handeye/config/handeye.example.yaml \
-  --fixture build_handeye/chess_robot_handeye/handeye_fixture \
-  --node install_handeye/chess_robot_handeye/lib/chess_robot_handeye/handeye_node \
-  --output-parent build_handeye/manual_test_runs --case success
+  --fixture build/ros/chess_robot_handeye/handeye_fixture \
+  --node install/dev/chess_robot_handeye/lib/chess_robot_handeye/handeye_node \
+  --output-parent build/ros/manual_test_runs --case success
 ```
 
 All 14 integration cases are registered with CTest and run by `colcon test` above;
@@ -222,6 +222,6 @@ still uses this repository's action/state/frame contracts. The supported baselin
 is ROS 2 Humble, Linux and OpenCV 4.5.x (tested 4.5.4), eye-in-hand, six bounded
 revolute joints. It is not an independently certified industrial calibration product.
 
-The [2026-10-30 field report](../../docs/validation/handeye-20261030.md) records
+The [2026-10-30 field report](../../runs/records/validation/handeye-20261030.md) records
 48 captures, held-out consistency, two initial physical corner checks and the later multi-point laser coarse check.
 Those checks do not establish submillimetre physical accuracy or a verified TCP.

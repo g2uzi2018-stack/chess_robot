@@ -22,8 +22,8 @@
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --packages-select dh_ag95_description chess_robot_description
-source install/setup.bash
+colcon --log-base build/colcon_logs build --build-base build/ros --install-base install/dev --packages-select dh_ag95_description chess_robot_description
+source install/dev/local_setup.bash
 python3 tools/description/check_models.py
 python3 tools/description/export_browser_model.py
 ```
@@ -51,4 +51,4 @@ python3 tools/description/export_browser_model.py
 
 本体的六个关节 effort/velocity 为原厂 0 占位值。尚无完整 SRDF、有效运动限值或实机碰撞误差验收。删除旧包络不代表碰撞检查已关闭，也不代表历史自碰撞原因已消除；细化后的模型仍需验证安装基准、误差余量和实际碰撞姿态。
 
-重新生成、参数覆盖和本轮检查见 `../../docs/models/ag95-browser.md` 和 `../../docs/validation/camera-v2-2026-10-24.md`。CAD 配准不等于实物安装/TCP 标定。
+重新生成、参数覆盖和本轮检查见 `../../docs/models/ag95-browser.md` 和 `../../runs/records/validation/camera-v2-2026-10-24.md`。CAD 配准不等于实物安装/TCP 标定。

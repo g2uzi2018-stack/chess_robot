@@ -10,7 +10,7 @@
    - 当前 `.runtime/arm.yaml` 为exploration、反馈1.0s；仓库模板仍只读/暂停，认证标志false。
    - 现场profile为roundtrip_low/high/alignment，规划速度/加速度cap分别0.3/1.0/0.4；默认roundtrip_low。
    - 现场ServoJ aheadtime=50、gain=500，command_time_s=0表示使用30ms发送周期；探索模板的100/200不是现场值。
-   - 旧1秒加载批次没有新增运动资格；后续一次下降记录不扩展为本工具完整范围验收，见[版本与范围](../validation/README.md)。
+   - 旧1秒加载批次没有新增运动资格；后续一次下降记录不扩展为本工具完整范围验收，见[版本与范围](../../runs/records/validation/README.md)。
 
 ## 2 规划与执行约束
 
@@ -46,12 +46,12 @@
    - 规划拒绝记录原因后可检查下一点；必要桥接路径重新规划并反馈确认。执行失败终止，不自动重试。
 3. **资格与输出**
    - 规划成功与实测到位分别记账；资格绑定当前源/二进制/控制器epoch，旧成功保留历史身份。
-   - 2026-10-25状态、原始证据与三维图见[该批次报告](../validation/business-node-20261025/REPORT.md)。
+   - 2026-10-25状态、原始证据与三维图见[该批次报告](../../runs/records/validation/business-node-20261025/REPORT.md)。
 
 ## 4 历史批次迁移与客户端复用
 
 1. **历史参考恢复**
-   - 专用脚本仍接收完整audit与真实无未观测运动声明；按[历史恢复契约](../validation/reference-recovery-history.md)从已知Home推进完整相位，不在当前位置初始化。
+   - 专用脚本仍接收完整audit与真实无未观测运动声明；按[历史恢复契约](../../runs/records/validation/reference-recovery-history.md)从已知Home推进完整相位，不在当前位置初始化。
    - `--completed-plan`引用旧账本，`--skip-recovery-home`仅在原Home来源可核验时使用；都不能跳过当前状态/路径检查。
    - `--validate-speed`另做当前上下文的上/左/右及有可测位移的取消停止验证；`--enable-disabled`只在无报警且静止时按选项使能，不清错/切模式。
 2. **复用前检查**

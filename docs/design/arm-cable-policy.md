@@ -5,7 +5,7 @@
 ## 1 日常目标与历史参考
 
 - 当前日常目标源为 `config/arm/home.yaml`，参数 `home.joint_positions_rad`；`home_reference.json`记录与目标匹配的采集来源。
-- 扭转历史基准为 `config/arm/twist_reference.yaml`，参数 `reference.joint_positions_rad`。原2026-10-24参考角度约 `[79.4900,16.9600,83.3900,-10.3500,-90.0000,-3.6500]` 度继续仅作为历史几何基准，旧采集证据见[冻结记录](../validation/home-reference-2026-10-24.md)。
+- 扭转历史基准为 `config/arm/twist_reference.yaml`，参数 `reference.joint_positions_rad`。原2026-10-24参考角度约 `[79.4900,16.9600,83.3900,-10.3500,-90.0000,-3.6500]` 度继续仅作为历史几何基准，旧采集证据见[冻结记录](../../runs/records/validation/home-reference-2026-10-24.md)。
 - 更新日常目标不更改历史基准、完整展开角或检查点identity；到了新Home也不清零。具体采集、校验与加载流程见[当前操作](../operations/arm-quickstart.md)。
 - 几何基准并不自动证明真实线缆中性，也不代表270°/360°已通过物理范围标定。真实更换历史基准需要独立物理校准和历史重建流程。
 

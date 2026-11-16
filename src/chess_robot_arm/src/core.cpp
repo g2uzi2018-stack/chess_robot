@@ -400,29 +400,41 @@ void State::validateRecovery(uint64_t generation,bool before_enable,double stopp
             "recovery lost stationary disabled dwell before enable");
 }
 void State::confirmRecoveryEndpoint(uint64_t generation, const Feedback &before,
-                                    Clock::time_point completed, double wait_s) {
+                                    Clock::time_point completed, double wait_s, bool expect_enabled) {
   require(std::isfinite(wait_s) && wait_s>0, "invalid recovery confirmation budget");
   const auto deadline=Clock::now()+std::chrono::duration<double>(wait_s);
+  std::optional<Clock::time_point> enabled_stopped_since;
   for (;;) {
     {
       std::lock_guard<std::mutex> lock(mutex_);
       require(reference_generation_==generation && tracker_.valid(),
               "recovery reference generation lost during enable attempt");
-      const bool continuous=have_ && Clock::now()-last_.received<=std::chrono::duration<double>(config_.freshness) &&
-          (last_.mode==4 || last_.mode==5) && maxSpeed(last_)<=config_.stationary_speed &&
-          stationary_since_ && *stationary_since_<=before.received &&
+      // A successful EnableRobot ACK can precede a brief measured brake-settling
+      // transition. Keep tracking that bounded movement; require a new stopped
+      // mode-5 window before declaring readiness. Never repeat EnableRobot.
+      const bool endpoint_trusted=have_ && Clock::now()-last_.received<=std::chrono::duration<double>(config_.freshness) &&
+          (last_.mode==4 || last_.mode==5) &&
           jointDistance(last_.q,before.q)<=config_.checkpoint_endpoint_tolerance &&
           model_->withinJointBounds(last_.q) && chess_robot_twist::withinLimits(tracker_.metrics(),config_.twist_limits);
+      const bool stopped=maxSpeed(last_)<=config_.stationary_speed && stationary_since_;
+      const bool continuous=endpoint_trusted && (expect_enabled ||
+          (stopped && *stationary_since_<=before.received));
       if (!continuous || Clock::now()>=deadline) {
         invalidateReferenceLocked();stationary_since_.reset();
         diagnostic_="checkpoint enable confirmation untrusted; explicit history recovery required";
         throw Failure(FEEDBACK_FAULT,diagnostic_);
       }
-      if (last_.received>completed && last_.controller_stamp>before.controller_stamp) return;
+      const bool new_frame=last_.received>completed && last_.controller_stamp>before.controller_stamp;
+      if (!expect_enabled && new_frame) return;
+      if (new_frame && last_.mode==5 && stopped) {
+        if(!enabled_stopped_since)enabled_stopped_since=last_.received;
+        if(last_.received-*enabled_stopped_since>=std::chrono::duration<double>(config_.checkpoint_dwell))return;
+      } else enabled_stopped_since.reset();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
   }
 }
+
 std::string State::restore(const std::vector<std::string> &files, bool no_motion) {
   require(no_motion, "history handoff requires explicit no-unobserved-motion attestation");
   require(!files.empty() && files.size() <= 16, "invalid history file count");

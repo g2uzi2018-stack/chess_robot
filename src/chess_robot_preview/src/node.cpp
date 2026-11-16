@@ -25,6 +25,9 @@
 #include <algorithm>
 #include <cerrno>
 #include <condition_variable>
+#ifdef CHESS_PREVIEW_GSTREAMER
+#include "hardware_jpeg.hpp"
+#endif
 
 namespace net=boost::asio;
 namespace http=boost::beast::http;
@@ -51,6 +54,10 @@ static std::map<std::string,std::string> query(const std::string &target) {
 }
 struct Channel {
   std::string id,title,description,topic,type,mode,error;
+  std::string jpeg_backend{"opencv"};
+#ifdef CHESS_PREVIEW_GSTREAMER
+  std::unique_ptr<HardwareJpegEncoder> hardware_encoder;
+#endif
   rclcpp::SubscriptionBase::SharedPtr subscription;
   Bytes jpeg; Clock::time_point received{},next_encode{};
   uint64_t sequence{0},received_count{0},encoded_count{0},sent_bytes{0};
@@ -68,6 +75,16 @@ class PreviewNode : public rclcpp::Node {
     bind_=p["bind_address"].as<std::string>(); port_=p["port"].as<int>();
     fps_=p["fps"].as<double>(); max_width_=p["max_width"].as<int>(); quality_=p["jpeg_quality"].as<int>();
     idle_s_=p["idle_timeout_s"].as<double>(); stale_s_=p["stale_timeout_s"].as<double>();
+    jpeg_backend_=declare_parameter<std::string>("jpeg_backend","opencv");
+    if(jpeg_backend_!="opencv" && jpeg_backend_!="nvjpeg")
+      throw std::runtime_error("jpeg_backend must be opencv or nvjpeg");
+    if(jpeg_backend_=="nvjpeg") {
+#ifdef CHESS_PREVIEW_GSTREAMER
+      HardwareJpegEncoder::initialize();
+#else
+      throw std::runtime_error("preview was built without GStreamer support");
+#endif
+    }
     min_depth_=p["depth_min_m"].as<double>(); max_depth_=p["depth_max_m"].as<double>();
     if(port_<1||port_>65535||!std::isfinite(fps_)||fps_<0.5||fps_>30||max_width_<160||max_width_>1920||
        quality_<20||quality_>95||!std::isfinite(idle_s_)||idle_s_<0.5||idle_s_>10||
@@ -149,6 +166,9 @@ class PreviewNode : public rclcpp::Node {
           });
       } else if(!wanted&&c->subscription) {
         c->subscription.reset(); c->jpeg.clear(); c->error.clear(); c->received={}; c->next_encode={};
+#ifdef CHESS_PREVIEW_GSTREAMER
+        if(!c->encoding) c->hardware_encoder.reset();
+#endif
       }
     }
   }
@@ -176,16 +196,34 @@ class PreviewNode : public rclcpp::Node {
     const bool resize=image.cols>max_width_;
     if(resize) cv::resize(image,image,{max_width_,std::max(1,image.rows*max_width_/image.cols)},0,0,cv::INTER_AREA);
     Bytes jpeg;
+    std::string backend="opencv";
+#ifdef CHESS_PREVIEW_GSTREAMER
+    if(jpeg_backend_=="nvjpeg" && image.cols%2==0 && image.rows%2==0) {
+      if(!c->hardware_encoder || !c->hardware_encoder->matches(image))
+        c->hardware_encoder=std::make_unique<HardwareJpegEncoder>(image.cols,image.rows,quality_);
+      c->hardware_encoder->encode(image,jpeg);
+      backend="nvjpeg";
+    } else
+#endif
     if(!cv::imencode(".jpg",image,jpeg,{cv::IMWRITE_JPEG_QUALITY,quality_})) throw std::runtime_error("JPEG encode failed");
     std::lock_guard<std::mutex> lock(mutex_);
     c->encoding=false;
-    if(!c->subscription) return;
+    if(!c->subscription) {
+#ifdef CHESS_PREVIEW_GSTREAMER
+      c->hardware_encoder.reset();
+#endif
+      return;
+    }
     c->jpeg=std::move(jpeg); c->received=Clock::now(); ++c->sequence; ++c->encoded_count;
     c->width=image.cols; c->height=image.rows; c->error.clear();
+    c->jpeg_backend=backend;
     frame_ready_.notify_all();
   }
   void frame_error(const std::shared_ptr<Channel> &c,const std::string &error) {
     std::lock_guard<std::mutex> lock(mutex_); c->encoding=false; c->error=error; c->jpeg.clear(); frame_ready_.notify_all();
+#ifdef CHESS_PREVIEW_GSTREAMER
+    c->hardware_encoder.reset();
+#endif
   }
   std::string metadata() {
     std::lock_guard<std::mutex> lock(mutex_); reconcile();
@@ -198,6 +236,7 @@ class PreviewNode : public rclcpp::Node {
        <<",\"subscribed\":"<<(c->subscription?"true":"false")
        <<",\"has_publisher\":"<<(count_publishers(c->topic)>0?"true":"false")
        <<",\"received_frames\":"<<c->received_count<<",\"encoded_frames\":"<<c->encoded_count
+       <<",\"jpeg_backend\":"<<json_quote(c->jpeg_backend)
        <<",\"sent_bytes\":"<<c->sent_bytes<<",\"width\":"<<c->width<<",\"height\":"<<c->height<<'}';
     }
     return o.str()+"]}";
@@ -292,7 +331,7 @@ class PreviewNode : public rclcpp::Node {
   std::mutex mutex_; std::condition_variable frame_ready_; std::vector<std::shared_ptr<Channel>> channels_;
   std::map<std::string,std::shared_ptr<Channel>> by_id_; std::map<std::string,Viewer> viewers_;
   std::map<std::string,Bytes> assets_;
-  std::string bind_; int port_,max_width_,quality_; double fps_,idle_s_,stale_s_,min_depth_,max_depth_;
+  std::string bind_,jpeg_backend_; int port_,max_width_,quality_; double fps_,idle_s_,stale_s_,min_depth_,max_depth_;
   rclcpp::TimerBase::SharedPtr timer_; rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_;
 };
 int main(int argc,char **argv) {

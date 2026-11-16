@@ -26,7 +26,7 @@ class Study:
         self.project=project;self.out=out;out.mkdir(parents=True,exist_ok=True)
         sys.path.insert(0,str(project/'tools/description'))
         from geometry_report import RobotGeometry
-        from rigid_geometry import origin
+        from chess_robot_description.rigid_geometry import origin
         self.model=RobotGeometry(project/'src/chess_robot_description/urdf/nova5_with_ag95.urdf',[project/'src'])
         self.home=np.array(json.loads((project/'config/arm/home_reference.json').read_text())['joint_positions_rad'])
         self.joints=[self.model.joints[f'joint{i}'] for i in range(1,7)]
@@ -45,7 +45,8 @@ class Study:
         self.hulls=self.make_hulls()
         config=dict(joint_origins=self.origins.reshape(6,16).tolist(),axes=self.axes.tolist(),lower=self.lower.tolist(),upper=self.upper.tolist(),tcp=self.tcp.reshape(16).tolist(),hulls=self.hulls,ground_z_m=ground,clearance_m=clearance,characteristic_length_m=self.L)
         (out/'model.yaml').write_text(yaml.safe_dump(config,sort_keys=False))
-        self.binary=out/'workspace_eval'
+        self.binary=project/'build/analysis/workspace_eval'
+        self.binary.parent.mkdir(parents=True,exist_ok=True)
         fcl_flags=shlex.split(subprocess.check_output(['pkg-config','--cflags','--libs','fcl'],text=True));fcl_flags=[f for f in fcl_flags if not f.startswith('-std=')]
         subprocess.run(['g++','-O3','-DNDEBUG','-std=c++17',str(project/'tools/analysis/workspace_eval.cpp'),'-lyaml-cpp',*fcl_flags,'-o',str(self.binary)],check=True)
         self.verify()

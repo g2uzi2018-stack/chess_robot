@@ -1,0 +1,33 @@
+开发构建目录
+默认：build/ros；安装输出：install/dev。执行目录为项目根目录。
+
+build/ros
+范围：src 下 ROS 驱动、接口、模型、预览、感知、任务及验证包。
+源码：src/<包名>。构建入口：bash tools/build.sh。
+配置：ROS 2 Humble；各包 CMakeLists.txt/package.xml 声明依赖。
+选择部分包：bash tools/build.sh --packages-up-to <包名>。
+产物：C++ 程序/库、消息类型和 Python 模块；由 install/dev 的开发启动入口使用。
+包名子目录由 colcon 管理，不代表各业务模块单独维护一套构建。
+
+build/arm_tools
+范围：独立机械臂维护工具；源码 tools/arm。
+独立原因：标准 CMake 工具，不依赖 ROS 或业务库；C++17/RelWithDebInfo。
+入口：bash tools/arm/build.sh。
+产物：arm_operator；tools/arm/arm_prepare.sh、arm_home.sh、arm_capture_home.sh 使用。
+
+build/analysis
+范围：离线工作空间分析内核；源码 tools/analysis。
+独立原因：按分析工具入口编译的 Eigen/FCL 内核，不是 ROS 节点。
+入口：bash tools/analysis/run_workspace_study.sh <runs/输出目录> [分析参数]。
+产物：workspace_eval、workspace_policy_probe；对应分析脚本使用。
+
+build/colcon_logs 为 colcon 自动产生的构建诊断，随 build 清理；不是运行日志。
+本文件是 build/README.txt 的版本管理原稿，构建入口会恢复它。
+清理 build 不得连带删除 config、data、state 或 runs。
+install/dev 是本工程的开发输出位置，不是 ROS 的强制目录规范。
+
+build/history_vision/<批次>（仅运行既有隔离回归时创建）
+源码：tools/testing/run_history_vision_regression.sh 复制的当前指定包。
+独立原因：Release、localhost 夹具及指定历史基线，不覆盖默认开发构建。
+入口：上述脚本 BEFORE_SOURCE_TGZ [runs/输出批次]；产物供该脚本自身使用。
+构建/安装/colcon诊断留在构建区，采样和结果写入 runs 输出批次。

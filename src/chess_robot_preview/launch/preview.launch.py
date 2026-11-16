@@ -9,6 +9,8 @@ def generate_launch_description():
     config = os.path.join(get_package_share_directory('chess_robot_preview'), 'config', 'channels.yaml')
     return LaunchDescription([
         DeclareLaunchArgument('preview_config', default_value=config),
+        DeclareLaunchArgument('jpeg_backend', default_value='opencv'),
         Node(package='chess_robot_preview', executable='preview_node', name='preview_node',
-             parameters=[{'config_file': LaunchConfiguration('preview_config')}], output='screen'),
+             parameters=[{'config_file': LaunchConfiguration('preview_config'),
+                          'jpeg_backend': LaunchConfiguration('jpeg_backend')}], output='screen'),
     ])

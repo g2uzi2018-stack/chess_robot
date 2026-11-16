@@ -8,7 +8,7 @@ import xml.etree.ElementTree as ET
 
 import numpy as np
 import trimesh
-from rigid_geometry import fk, joint_values, origin
+from chess_robot_description.rigid_geometry import fk, joint_values, origin
 
 
 def sha256(path):

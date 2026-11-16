@@ -484,6 +484,15 @@ void V4Driver::enableAfterHistoryRestore(bool checkpoint_attested,const std::fun
   if (!config_.hardwareAllowed() || !(old_recovery || checkpoint_recovery))
     throw Failure(HARDWARE_DISABLED,"explicit powered recovery is not enabled");
   if(!before_enable)throw Failure(REFERENCE_INVALID,"recovery enable requires a live state guard");
+  {
+    std::lock_guard<std::mutex> lock(command_mutex_);
+    if (streaming_) throw Failure(BUSY, "recovery during active ServoJ stream");
+    // A power cycle leaves the old dashboard socket stale. Fresh disabled
+    // stationary feedback authorizes a new session before the alarm query.
+    before_enable();
+    command_transport_.reset();
+    session_fault_ = false;
+  }
   OfficialCommand sdk;
   const auto errors=call(sdk.GetErrorID());
   if (errors.empty() || errors.find_first_not_of("[], \t\r\n")!=std::string::npos)

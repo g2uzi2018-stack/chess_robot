@@ -6,13 +6,14 @@
 #include <opencv2/imgproc.hpp>
 #include <yaml-cpp/yaml.h>
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <vector>
 #include <map>
 
-struct Entry {int id;std::string name;double score,tilt;cv::Point center;std::vector<cv::Point> outline;std::vector<double> xyz;bool base=false;std::vector<double> camera;};
+struct Entry {int id;std::string name,reason;double score,tilt;cv::Point center;std::vector<cv::Point> outline;std::vector<double> xyz;bool base=false,classified=false,camera_geometry=false,base_geometry=false,complete=false,confirmed=false,edge=false;int hits=0;std::vector<double> camera;};
 class TrackingPreview final:public rclcpp::Node {
  public:
   TrackingPreview():Node("xiangqi_tracking_preview") {
@@ -31,6 +32,37 @@ class TrackingPreview final:public rclcpp::Node {
     });
   }
  private:
+  // Diagnostic state only; data admission and retry timing are unchanged.
+  std::string track_log_reason_;
+  size_t track_log_count_{0};
+  double track_log_first_{0}, track_log_last_{0};
+  std::chrono::steady_clock::time_point track_log_reported_{};
+  void logTrackFault(const std::string &reason, bool recovered=false) {
+    if (recovered && track_log_count_==0) return;
+    const auto summary=[&](const char *stage, bool success) {
+      const std::string object="/pose/xiangqi/detections";
+      if (success) {
+        RCLCPP_INFO(get_logger(), "tracking_input stage=%s object=%s count=%zu first_unix_s=%.6f last_unix_s=%.6f previous_reason=%s",
+                    stage, object.c_str(), track_log_count_, track_log_first_, track_log_last_, track_log_reason_.c_str());
+      } else {
+        RCLCPP_ERROR(get_logger(), "tracking_input stage=%s object=%s impact=tracking_overlay_unavailable count=%zu first_unix_s=%.6f last_unix_s=%.6f reason=%s",
+                     stage, object.c_str(), track_log_count_, track_log_first_, track_log_last_, track_log_reason_.c_str());
+      }
+    };
+    if (recovered) {
+      summary("recovered", true); track_log_count_=0; track_log_reason_.clear(); return;
+    }
+    if (track_log_count_ && reason!=track_log_reason_) {
+      summary("reason_changed", false); track_log_count_=0;
+    }
+    const auto current=std::chrono::steady_clock::now();
+    track_log_last_=std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+    if (track_log_count_==0) { track_log_reason_=reason; track_log_first_=track_log_last_; }
+    ++track_log_count_;
+    if (track_log_count_==1 || current-track_log_reported_>=std::chrono::seconds(2)) {
+      summary(track_log_count_==1 ? "first" : "ongoing", false); track_log_reported_=current;
+    }
+  }
   void data(const std::string &s) {
     try {
       const auto d=YAML::Load(s);const int64_t next=d["stamp_ns"].as<int64_t>();
@@ -44,6 +76,14 @@ class TrackingPreview final:public rclcpp::Node {
       for(const auto &v:d["detections"]) {
         if(!v["detection_valid"].as<bool>(v["valid"].as<bool>(false)))continue;
         Entry e;e.base=v["valid"].as<bool>(false)&&v["track_confirmed"].as<bool>(false)&&v["complete_center_target"].as<bool>(false);
+        e.classified=v["classification_valid"].as<bool>(false);e.camera_geometry=v["camera_geometry_valid"].as<bool>(false);
+        e.base_geometry=v["base_geometry_valid"].as<bool>(false);e.complete=v["complete_center_target"].as<bool>(false);
+        e.confirmed=v["track_confirmed"].as<bool>(false);e.hits=v["track_hits"].as<int>(0);
+        e.edge=v["touches_image_edge"].as<bool>(false)||v["touches_processing_edge"].as<bool>(false);
+        if(e.edge)e.reason="incomplete image/processing boundary";
+        else if(!e.classified)e.reason=v["classification_reason"].as<std::string>("classification unresolved");
+        else if(!e.camera_geometry)e.reason=v["camera_geometry_reason"].as<std::string>(v["reason"].as<std::string>("camera geometry unresolved"));
+        else if(!e.base_geometry||!e.complete)e.reason=v["reason"].as<std::string>(d["base_transform_reason"].as<std::string>("complete center unresolved"));
         e.id=e.base?v["track_id"].as<int>():0;
         e.name=v["class_name"].as<std::string>(v["track_class_name"].as<std::string>("unknown"));
         e.score=v["confidence"].as<double>(v["track_class_vote_fraction"].as<double>(0));e.tilt=v["surface_tilt_deg"].as<double>(0);
@@ -59,8 +99,9 @@ class TrackingPreview final:public rclcpp::Node {
         entries_.push_back(std::move(e));
       }
       std::sort(entries_.begin(),entries_.end(),[](const Entry&a,const Entry&b){return a.id<b.id;});
-      if(!entries_.empty())++rate_data_frames_;
-    } catch(const std::exception &e) {entries_.clear();source_q_.clear();source_names_.clear();RCLCPP_WARN_THROTTLE(get_logger(),*get_clock(),2000,"Track JSON rejected: %s",e.what());}
+      ++rate_data_frames_;
+      logTrackFault("", true);
+    } catch(const std::exception &e) {entries_.clear();source_q_.clear();source_names_.clear();logTrackFault(e.what());}
   }
   void image(const sensor_msgs::msg::Image::ConstSharedPtr msg) {
     const int64_t stamp=rclcpp::Time(msg->header.stamp).nanoseconds();const int64_t current=now().nanoseconds();
@@ -72,13 +113,19 @@ class TrackingPreview final:public rclcpp::Node {
     const double age=(current-data_stamp_)*1e-9;
     const bool camera_valid=data_stamp_>0&&age>=0&&age<=.5&&stamp>=data_stamp_&&(stamp-data_stamp_)*1e-9<=.5;
     bool valid=camera_valid&&source_q_.size()==6&&joint_.position.size()==6&&joint_.velocity.size()==6;
+    std::string render_reason=!camera_valid?"image stale":(source_q_.size()!=6?"base unavailable":"joint unavailable");
     if(valid) {
       double joint_age=(current-rclcpp::Time(joint_.header.stamp).nanoseconds())*1e-9;
       valid=joint_age>=0&&joint_age<=.25&&joint_.name==source_names_;
-      for(size_t i=0;i<6;++i)valid=valid&&std::isfinite(joint_.position[i])&&std::isfinite(joint_.velocity[i])&&std::abs(joint_.velocity[i])<=.002&&std::abs(joint_.position[i]-source_q_[i])<=.001;
+      render_reason=joint_age<0||joint_age>.25?"joint stale":(joint_.name!=source_names_?"joint order":"ok");
+      for(size_t i=0;i<6;++i) {
+        if(!std::isfinite(joint_.position[i])||!std::isfinite(joint_.velocity[i])) {valid=false;render_reason="joint invalid";}
+        else if(std::abs(joint_.velocity[i])>.002) {valid=false;render_reason="moving";}
+        else if(std::abs(joint_.position[i]-source_q_[i])>.001) {valid=false;render_reason="pose changed";}
+      }
     }
     cv::rectangle(bgr,{0,0},{bgr.cols,49},{0,0,0},-1);
-    std::ostringstream title;title<<std::fixed<<std::setprecision(1)<<"VIDEO "<<video_hz_<<" Hz / "<<bgr.cols<<"x"<<bgr.rows<<" | recognition "<<data_hz_<<" Hz";
+    std::ostringstream title;title<<std::fixed<<std::setprecision(1)<<"VIDEO "<<video_hz_<<" Hz / "<<bgr.cols<<"x"<<bgr.rows<<" | processed "<<data_hz_<<" Hz";
     cv::putText(bgr,title.str(),{10,20},cv::FONT_HERSHEY_SIMPLEX,.52,{0,255,255},1);
     std::ostringstream description;
     if(current-status_received_<500000000LL&&status_received_>0)description<<observation_state_<<" "<<std::fixed<<std::setprecision(1)<<observation_elapsed_<<"/2s | "<<(observation_eligible_?"snapshot usable once":"history / awaiting confirmation")<<" | ";
@@ -90,13 +137,26 @@ class TrackingPreview final:public rclcpp::Node {
       int row=0;
       for(const auto &e:entries_) {
         const bool show_base=valid&&e.base;
+        std::string cause;
+        if(!show_base) {
+          ++pred_observations_;
+          if(e.edge) {cause="edge";++pred_edge_;}
+          else if(!e.classified) {cause="class";++pred_class_;}
+          else if(!e.camera_geometry) {cause="geometry";++pred_geometry_;}
+          else if(!e.base_geometry||!e.complete) {cause="base";++pred_base_;}
+          else if(!e.confirmed) {cause="track";++pred_track_;}
+          else {cause=render_reason;++pred_render_;}
+        } else ++number_observations_;
         auto color=show_base?colors[(e.id-1)%6]:cv::Scalar(255,200,0);
         if(e.outline.size()>2)cv::polylines(bgr,std::vector<std::vector<cv::Point>>{e.outline},true,color,2);
         cv::drawMarker(bgr,e.center,color,cv::MARKER_CROSS,17,2);
-        const std::string id=show_base?"#"+std::to_string(e.id):"pred";cv::Point at=e.center+cv::Point(12,-12);
+        const std::string id=show_base?"#"+std::to_string(e.id):"pred("+cause+")";cv::Point at=e.center+cv::Point(12,-12);
         cv::putText(bgr,id,at,cv::FONT_HERSHEY_SIMPLEX,.8,{0,0,0},5);cv::putText(bgr,id,at,cv::FONT_HERSHEY_SIMPLEX,.8,color,2);
         if(row<12) {
           std::ostringstream text;text<<id<<" "<<e.name<<" "<<std::fixed<<std::setprecision(2)<<e.score;
+          text<<" C:"<<(e.classified?"ok":"wait")<<" G:"<<(e.camera_geometry?"ok":"wait")
+              <<" B:"<<(e.base_geometry?"ok":"wait")<<" T:"<<(e.confirmed?"ok":std::to_string(e.hits)+"/3");
+          if(!show_base&&!e.reason.empty())text<<" ["<<e.reason<<"]";
           const bool locked=observation_id_==snapshot_id_&&!snapshot_id_.empty()&&locked_xyz_.count(e.id);
           const auto &xyz=locked?locked_xyz_.at(e.id):(show_base?e.xyz:e.camera);
           if(xyz.size()==3)text<<(locked?" LOCKED base mm ":(show_base?" live base mm ":" camera mm "))<<std::setprecision(1)<<xyz[0]*1000<<", "<<xyz[1]*1000<<", "<<xyz[2]*1000;
@@ -108,8 +168,12 @@ class TrackingPreview final:public rclcpp::Node {
     if(current-last_metrics_>2000000000LL) {
       const double duration=(current-rate_window_start_)*1e-9;
       if(duration>=1.) {video_hz_=rate_video_frames_/duration;data_hz_=rate_data_frames_/duration;rate_window_start_=current;rate_video_frames_=0;rate_data_frames_=0;}
-      std::ostringstream json;json<<"{\"stamp_ns\":"<<stamp<<",\"video_hz\":"<<video_hz_<<",\"recognition_hz\":"<<data_hz_<<",\"published_frames\":"<<published_<<",\"overlay_valid\":"<<(valid?"true":"false")<<",\"visible_tracks\":"<<(camera_valid?entries_.size():0)<<"}";
+      std::ostringstream json;json<<"{\"stamp_ns\":"<<stamp<<",\"video_hz\":"<<video_hz_<<",\"recognition_hz\":"<<data_hz_<<",\"published_frames\":"<<published_<<",\"overlay_valid\":"<<(valid?"true":"false")<<",\"visible_tracks\":"<<(camera_valid?entries_.size():0)
+          <<",\"number_observations\":"<<number_observations_<<",\"pred_observations\":"<<pred_observations_
+          <<",\"pred_edge\":"<<pred_edge_<<",\"pred_classification\":"<<pred_class_<<",\"pred_camera_geometry\":"<<pred_geometry_
+          <<",\"pred_base_geometry\":"<<pred_base_<<",\"pred_track_confirmation\":"<<pred_track_<<",\"pred_render_feedback\":"<<pred_render_<<"}";
       std_msgs::msg::String value;value.data=json.str();metrics_->publish(value);last_metrics_=current;
+      number_observations_=pred_observations_=pred_edge_=pred_class_=pred_geometry_=pred_base_=pred_track_=pred_render_=0;
     }
   }
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr source_;
@@ -121,5 +185,6 @@ class TrackingPreview final:public rclcpp::Node {
   sensor_msgs::msg::JointState joint_;std::vector<double> source_q_;std::vector<std::string> source_names_;std::vector<Entry> entries_;
   std::map<int,std::vector<double>> locked_xyz_;std::string observation_state_="waiting",observation_id_,snapshot_id_;double observation_elapsed_=0;bool observation_eligible_=false;int64_t status_received_=0;
   int64_t data_stamp_{0},last_image_{0},last_metrics_{0},rate_window_start_{0};uint64_t published_{0},rate_video_frames_{0},rate_data_frames_{0};double video_hz_{0},data_hz_{0};
+  uint64_t number_observations_{0},pred_observations_{0},pred_edge_{0},pred_class_{0},pred_geometry_{0},pred_base_{0},pred_track_{0},pred_render_{0};
 };
 int main(int argc,char**argv){rclcpp::init(argc,argv);rclcpp::spin(std::make_shared<TrackingPreview>());rclcpp::shutdown();}

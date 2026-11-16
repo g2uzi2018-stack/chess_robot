@@ -6,9 +6,9 @@ import numpy as np
 import rclpy
 from rclpy.action import ActionClient
 from chess_robot_interfaces.action import MoveArm,MoveGripper
-from scan_controller import position,convert,stamp,write
-from ros_io import PlanInspector,RealIO
-from demo import qualified_target,distance
+from chess_robot_tasks.scan_controller import position,convert,stamp,write
+from chess_robot_tasks.ros_io import PlanInspector,RealIO
+from chess_robot_tasks.demo import qualified_target,distance
 
 class Trial(PlanInspector):
     gripper_state=RealIO.gripper_state

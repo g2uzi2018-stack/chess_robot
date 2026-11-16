@@ -15,8 +15,8 @@ New C++ code; vendor examples are never launched. No enable, motion, safety/conf
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --base-paths src --packages-select chess_robot_description chess_robot_validation --cmake-args -DBUILD_TESTING=ON
-source install/setup.bash
+colcon --log-base build/colcon_logs build --build-base build/ros --install-base install/dev --base-paths src --packages-select chess_robot_description chess_robot_validation --cmake-args -DBUILD_TESTING=ON
+source install/dev/local_setup.bash
 ```
 
 ## 3 Evidence and offline checks

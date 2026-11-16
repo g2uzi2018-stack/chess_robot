@@ -38,7 +38,7 @@ ros2 topic echo /arm/state --once
 
 ## 3 更新日常Home
 
-维护采集程序是独立CMake构建，不随ROS全包构建自动更新。升级源码后先重建 `runs/arm_tools_build/arm_operator`，并核对使用的是本版本工具：
+维护采集程序是独立CMake构建，不随ROS全包构建自动更新。升级源码后先重建 `build/arm_tools/arm_operator`，并核对使用的是本版本工具：
 
 ```bash
 bash tools/arm/build.sh
@@ -89,11 +89,11 @@ bash tools/arm/run_with_checkpoint.sh
 - exploration反馈上限1.0s，commissioning仍0.1s；ServoJ ACK0.15s、普通命令500ms、Stop ACK1500ms独立。重复旧帧不刷新时效，断链/非法帧/时间回退/相位跳变仍拒绝。
 - `.runtime/audit/`每流默认64MiB/16段（含活动段），独立异步诊断；文件自然增长或checkpoint周期变化不表示有人操作设备。
 - `STOP_FAILED`不能由取消响应当作已停。夹爪没有已验证的独立停止接口，退出/超时也不保证物理停止。
-- 清错、使能、直接MovJ Home与采集工具见[维护说明](../../tools/arm/README.md)。直接Home绕开业务路径/防绕转检查，不是日常恢复步骤。
+- 清错、使能、直接MovJ Home与采集工具见[维护说明](arm-maintenance.md)。直接Home绕开业务路径/防绕转检查，不是日常恢复步骤。
 - 旧客户端可能自检0.1/0.2s或自建节点；读取当前参数并核对所有权后再适配，不改旧报告冒称当前资格。
 
 ## 6 证据如何使用
 
-[验证索引](../validation/README.md)区分原1秒窗口、后续100Hz/下降记录、历史恢复及本次版本。
-[恢复状态机与视觉解耦](../validation/history-vision-decouple-20261101.md)和[历史audit恢复契约](../validation/reference-recovery-history.md)保留原版本范围；其中“当时未加载”的陈述不能替代当前进程核对。
+[验证索引](../../runs/records/validation/README.md)区分原1秒窗口、后续100Hz/下降记录、历史恢复及本次版本。
+[恢复状态机与视觉解耦](../../runs/records/validation/history-vision-decouple-20261101.md)和[历史audit恢复契约](../../runs/records/validation/reference-recovery-history.md)保留原版本范围；其中“当时未加载”的陈述不能替代当前进程核对。
 实体掉电、真实运动范围、TCP精度和自动夹取须另有相应实测；离线测试、部署成功或网页GET成功不能替代它们。

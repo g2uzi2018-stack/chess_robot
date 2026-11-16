@@ -10,7 +10,7 @@ def collisions(robot, supplied, pairs, sweep):
         import fcl
     except ImportError as exc:
         raise RuntimeError('FCL NOT_RUN: install python-fcl in the analysis environment') from exc
-    from rigid_geometry import origin
+    from chess_robot_description.rigid_geometry import origin
     required={name for pair in pairs for name in pair}
     if any(a==b for a,b in pairs):raise ValueError('Collision pairs require two distinct links')
     if not required<=set(robot.links):raise ValueError('Unknown collision-pair link')
@@ -82,7 +82,7 @@ def main():
     try:
         import numpy as np
         from geometry_report import RobotGeometry,render_views,save_json,sha256,versions,mesh_stats
-        from rigid_geometry import joint_values
+        from chess_robot_description.rigid_geometry import joint_values
         if (args.sweep or args.require_clear) and not args.pair:raise ValueError('Specify --pair before sweep/require-clear; unrequested collisions are NOT_RUN')
         supplied=json.loads(args.positions.read_text(encoding='utf-8-sig')) if args.positions else {}
         if not isinstance(supplied,dict):raise ValueError('Positions JSON must be an object')

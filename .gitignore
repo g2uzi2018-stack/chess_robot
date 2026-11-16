@@ -25,7 +25,9 @@ dist/
 # Local experiment and runtime output
 data/local/
 models/local/
-runs/
+/runs/*
+!/runs/records/
+
 logs/
 *.log
 *.bag
@@ -56,3 +58,9 @@ Thumbs.db
 /build_panel/
 /install_panel/
 /log_panel/
+
+# Per-installation mutable state
+/state/
+
+# Preserve all files moved from the previous versioned records
+!/runs/records/**

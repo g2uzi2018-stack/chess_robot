@@ -45,7 +45,7 @@ python3 tools/description/check_models.py
 
 ```bash
 mkdir -p runs
-source install/setup.bash
+source install/dev/local_setup.bash
 xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
   include_ground:=true > runs/nova5_with_ag95_ground.urdf
 ```

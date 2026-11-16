@@ -567,7 +567,10 @@ class ArmNode final : public rclcpp::Node {
       }
     } catch(const std::exception &e) {failure=e.what();}
     try {
-      state_->confirmRecoveryEndpoint(before.reference_generation,before.feedback,Clock::now(),config_.freshness);
+      const bool expect_enabled=before.feedback.mode==4 && failure.empty();
+      const double confirmation_budget=expect_enabled ?
+          std::max(config_.freshness,config_.enable_ack_timeout_ms*.001+config_.checkpoint_dwell) : config_.freshness;
+      state_->confirmRecoveryEndpoint(before.reference_generation,before.feedback,Clock::now(),confirmation_budget,expect_enabled);
     } catch(const std::exception &e) {
       checkpoint_enable_status_="enable/confirmation failed: "+failure+"; "+e.what();
       detail="history committed but subsequent feedback confirmation invalidated it; "+checkpoint_enable_status_;
@@ -587,6 +590,16 @@ class ArmNode final : public rclcpp::Node {
   }
   bool recoverCheckpoint(bool attested,std::string &detail) {
     if(!checkpoint_store_) {detail="checkpoint storage is disabled";return false;}
+    const auto current=state_->snapshot();
+    if(current.reference && current.feedback.mode==4 && config_.checkpoint_enable_after_restore) {
+      // A failed alarm query/enable can leave history valid but the robot
+      // disabled. An explicit recovery reuses that history for guarded enable.
+      detail="existing trusted reference retained";
+      const bool valid=enableRecoveredHistory(attested,config_.checkpoint_dwell,detail);
+      checkpoint_save_due_=true;
+      checkpoint_status_=detail;
+      return valid;
+    }
     try {
       auto cp=checkpoint_store_->load();
       if(!gate_.restoreCheckpoint(*state_,cp,attested,detail)) return false;
@@ -596,6 +609,37 @@ class ArmNode final : public rclcpp::Node {
     checkpoint_enable_status_="not requested; history alone grants no motion readiness";
     const bool valid=!config_.checkpoint_enable_after_restore || enableRecoveredHistory(attested,config_.checkpoint_dwell,detail);
     checkpoint_status_=detail;return valid;
+  }
+  // Diagnostic state only; data admission and retry timing are unchanged.
+  std::string checkpoint_log_reason_;
+  size_t checkpoint_log_count_{0};
+  double checkpoint_log_first_{0}, checkpoint_log_last_{0};
+  std::chrono::steady_clock::time_point checkpoint_log_reported_{};
+  void logCheckpointSave(const std::string &reason, bool recovered=false) {
+    if (recovered && checkpoint_log_count_==0) return;
+    const auto summary=[&](const char *stage, bool success) {
+      const std::string object=config_.checkpoint_file;
+      if (success) {
+        RCLCPP_INFO(get_logger(), "checkpoint_save stage=%s object=%s count=%zu first_unix_s=%.6f last_unix_s=%.6f previous_reason=%s",
+                    stage, object.c_str(), checkpoint_log_count_, checkpoint_log_first_, checkpoint_log_last_, checkpoint_log_reason_.c_str());
+      } else {
+        RCLCPP_ERROR(get_logger(), "checkpoint_save stage=%s object=%s impact=checkpoint_not_saved count=%zu first_unix_s=%.6f last_unix_s=%.6f reason=%s",
+                     stage, object.c_str(), checkpoint_log_count_, checkpoint_log_first_, checkpoint_log_last_, checkpoint_log_reason_.c_str());
+      }
+    };
+    if (recovered) {
+      summary("recovered", true); checkpoint_log_count_=0; checkpoint_log_reason_.clear(); return;
+    }
+    if (checkpoint_log_count_ && reason!=checkpoint_log_reason_) {
+      summary("reason_changed", false); checkpoint_log_count_=0;
+    }
+    const auto current=std::chrono::steady_clock::now();
+    checkpoint_log_last_=std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+    if (checkpoint_log_count_==0) { checkpoint_log_reason_=reason; checkpoint_log_first_=checkpoint_log_last_; }
+    ++checkpoint_log_count_;
+    if (checkpoint_log_count_==1 || current-checkpoint_log_reported_>=std::chrono::seconds(5)) {
+      summary(checkpoint_log_count_==1 ? "first" : "ongoing", false); checkpoint_log_reported_=current;
+    }
   }
   void checkpointTick() {
     auto s=state_->snapshot();
@@ -646,9 +690,10 @@ class ArmNode final : public rclcpp::Node {
           checkpoint_store_->save(current);checkpoint_saved_=Clock::now();checkpoint_save_due_=false;
         });
         checkpoint_status_="durable stopped save ready";
+        logCheckpointSave("", true);
       } catch(const std::exception &e) {
         checkpoint_status_=std::string("save failed: ")+e.what();
-        RCLCPP_ERROR_THROTTLE(get_logger(),*get_clock(),5000,"checkpoint save: %s",e.what());
+        logCheckpointSave(e.what());
       }
     }
   }

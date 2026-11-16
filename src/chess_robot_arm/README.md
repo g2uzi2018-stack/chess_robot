@@ -25,7 +25,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
    - 当前探索窗口上限 **1.0 s**；通用 hardware 默认未改，commissioning上限仍0.1 s。
    - 接收期限覆盖反馈窗口；重复帧既不刷新状态，也不重开读取期限。
    - ServoJ ACK **0.15 s**、Stop ACK **1500 ms**、普通命令 **500 ms** 独立；1秒并非反馈频率。
-   - [1秒变更证据](../../docs/validation/feedback-window-1s-20261031.md)记录该批次单元/loopback与停稳加载；后续100Hz发布与一次下降记录见[验证索引](../../docs/validation/README.md)，不能合并成完整运动范围验收。
+   - [1秒变更证据](../../runs/records/validation/feedback-window-1s-20261031.md)记录该批次单元/loopback与停稳加载；后续100Hz发布与一次下降记录见[验证索引](../../runs/records/validation/README.md)，不能合并成完整运动范围验收。
 
 ## 2 ROS 接口
 
@@ -76,7 +76,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 4. **`/arm/restore_reference`**
    - 功能：原始audit的完整历史迁移/取证，不作为日常启动入口。
    - 入参：有序 `audit_files` 与 `no_unobserved_motion`；返回 `success`、`detail`。
-   - 从已知历史参考姿态重放完整展开相位，不能从新日常Home猜测原始零基准或缺失圈数；[历史边界契约](../../docs/validation/reference-recovery-history.md)。
+   - 从已知历史参考姿态重放完整展开相位，不能从新日常Home猜测原始零基准或缺失圈数；[历史边界契约](../../runs/records/validation/reference-recovery-history.md)。
    - 离线 `migrate_checkpoint_offline` 审阅计划必须显式给出 `reference_parameters`；缺项拒绝，不能从 `home_parameters` 推断历史基准。它不是任意更换历史零点的工具。
 5. **回环命名空间**
    - `test_fixture=true` 必须为IPv4 `127.0.0.1`；端点改为 `/simulation/arm/...`、`simulated=true`。
@@ -97,7 +97,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 3. **扭转与几何**
    - 实测反馈独占推进 `chess_robot_twist::Tracker`；规划复制完整历史，不做关节绕回/圈数猜测。
    - 每个规划/执行采样检查关节界、相位步长、工作区、净/总扭转和几何；无连续碰撞保证。
-   - GeometryGuard由 `tools/analysis/workspace_analysis.py --probe-only` 导出；来源见[离线工作区报告](../../docs/analysis/arm-workspace-2026-10-24.md)。桌面z=-0.010m，活动件20mm余量，非相邻组10mm，关节余量5°，归一化Jacobian最小奇异值≥0.05、条件数≤80。
+   - GeometryGuard由 `tools/analysis/workspace_analysis.py --probe-only` 导出；来源见[离线工作区报告](../../runs/records/analysis/arm-workspace-2026-10-24.md)。桌面z=-0.010m，活动件20mm余量，非相邻组10mm，关节余量5°，归一化Jacobian最小奇异值≥0.05、条件数≤80。
    - 固定/工具组与直接相邻组有明确排除；21开度夹爪包络不等于完整场景。
 4. **选解与采样**
    - 厂家当前/Home seed的候选都核对SDK FK(IK)、URDF FK和路径；总扭转→净扭转绝对值→耗时排序。
@@ -117,7 +117,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
    - schema1身份字节布局保持；原Home槽位绑定同一个历史基准。日常目标变化不改identity，旧存档的关节、previous_phase和local保持；历史基准、模型、TCP或控制器变化仍拒绝。
    - 实际运动前先写脏标记；坏/脏/不兼容/端点失配拒绝恢复，不回退旧档，不在非Home造初始参考。
    - `checkpoint.auto_restore` 要求 `checkpoint.no_unobserved_motion`；`enable_after_restore` 才在成功后GetErrorID并按配置EnableRobot，不ClearError、不自动运动。
-   - 可选使能失败单独报告；仅后续新的连续可信停稳端点确认可保留已提交历史，反馈gap、跳变或确认不可信仍使对应参考失效。当前进程不自动反复使能；详见[恢复状态机](../../docs/validation/history-vision-decouple-20261101.md)。
+   - 可选使能失败单独报告；仅后续新的连续可信停稳端点确认可保留已提交历史，反馈gap、跳变或确认不可信仍使对应参考失效。当前进程不自动反复使能；详见[恢复状态机](../../runs/records/validation/history-vision-decouple-20261101.md)。
 2. **日志**
    - `audit.directory` 可选；独立异步队列8MiB/8192记录，默认每流64MiB/16文件含活动段，二进制记录不跨段。
    - 原始记录为int64主机UTC纳秒＋1440控制器字节，小端；队列/磁盘错误报告丢弃数，不阻塞反馈。
@@ -127,8 +127,10 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
    - 现场另用roundtrip_low=0.3、roundtrip_high=1.0、alignment=0.4的速度/加速度规划上限；以 `.runtime/arm.yaml` 为准。
    - `backend=hardware` 要求hardware下五项布尔均true；它们是操作者声明，默认false。exploration/commissioning不会提升为认证模式。
    - 标称TCP、实际控制器限值、附件模型、完整碰撞场景、ServoJ/Stop实测范围仍需按任务核对；外部控制客户端不受本节点排他锁保护。
-   - [业务探索操作](../../docs/operations/arm-business-acceptance.md)、[验证索引](../../docs/validation/README.md)。
+   - [业务探索操作](../../docs/operations/arm-business-acceptance.md)、[验证索引](../../runs/records/validation/README.md)。
 
 ## 2026-11-01：ROS状态发布频率
 
 `feedback.publish_hz` 默认20Hz，允许1～125Hz，启动后不可变。现场本轮已验证100Hz并写入`.runtime/arm.yaml`。该参数只调整ArmState/JointState及Action反馈发布；原始控制器采样、运动时序、安全新鲜度门限不变，停稳存档/任务维护仍为20Hz。重复发布不刷新源反馈stamp；应分别统计消息频率与唯一反馈时间戳频率。原始30004流本轮约122Hz，不宣称其硬件上限可由本参数提高。
+
+检查点保存失败首次立即记录，同原因每 5 秒汇总次数与时间范围；原因改变和成功保存时立即记录。保存周期、停止判定和恢复条件不变。日志位置见 [日志说明](../../docs/operations/logging.md)。

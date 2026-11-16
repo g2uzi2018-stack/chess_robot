@@ -105,12 +105,44 @@ class VisionNode final : public rclcpp::Node {
       serial_.c_str(),profile_.get_device().get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION),
       profile_.get_device().get_info(RS2_CAMERA_INFO_USB_TYPE_DESCRIPTOR),scale_);
   }
+  // Diagnostic state only; data admission and retry timing are unchanged.
+  std::string frame_log_reason_;
+  size_t frame_log_count_{0};
+  double frame_log_first_{0}, frame_log_last_{0};
+  std::chrono::steady_clock::time_point frame_log_reported_{};
+  void logFrameFault(const std::string &reason, bool recovered=false) {
+    if (recovered && frame_log_count_==0) return;
+    const auto summary=[&](const char *stage, bool success) {
+      const std::string object=serial_;
+      if (success) {
+        RCLCPP_INFO(get_logger(), "camera_stream stage=%s object=%s count=%zu first_unix_s=%.6f last_unix_s=%.6f previous_reason=%s",
+                    stage, object.c_str(), frame_log_count_, frame_log_first_, frame_log_last_, frame_log_reason_.c_str());
+      } else {
+        RCLCPP_ERROR(get_logger(), "camera_stream stage=%s object=%s impact=frame_unavailable count=%zu first_unix_s=%.6f last_unix_s=%.6f reason=%s",
+                     stage, object.c_str(), frame_log_count_, frame_log_first_, frame_log_last_, frame_log_reason_.c_str());
+      }
+    };
+    if (recovered) {
+      summary("recovered", true); frame_log_count_=0; frame_log_reason_.clear(); return;
+    }
+    if (frame_log_count_ && reason!=frame_log_reason_) {
+      summary("reason_changed", false); frame_log_count_=0;
+    }
+    const auto current=std::chrono::steady_clock::now();
+    frame_log_last_=std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
+    if (frame_log_count_==0) { frame_log_reason_=reason; frame_log_first_=frame_log_last_; }
+    ++frame_log_count_;
+    if (frame_log_count_==1 || current-frame_log_reported_>=std::chrono::seconds(2)) {
+      summary(frame_log_count_==1 ? "first" : "ongoing", false); frame_log_reported_=current;
+    }
+  }
   void invalid(const std::string &why) {
     vision::msg::FrameInfo msg;
     msg.header.stamp=now(); msg.header.frame_id=frame_id_;
     msg.stream_ok=false; msg.diagnostic=why;
     msg.depth_scale_m=scale_;
     frame_pub_->publish(msg);
+    logFrameFault(why);
   }
   void tick() {
     const auto steady_now=std::chrono::steady_clock::now();
@@ -186,12 +218,12 @@ class VisionNode final : public rclcpp::Node {
       ++count_;
       if (!evidence_dir_.empty() && (count_==30 || (max_frames_>0 && count_==max_frames_)))
         save(bgr,z16,info,result,intrinsics);
+      logFrameFault("", true);
       if (max_frames_>0 && count_>=max_frames_) {
         RCLCPP_INFO(get_logger(),"completed %d frames",count_); rclcpp::shutdown();
       }
     } catch (const std::exception &e) {
       invalid(e.what());
-      RCLCPP_ERROR_THROTTLE(get_logger(),*get_clock(),2000,"vision: %s",e.what());
     }
   }
   void save(const cv::Mat &color,const cv::Mat &depth,

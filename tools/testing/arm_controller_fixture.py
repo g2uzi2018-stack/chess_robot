@@ -24,7 +24,7 @@ class Model:
     def __init__(self, project):
         import sys
         sys.path.insert(0,str(project/'tools/description'))
-        from rigid_geometry import origin, rotation
+        from chess_robot_description.rigid_geometry import origin, rotation
         self.rotation=rotation
         xml=ET.parse(project/'src/chess_robot_description/urdf/nova5.urdf').getroot()
         joints=[xml.find(f"joint[@name='joint{i}']") for i in range(1,7)]

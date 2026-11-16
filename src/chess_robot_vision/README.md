@@ -13,11 +13,11 @@
 ```bash
 cd /home/kuang/workspace/chess_robot
 source /opt/ros/humble/setup.bash
-colcon --log-base log_vision build --base-paths src/chess_robot_vision src/chess_robot_preview \
-  --build-base build_vision --install-base install_vision --executor sequential \
+colcon --log-base build/colcon_logs build --base-paths src/chess_robot_vision src/chess_robot_preview \
+  --build-base build/ros --install-base install/dev --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_PREFIX_PATH=/home/kuang/.local/realsense-2.58.1
-source install_vision/setup.bash
+source install/dev/setup.bash
 ros2 launch chess_robot_vision vision.launch.py
 ```
 
@@ -58,8 +58,8 @@ ros2 launch chess_robot_vision vision.launch.py
 ## 4 检查与采样
 
 ```bash
-colcon --log-base log_vision test --base-paths src/chess_robot_vision \
-  --build-base build_vision --install-base install_vision --packages-select chess_robot_vision \
+colcon --log-base build/colcon_logs test --base-paths src/chess_robot_vision \
+  --build-base build/ros --install-base install/dev --packages-select chess_robot_vision \
   --return-code-on-test-failure
 
 # 已运行相机时仅观察，不重复打开 USB
@@ -79,9 +79,9 @@ ros2 run chess_robot_vision vision_node --ros-args \
 
 当前组合配置为 **1280×720、请求30 fps**，源和installed YAML同步；网页最大宽度设为1280，彩色、深度、检测叠加均已验证实际1280×720且序号持续增长。请求帧率不代表已认证无丢帧30 Hz。
 
-用户保留约2m延长线重新插拔后，现有vision_node两次独立启动各完成60帧，独立SDK另完成40对。正式运行旁路观察得到129组同stamp图像/深度/K/FrameInfo，无stream invalid，源帧号严格增长；43次ChArUco检测74–88角点。预览持续运行，机械臂未被控制。详细证据见 [重新插拔复测](../../docs/validation/d405-replug-20261030.md)。
+用户保留约2m延长线重新插拔后，现有vision_node两次独立启动各完成60帧，独立SDK另完成40对。正式运行旁路观察得到129组同stamp图像/深度/K/FrameInfo，无stream invalid，源帧号严格增长；43次ChArUco检测74–88角点。预览持续运行，机械臂未被控制。详细证据见 [重新插拔复测](../../runs/records/validation/d405-replug-20261030.md)。
 
-2026-10-29曾出现1280彩色UVC probe/commit STALL，见 [历史验证](../../docs/validation/d405-1280-20261029.md)。本次恢复不能区分接触改善与相机重新上电清除异常，也不能证明延长线长期可靠。历史Python对比统计的K/D传参更正保存在runs/camera_1280_20261029/errata.md，旧多帧RMS不应作为产品或分辨率优势证据。
+2026-10-29曾出现1280彩色UVC probe/commit STALL，见 [历史验证](../../runs/records/validation/d405-1280-20261029.md)。本次恢复不能区分接触改善与相机重新上电清除异常，也不能证明延长线长期可靠。历史Python对比统计的K/D传参更正保存在runs/camera_1280_20261029/errata.md，旧多帧RMS不应作为产品或分辨率优势证据。
 
 切换时先stop组合服务、等待2秒、start，并检查真实图像更新；service active本身不能证明相机正常。848回退备份位于runs/camera_replug_20261030_01/camera-{source,installed}-before-deploy.yaml。独占USB探针必须先停止正式相机。
 
@@ -91,10 +91,12 @@ ros2 run chess_robot_vision vision_node --ros-args \
 
 exposure_mode 支持 keep（代码默认，保留SDK现状）、auto、manual。所有参数仍仅启动时读取，现场YAML默认显式manual；SDK范围检查后写入，原始曝光/增益元数据附在FrameInfo.diagnostic。启动日志打印实际彩色流尺寸/帧率与曝光读回。不改变内参、校正、彩深对齐或手眼外参。更换光照时可改回auto并重启组合相机预览服务。
 
-源码、构建、曝光对比、部署前二进制及YAML备份、同步采样和只读识别试验见 runs/xiangqi_recognition_20261031_02/。实验Python预览不属于正式C++位姿节点，不发布生产TF、不发动作。详细复现见 docs/validation/xiangqi-recognition-20261031.md。
+源码、构建、曝光对比、部署前二进制及YAML备份、同步采样和只读识别试验见 runs/xiangqi_recognition_20261031_02/。实验Python预览不属于正式C++位姿节点，不发布生产TF、不发动作。详细复现见 runs/records/validation/xiangqi-recognition-20261031.md。
 
 ## 7 720p30 发布与传输优化（2026-10-31）
 
 保持1280×720、30fps、曝光25000us、增益16。预转换独立的彩色线性/深度最近邻remap表，OpenCV线程2→4；视觉启动脚本在未显式覆盖时使用`config/large_images_fastdds.xml`（Fast DDS共享内存段64MiB、最大消息8MiB、loopback UDP发现）。只作用于相机/预览和只读叠加渲染，不改变全局DDS或机械臂配置。
 
-当前暗场/关臂环境，独立C++观察30秒获得900组同stamp RGB/深度/K/FrameInfo，四路30Hz、无无效或源帧跳跃，局域网叠加实收29.7Hz。4组720p输入校正前后彩色/Z16像素完全一致。开灯并恢复机械臂反馈后的实时三维识别满负载仍待验证；此结果不作长期无丢帧认证。详情、回退与原始证据见[本轮验证](../../docs/validation/xiangqi-camera-30hz-20261031.md)。
+当前暗场/关臂环境，独立C++观察30秒获得900组同stamp RGB/深度/K/FrameInfo，四路30Hz、无无效或源帧跳跃，局域网叠加实收29.7Hz。4组720p输入校正前后彩色/Z16像素完全一致。开灯并恢复机械臂反馈后的实时三维识别满负载仍待验证；此结果不作长期无丢帧认证。详情、回退与原始证据见[本轮验证](../../runs/records/validation/xiangqi-camera-30hz-20261031.md)。
+
+帧不可用首次立即记录，同原因每 2 秒汇总；原因变化与成功处理下一帧时立即记录。日志不改变相机轮询、帧有效判定或发布频率。位置和格式见 [日志说明](../../docs/operations/logging.md)。

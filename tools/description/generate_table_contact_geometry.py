@@ -32,7 +32,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--root',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);p.add_argument('--report',type=Path,required=True);a=p.parse_args()
     sys.path.insert(0,str(a.root/'tools/description'))
-    from rigid_geometry import fk,origin,stl_vertices,numbers
+    from chess_robot_description.rigid_geometry import fk,origin,stl_vertices,numbers
     source=a.root/'src/chess_robot_arm/config/nova5_ag95_geometry.yaml'
     old=yaml.safe_load(source.read_text());assert len(old['hulls'])==8
     assert [h['link'] for h in old['hulls'][:7]]==list(range(7)) and old['hulls'][7]['link']==6

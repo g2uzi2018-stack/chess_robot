@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import rclpy
 from chess_robot_interfaces.action import MoveArm
-from ros_io import PlanInspector
-from scan_controller import stamp,position,convert,write
+from chess_robot_tasks.ros_io import PlanInspector
+from chess_robot_tasks.scan_controller import stamp,position,convert,write
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)

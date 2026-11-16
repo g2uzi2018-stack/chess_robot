@@ -1,0 +1,6 @@
+{
+  "source": "runs/records/validation/handeye-20261030/flange_T_camera_candidate.yaml",
+  "applies_to": "Nova5 + AG95 + D405 current installation; Link6 to d405_color_optical_frame",
+  "sha256": "9bff5c65446fe35850bc67c309af6008936c72d9cd22647c0f2296451fa7a002",
+  "status": "Same adopted input as the workspace before directory migration; no recalibration"
+}

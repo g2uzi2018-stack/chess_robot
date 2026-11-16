@@ -172,7 +172,7 @@ public:
   // No commands: require a new, continuously stopped endpoint after an enable attempt.
   // Failure invalidates only this generation, never a newer explicit recovery.
   void confirmRecoveryEndpoint(uint64_t generation, const Feedback &before,
-                               Clock::time_point completed, double wait_s);
+                               Clock::time_point completed, double wait_s, bool expect_enabled = false);
 };
 struct Goal {
   Joints positions{}, expected_start{};

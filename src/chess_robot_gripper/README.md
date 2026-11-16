@@ -16,7 +16,7 @@ ROS 2 Humble / C++17。`gripper_node` 只控制夹爪，不使能、停止或移
 
 已完成软件回归、真实只读反馈，以及20%力设定下1000→0、步长100的11点实机收窄验证。
 一次初始化请求后出现范围异常并中止；只读确认已初始化后，第二批未重发初始化、11点全部反馈到位。
-首版软件/只读验证见[节点首版报告](../../docs/validation/gripper-node-20261025/REPORT.md)，后续动作见[实机收窄报告](../../docs/validation/gripper-sweep-20261025/REPORT.md)。毫米开口、实际力和棋子夹持/掉落仍未验收。
+首版软件/只读验证见[节点首版报告](../../runs/records/validation/gripper-node-20261025/REPORT.md)，后续动作见[实机收窄报告](../../runs/records/validation/gripper-sweep-20261025/REPORT.md)。毫米开口、实际力和棋子夹持/掉落仍未验收。
 并行机械臂测试须核对实际使用的碰撞包络；本次已确认当前配置合并21种模型开度。
 独立ROS节点本身不构成机械安全隔离。
 
@@ -26,8 +26,8 @@ ROS 2 Humble / C++17。`gripper_node` 只控制夹爪，不使能、停止或移
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon build --base-paths src --packages-up-to chess_robot_gripper
-source install/setup.bash
+colcon --log-base build/colcon_logs build --build-base build/ros --install-base install/dev --base-paths src --packages-up-to chess_robot_gripper
+source install/dev/local_setup.bash
 # 默认 launch 使用 mock.yaml，只产生模拟反馈，允许模拟命令。
 ros2 launch chess_robot_gripper gripper.launch.py
 # 真实设备只读（hardware.yaml 的 enable_commands=false）。

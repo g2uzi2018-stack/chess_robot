@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 import struct
 import xml.etree.ElementTree as ET
-from rigid_geometry import pad_gap, joint_values
+from chess_robot_description.rigid_geometry import pad_gap, joint_values
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -140,7 +140,7 @@ def main():
     source = ROOT / derived_meta["source_path"]
     assert hashlib.sha256(source.read_bytes()).hexdigest() == derived_meta["source_sha256"]
     assert derived_meta["original_components"] == derived_meta["retained_components"] == 7
-    from rigid_geometry import stl_vertices
+    from chess_robot_description.rigid_geometry import stl_vertices
     vertices = list(stl_vertices(derived))
     actual_bounds = [[min(v[i] for v in vertices) for i in range(3)],
                      [max(v[i] for v in vertices) for i in range(3)]]

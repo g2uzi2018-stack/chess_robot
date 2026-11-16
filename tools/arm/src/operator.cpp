@@ -1,5 +1,5 @@
 #include "arm_tools/operator.hpp"
-#include "arm_tools/dashboard_reply.hpp"
+#include "chess_robot_arm/dashboard_reply.hpp"
 #include "arm_tools/feedback_frame.hpp"
 #include "arm_tools/net.hpp"
 #include <algorithm>

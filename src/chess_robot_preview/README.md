@@ -8,7 +8,7 @@
 ```bash
 cd /home/kuang/workspace/chess_robot
 source /opt/ros/humble/setup.bash
-source install_vision/setup.bash
+source install/dev/setup.bash
 
 # 相机已运行：仅启动预览节点
 ros2 launch chess_robot_preview preview.launch.py
@@ -80,9 +80,9 @@ ros2 launch chess_robot_preview preview.launch.py preview_config:=/absolute/path
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon --log-base log_vision build \
+colcon --log-base build/colcon_logs build \
   --base-paths src/chess_robot_vision src/chess_robot_preview \
-  --build-base build_vision --install-base install_vision --executor sequential \
+  --build-base build/ros --install-base install/dev --executor sequential \
   --cmake-args -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_PREFIX_PATH=/home/kuang/.local/realsense-2.58.1
 ```
@@ -94,3 +94,26 @@ colcon --log-base log_vision build \
 - 响应不缓存，Web 资源全部随包安装，无 CDN 或云服务。
 
 节点只用于局域网预览，当前没有账户系统或互联网发布。HTTP 的暂停/选择仅影响预览订阅，不会停止上游相机节点。
+
+## 5 Jetson 硬件 JPEG 编码
+
+构建环境提供 `gstreamer-app-1.0` 时，预览节点编译可选的 NVIDIA JPEG 编码路径。运行环境需有与 Jetson Linux 版本对应的 `nvjpegenc` 插件及其依赖。`jpeg_backend` 默认值为 `opencv`，可在启动时选择 `nvjpeg`。
+
+```bash
+ros2 launch chess_robot_preview preview.launch.py jpeg_backend:=nvjpeg
+```
+
+组合入口 `camera_preview.launch.py` 同样接收 `jpeg_backend` 参数。插件放在独立运行目录时，通过 `GST_PLUGIN_PATH` 和 `LD_LIBRARY_PATH` 指向对应目录。
+
+硬件路径将 BGR 转为 I420，并把亮度与色度转换到 JPEG 所需的完整数值范围。NVIDIA 插件优先解析自身依赖中的 JPEG 符号，以兼容同一进程中的 OpenCV JPEG 编解码。宽或高为奇数的图像使用 OpenCV 编码。
+
+`GET /api/channels` 的每路 `jpeg_backend` 字段报告最近一次实际使用的编码器。硬件编码适用于预览 JPEG，识别节点继续使用原始 RGB-D 话题。
+
+2026-11-06 现场选定版本通过现有服务启动。日常重新启动预览使用以下命令。
+
+```bash
+systemctl --user restart chess_robot_preview.service
+systemctl --user status chess_robot_preview.service --no-pager
+```
+
+本次现场依赖与安装目录位于 `runs/vision_hardware_20261105_01/`。该目录包含运行脚本、工件摘要、对照结果与部署回退入口，属于现场运行所需文件。

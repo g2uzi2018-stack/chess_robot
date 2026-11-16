@@ -1,0 +1,139 @@
+{
+  "schema": "xiangqi_pick_stack_config/v1",
+  "scan_config": "config/scan/scan.site.json",
+  "home_config": "config/arm/home.yaml",
+  "commissioning_review_file": null,
+  "confirmation_timeout_s": 300.0,
+  "observation_timeout_s": 6.0,
+  "home_joint_tolerance_rad": 0.0005,
+  "max_pieces": 5,
+  "startup_open_raw": 1000,
+  "table_z_m": -0.01,
+  "piece_thickness_m": 0.013,
+  "board_thickness_m": 0.014,
+  "board_thickness_use": "reference only; never added to bare-table stack height or substituted for measured source depth",
+  "stack_xy_m": [
+    0.00023669097092491665,
+    -0.5767915924856896
+  ],
+  "stack_xy_basis": "fixed daily Home model FK projection from unchanged Home joints and guard chain; physical empty bare support not yet verified",
+  "orientation_xyzw": [
+    0.48299238089943397,
+    0.5185547459906317,
+    -0.48022726217308936,
+    0.5169149950131322
+  ],
+  "orientation_basis": "existing p1 downward observation orientation, candidate only; gripper installation/contact geometry unmeasured",
+  "stack_exclusion_radius_m": 0.06,
+  "retired_radius_m": 0.03,
+  "neighbor_clearance_m": 0.11,
+  "reassociate_radius_m": 0.012,
+  "descent_tolerance_m": 0.003,
+  "vertical_clearance_m": 0.1,
+  "force_percent": 20,
+  "threshold_basis": "conservative search/rehearsal bounds only, not physical collision or metrology acceptance",
+  "measured": {
+    "surface_to_nominal_tcp_base_m": null,
+    "surface_to_observation_tcp_base_m": null,
+    "finger_lowest_point_and_contact_envelope": null,
+    "piece_radius_m": 0.02,
+    "open_raw": 1000,
+    "close_raw": 0,
+    "empty_bare_support_and_exit_clearance": null,
+    "grip_retention_and_release_evidence": null,
+    "stack_stability_observation_pose": null
+  },
+  "calibration_mode": "supervised_flat_table",
+  "nominal_pick_tcp_base_z_m": -0.006535731876821386,
+  "hover_tcp_base_z_m": 0.14,
+  "transfer_tcp_base_z_m": 0.143,
+  "business_mode": "row",
+  "pick_target_observation": {"min_frames": 6, "window_s": 0.25},
+  "row_slots_m": [
+    [
+      0.045,
+      -0.675
+    ],
+    [
+      0.045,
+      -0.625
+    ],
+    [
+      0.045,
+      -0.575
+    ],
+    [
+      0.045,
+      -0.525
+    ],
+    [
+      0.045,
+      -0.475
+    ],
+    [
+      0.045,
+      -0.425
+    ],
+    [
+      0.045,
+      -0.375
+    ],
+    [
+      0.045,
+      -0.325
+    ]
+  ],
+  "row_slot_clearance_xy_m": [
+    0.084,
+    0.039
+  ],
+  "excluded_pick_positions_m": [],
+  "workspace_observation": null,
+  "experimental_height_adjustment_m": -0.0013,
+  "prior_validated_nominal_tcp_base_z_m": -0.005235731876821386,
+  "prior_verified_placements": [],
+  "height_adjustment_basis": "User directly observed gripping too high and explicitly authorized another 1mm lower with limited contact-clearance adjustment; cumulative 1.3mm trial",
+  "row_placement_tolerance_m": 0.0045,
+  "pick_orientation_xyzw": [
+    0.48299238089943397,
+    0.5185547459906317,
+    -0.48022726217308936,
+    0.5169149950131322
+  ],
+  "pick_orientation_basis": "canonical downward pick and placement for a new cleared-table batch",
+  "transfer_height_basis": "143mm held transfer/slot observation qualified at final two slots in 2026-11-05 physical run; 149.536mm nominal descent remains under unchanged 150mm cap",
+  "active_observation": {
+    "enabled": true,
+    "drop_offsets_m": [
+      0.01,
+      0.02
+    ],
+    "min_tcp_base_z_m": 0.11,
+    "_comment": "看不清时最多补查6个视角。原位确认和抓取复核先沿标定后的图像方向移动15/30毫米，再在第一观察点两侧各尝试15毫米，最后下探10/20毫米；放置净空先沿放置轴下探，再横移。XY最多偏离40毫米，TCP最低110毫米。每一步先规划、检查整条路径和持物包络，再取新帧。扫描最多补查4个未定位位置。下降抓放前重新对准并独立检查，图像方向估计只作搜索提示。",
+    "lateral_steps_m": [
+      0.015,
+      0.03
+    ],
+    "max_xy_offset_m": 0.04,
+    "scan_rechecks": 4,
+    "search_hint_radius_m": 0.04,
+    "side_step_m": 0.015
+  },
+  "row_occupied_policy": "occupant_first",
+  "row_occupied_policy_note": "先扫描，再优先处理当前槽位占位者。已在标准位置并经两次独立复核的棋子计入完成，偏位棋子优先校正。同一净空区有多个占位者时，先把持物放到确认安全的后续目标槽位，再回头处理原槽位。本轮访问顺序写入 row_slot_order，物理槽位坐标保持配置值。",
+  "row_verification": {
+    "window_s": 3.0,
+    "min_valid_fraction": 0.8,
+    "max_missing_s": 0.3,
+    "_comment": "每次最长6秒内滚动寻找3秒观察窗口，至少20个完整有效目标样本且占比不低于80%，有效样本跨度至少2秒，最长缺失间隔不超过0.3秒，位置散布不超过3毫米。槽位XY误差不超过4.5毫米，相对源棋子顶面高度误差不超过3毫米。位置、高度或关联不一致先复核；已释放且空爪时，复核耗尽保留待确认槽位，处理其他棋子后再查一次。"
+  },
+  "target_recheck_attempts": 2,
+  "target_recheck_note": "抓取前位置出现差异时，最多重新对准并独立复测2次。每次使用新测量，最终下降前重新检查目标位置、标定和视觉来源；复核耗尽后保留该候选的未完成记录。",
+  "pick_neighbor_policy": "finger_model",
+  "pick_neighbor_policy_note": "使用守卫文件中左右夹指完整21状态开合联合包络，保留棋子半径、位置与姿态余量。完整三维近邻按中心判断，不完整图像外框按指体包络在棋子高度范围内的投影判断。",
+  "pick_yaw_rechecks_deg": [
+    90,
+    -90
+  ],
+  "pick_yaw_rechecks_note": "空爪近邻冲突或有界视觉复查耗尽后，最多尝试世界竖直轴+90度、-90度高空换向。每次先做高空轨迹和接触纯规划，再重新独立观测。抓取观察使用143毫米标准高度，实际下降前再次复测。"
+}

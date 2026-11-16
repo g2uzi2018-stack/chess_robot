@@ -13,7 +13,7 @@ for branch in range(8):
     indices=np.flatnonzero(mask);indices=indices[np.argsort(np.linalg.norm(source[indices]-home,axis=1))][:3]
     for index in indices:cases.append(source[index]);labels.append('table_penetration_pose_validation_probe')
 q=np.asarray(cases);q.tofile(a.out/'policy_cases.bin')
-result=subprocess.run([str(a.project/'runs/workspace_policy_probe'),str(a.project/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'),str(a.out/'policy_cases.bin')],capture_output=True,text=True,check=True)
+result=subprocess.run([str(a.project/'build/analysis/workspace_policy_probe'),str(a.project/'src/chess_robot_description/urdf/nova5_with_ag95.urdf'),str(a.out/'policy_cases.bin')],capture_output=True,text=True,check=True)
 rows=[json.loads(s) for s in result.stdout.splitlines()];
 for i,row in enumerate(rows):row.update(kind=labels[i],q_rad=q[i].tolist())
 (a.out/'policy_probe.json').write_text(json.dumps({'scope':'offline actual production Planner with a single FK-verified known inverse pose; no SDK/network/motion','cases':rows},indent=2)+'\n');print(result.stdout)

@@ -44,7 +44,7 @@ The math tests use a copy of the existing project Nova5 URDF from
 are not loaded by this FK-only library. No collision-clearance claim is made.
 
 ```bash
-colcon build --base-paths src --packages-select chess_robot_twist
+colcon --log-base build/colcon_logs build --build-base build/ros --install-base install/dev --base-paths src --packages-select chess_robot_twist
 colcon test --base-paths src --packages-select chess_robot_twist --event-handlers console_direct+
 colcon test-result --test-result-base build/chess_robot_twist --verbose
 ```

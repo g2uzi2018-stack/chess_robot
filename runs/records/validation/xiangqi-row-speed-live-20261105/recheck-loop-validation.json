@@ -1,0 +1,33 @@
+{
+  "synthetic_orchestration_only": true,
+  "physical_commands_sent": 0,
+  "checks": [
+    {
+      "scenario": "neighbor_removed",
+      "attempts": {
+        "a": 2,
+        "b": 1
+      },
+      "placements": 2,
+      "rechecks": 1
+    },
+    {
+      "scenario": "all_unavailable",
+      "attempts": {
+        "a": 1,
+        "b": 1
+      },
+      "placements": 0,
+      "rechecks": 0
+    },
+    {
+      "scenario": "persistent_unavailable",
+      "attempts": {
+        "a": 2,
+        "b": 1
+      },
+      "placements": 1,
+      "rechecks": 1
+    }
+  ]
+}

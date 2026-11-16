@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import rclpy
 from chess_robot_interfaces.action import MoveArm
-from ros_io import PlanInspector
-from scan_controller import position,stamp,convert,write
+from chess_robot_tasks.ros_io import PlanInspector
+from chess_robot_tasks.scan_controller import position,stamp,convert,write
 
 
 def main():
@@ -20,7 +20,7 @@ def main():
             0<old['z']-target[2]<=.080):
         raise SystemExit('proposal is not a bounded non-contact observation step')
     out=Path(a.output);out.mkdir(parents=False,exist_ok=False)
-    config=json.loads(Path(__file__).with_name('demo.current.json').read_text())
+    config=json.loads(Path('config/pick/demo.current.json').read_text())
     rclpy.init();io=PlanInspector(config,out);io.execute=True
     io.report.update(schema='vertical_observation_step/v1',execute=True,authorization=a.authorization,
                      hands_and_ruler_clear=True,gripper_commands_sent=0,nominal_target_tcp_m=target,
