@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ROS 2 使用 Fast DDS 时的大图像传输配置；放进 config 目录不会自动生效。
+  构建后的文件位于 install/dev/chess_robot_vision/share/chess_robot_vision/config/。
+  在项目根目录、启动相关 ROS 进程之前指定：
+  export FASTRTPS_DEFAULT_PROFILES_FILE="$PWD/install/dev/chess_robot_vision/share/chess_robot_vision/config/large_images_fastdds.xml"
+  preview_service.sh 和 start_tracking_renderer.sh 已设置该变量，且保留调用者的显式覆盖。
+  vision.launch.py 本身只加载相机 YAML，不设置此变量。该 XML 不安装到 Linux 系统目录。
+-->
 <profiles xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
   <transport_descriptors>
     <transport_descriptor>
       <transport_id>camera_local_udp</transport_id>
       <type>UDPv4</type>
+      <!-- UDP 仅使用本机回环接口。 -->
       <interfaceWhiteList><address>127.0.0.1</address></interfaceWhiteList>
     </transport_descriptor>
     <transport_descriptor>
       <transport_id>camera_large_shm</transport_id>
       <type>SHM</type>
-      <maxMessageSize>8388608</maxMessageSize>
-      <segment_size>67108864</segment_size>
-      <port_queue_capacity>512</port_queue_capacity>
+      <maxMessageSize>8388608</maxMessageSize> <!-- 传输消息缓冲上限：8 MiB，单位为字节。 -->
+      <segment_size>67108864</segment_size> <!-- 每个 DDS 参与者的共享内存段：64 MiB。 -->
+      <port_queue_capacity>512</port_queue_capacity> <!-- 接收队列的消息描述项数，不是完整图像数。 -->
     </transport_descriptor>
   </transport_descriptors>
   <participant profile_name="camera_large_images" is_default_profile="true">
@@ -20,6 +29,7 @@
         <transport_id>camera_local_udp</transport_id>
         <transport_id>camera_large_shm</transport_id>
       </userTransports>
+      <!-- 关闭默认内置传输，使用上面指定的本机 UDP 和共享内存传输。 -->
       <useBuiltinTransports>false</useBuiltinTransports>
     </rtps>
   </participant>

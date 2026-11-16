@@ -1,2 +1,8 @@
-# Intel RealSense D405, SDK RSUSB access for plugdev group.
+# Linux udev USB 权限规则，供系统读取，不是 ROS 节点参数。
+# 仓库中保存源文件；系统目标为 /etc/udev/rules.d/99-chess-d405.rules。
+# 在 Jetson 上安装（仅 ROS 构建不会执行此命令）：
+# sudo install -m 0644 /home/kuang/workspace/chess_robot/src/chess_robot_vision/config/99-chess-d405.rules /etc/udev/rules.d/99-chess-d405.rules
+# 安装后用 sudo udevadm control --reload-rules 重新加载；新规则在后续设备事件时应用。
+# 匹配 Intel D405（USB 厂商 8086、产品 0b5b），允许设备所有者和 plugdev 组读写。
+# 运行相机的用户需要属于 plugdev 组；0660 是设备权限，不是本规则文件的权限。
 SUBSYSTEM=="usb", ATTR{idVendor}=="8086", ATTR{idProduct}=="0b5b", GROUP="plugdev", MODE="0660"

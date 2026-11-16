@@ -51,7 +51,7 @@ ros2 run chess_robot_tasks scan_controller   --config config/scan/scan.current.j
 | --- | --- |
 | `src/` | ROS 包、业务实现和共用库；驱动、感知、任务、接口、描述资源各有归属 |
 | `tools/` | 维护、标定辅助、分析、训练和既有验证工具，统一说明入口 |
-| `config/` | 工作区选择的扫描、抓放和机械臂参数；包内 config 保存默认模板 |
+| `config/` | 工作区选择的扫描、抓放和机械臂参数；包内 config 按节点需求保存直接相关的参数与配套配置 |
 | `data/` | 已采用的长期输入；手眼文件及来源在 `data/handeye/` |
 | `state/` | 新增跨运行状态的归属，按实际需要创建；不复制一份现场存档另行续写 |
 | `runs/` | 按批次保存的资料；`runs/records/` 保存原有历史记录 |

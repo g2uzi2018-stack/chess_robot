@@ -1,15 +1,25 @@
-vision_node:
-  ros__parameters:
-    serial: ''
-    width: 1280
-    height: 720
-    fps: 30
-    opencv_threads: 4
-    frame_id: d405_color_optical_frame
-    stale_timeout_s: 0.5
-    publish_raw: true
-    max_frames: 0
-    evidence_dir: ''
-    exposure_mode: manual
-    exposure_us: 25000.0
-    gain: 16.0
+# vision_node 的 ROS 2 启动参数，由 vision.launch.py 的 config 参数加载。
+# 所有参数仅启动时读取；修改此文件不会改变已运行节点，运行中设置参数会被拒绝。
+vision_node:                    # 参数对应的节点名称
+  ros__parameters:              # ROS 2 参数文件的固定字段
+    serial: ''                  # D405 序列号；空值时要求恰好连接一台 D405
+    width: 1280                 # 请求的彩色和深度图像宽度，单位：像素
+    height: 720                 # 请求的彩色和深度图像高度，单位：像素
+    fps: 30                     # 请求的采集帧率，单位：帧/秒；不保证实际始终达到此值
+    opencv_threads: 4           # OpenCV 图像处理线程数，不是整个进程的总线程数
+    frame_id: d405_color_optical_frame  # 输出坐标系名称（X 右、Y 下、Z 前），本身不发布 TF
+
+    # 超过此时间未得到新帧时，发布 stream_ok=false；单帧处理超过此时间则丢弃该帧。
+    stale_timeout_s: 0.5        # 单位：秒；不触发相机或服务重启
+    publish_raw: true           # 允许向订阅者发布未压缩图像；图像已对齐和校正
+                                # false 仍采集、处理并发布 CameraInfo 和 FrameInfo
+
+    max_frames: 0              # 成功处理指定帧数后退出；0 表示持续运行
+    evidence_dir: ''           # 采样输出目录；空值表示不保存，建议使用独立 runs/<批次> 目录
+                                # 非空时在第 30 帧及 max_frames 指定的末帧保存：
+                                # color.png、depth_z16.png、capture.json；同名覆盖，不是录像
+
+    # D405 的曝光设置作用于立体模块，会同时影响彩色和深度。
+    exposure_mode: manual      # manual：手动；auto：自动；keep：保留设备现有曝光/增益设置
+    exposure_us: 25000.0       # manual 模式下写入；单位：微秒，当前为 25 毫秒
+    gain: 16.0                 # manual 模式下写入的设备增益值，不是百分比；范围由 SDK 检查
