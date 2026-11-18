@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <robot name="ag95_preview" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <!-- Description only. No hardware plugin, serial device or controller. -->
+  <!-- AG95 独立模型入口，只描述形状和连接，不启动硬件。 -->
   <xacro:include filename="dh_ag95_macro.xacro"/>
   <link name="world"/>
+  <!-- 主动关节的模型上限，单位 rad；依据当前网格闭合范围，不是硬件限位。 -->
   <xacro:arg name="gripper_joint_upper_limit" default="0.94"/>
+  <!-- 抓取参考点沿 ag95_base_link 的 +Z 偏移，单位 m；参考值尚未实物标定。 -->
   <xacro:arg name="grasp_link_offset" default="0.20"/>
   <xacro:dh_ag95_gripper prefix="" parent="world"
       grasp_link_offset="$(arg grasp_link_offset)"

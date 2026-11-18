@@ -22,7 +22,7 @@ unset XIANGQI_BENCHMARK_LOCK
 cd "$build_run"
 colcon --log-base colcon_logs build --base-paths source/src --build-base build --install-base install --executor sequential --cmake-args -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
 source install/local_setup.bash
-export PYTHONPATH="$root/src/chess_robot_perception:$root/src/chess_robot_description:$root/src/chess_robot_perception/test:${PYTHONPATH:-}"
+export PYTHONPATH="$root/src/chess_robot_perception:$root/src/chess_robot_description/python:$root/src/chess_robot_perception/test:${PYTHONPATH:-}"
 for pair in chess_robot_arm/test_arm chess_robot_arm/test_checkpoint chess_robot_twist/test_twist; do
   name=${pair##*/}
   build/$pair --gtest_output=xml:"$run/$name.xml" > "$run/$name.log" 2>&1

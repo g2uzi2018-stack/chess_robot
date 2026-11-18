@@ -1,18 +1,22 @@
 <?xml version="1.0"?>
 <robot name="nova5_with_ag95" xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <!-- ROS resolves the installed package; the generator supplies a source path. -->
+  <!-- 整机装配入口：引用原厂机械臂和 AG95 本体；生成结果不手工修改。
+       ROS 按已安装包查找夹爪定义，工程生成工具会传入源码路径。 -->
   <xacro:include filename="nova5.urdf"/>
   <xacro:arg name="ag95_macro_file" default="$(find dh_ag95_description)/urdf/dh_ag95_macro.xacro"/>
   <xacro:include filename="$(arg ag95_macro_file)"/>
+  <!-- 是否加入地面显示和碰撞形状；默认关闭，不属于机器人本体。 -->
   <xacro:arg name="include_ground" default="false"/>
-  <!-- New fixture includes the slotted gripper base; flange datums coincide in CAD.
-       Additional mount Z remains adjustable for later physical calibration. -->
+  <!-- 夹爪相对 camera_bracket_link 沿 +Z 的额外安装偏移，单位 m。
+       当前 CAD 安装面重合，默认 0；实物偏差待测。 -->
   <xacro:arg name="gripper_mount_z" default="0.0"/>
+  <!-- 抓取参考点沿 ag95_base_link 的 +Z 偏移，单位 m；0.20 是未标定的参考值。 -->
   <xacro:arg name="grasp_link_offset" default="0.20"/>
+  <!-- 夹爪主动关节的模型上限，单位 rad；按当前网格闭合范围设置，不是硬件限位。 -->
   <xacro:arg name="gripper_joint_upper_limit" default="0.94"/>
 
-  <!-- User 20260117 v2 fixture: mounting plate, slotted clamp and new camera.
-       Includes the base shape, so the generic AG95 base geometry is omitted below. -->
+  <!-- 当前安装件已包含安装板、夹持底座、支架和相机；下方关闭 AG95 底座外形以免重复。
+       网格已换算为 m，按 Link6 法兰安装面对齐；来源和变换见配套 JSON。 -->
   <link name="camera_bracket_link">
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -41,7 +45,7 @@
     <origin xyz="0 0 $(arg gripper_mount_z)" rpy="0 0 0"/>
   </xacro:dh_ag95_gripper>
 
-  <!-- Scene geometry is optional; not part of the default robot model. -->
+  <!-- include_ground 开启时才加入地面场景。 -->
   <xacro:if value="$(arg include_ground)">
     <link name="env_ground">
       <collision><geometry><box size="2.0 2.0 0.05"/></geometry></collision>

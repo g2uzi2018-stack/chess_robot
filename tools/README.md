@@ -20,7 +20,7 @@
 扫描、抓放调度和设备准备在 [chess_robot_tasks](../src/chess_robot_tasks/README.md)。
 感知与场景节点在 [chess_robot_perception](../src/chess_robot_perception/README.md)。
 现场冻结代码仍通过 tools/description/rigid_geometry.py 的兼容符号链接读取同一份实现；不维护副本。
-共用几何实现位于 `src/chess_robot_description/chess_robot_description/rigid_geometry.py`。
+共用几何实现位于 `src/chess_robot_description/python/chess_robot_description/rigid_geometry.py`。
 
 构建产物写入 `build/`；运行采样和分析结果写入 `runs/<批次>/`，长期采用的数据写入 `data/`。
 新增前查现有工具，优先复用。本文是 tools 内唯一 README；修改入口时更新本文和实际调用方。

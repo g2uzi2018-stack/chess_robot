@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <!-- 可复用的夹爪定义。parent 指定安装到哪个部件，origin 指定相对它的位置和朝向。
+       prefix 用于区分多个实例；grasp_link_offset 沿夹爪基座 +Z，单位 m，默认 0.19，
+       当前两个模型入口均覆盖为 0.20，这些参考值尚未实物标定。
+       joint_upper_limit 单位 rad，只限定模型范围；include_base_geometry 控制是否包含底座外形。 -->
   <xacro:macro name="dh_ag95_gripper"
     params="
     prefix
@@ -11,11 +15,12 @@
     *origin"
   >
 
-    <!-- Adapted 2026-10-24: remove legacy collision boxes and expose a geometry-only
-         closing limit. The unmodified source is in reference/ag95/. -->
+    <!-- 当前使用上游碰撞网格，不附加指尖碰撞盒；原始宏保存在 reference/ag95/。
+         模型关节轴和物理参数沿用上游，未据此确认实机参数。 -->
 
     <xacro:property name="lower_limit" value="0.0" />
     <xacro:property name="upper_limit" value="${joint_upper_limit}" />
+    <!-- 上游转动关节参数：effort 单位 N·m，velocity 单位 rad/s；不作为驱动命令。 -->
     <xacro:property name="max_effort" value="50.0" />
     <xacro:property name="max_velocity" value="2.1" />
 

@@ -25,21 +25,27 @@ python3 tools/description/export_browser_model.py
 也可以直接在查看器中选择本仓库的 `src` 文件夹，然后选择组合纯 URDF；
 两个 package.xml 用于解析 `package://` 路径。导出包则不依赖 ROS 包路径解析。
 
-## 2 修改与重新生成
+## 2 按需修改与生成
 
-ROS 2 Humble 环境中已有 Xacro 时：
+整机源入口为 `src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro`，
+夹爪本体定义为 `src/dh_ag95_description/urdf/dh_ag95_macro.xacro`。
+`nova5.urdf` 是原厂本体输入；`nova5_with_ag95.urdf` 和 `ag95.urdf` 才是本工具生成的结果。
+
+仅当输入变化影响展开结果、且需要使用或维护结果文件时，或本次需要的结果缺失/已确认过期时，执行：
 
 ```bash
+cd /home/kuang/workspace/chess_robot
 source /opt/ros/humble/setup.bash
 python3 tools/description/generate_models.py
-python3 tools/description/generate_models.py --check
-python3 tools/description/check_models.py
 ```
 
-模型源文件为 `src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro`，
-夹爪源宏为 `src/dh_ag95_description/urdf/dh_ag95_macro.xacro`。
-不要直接修改生成的 `.urdf`；修改源文件后重新生成，再重新导出浏览器包。
-这些 Python 工具只做离线模型处理，不属于机器人业务/控制代码。
+现有生成脚本一次处理 AG95 独立模型和整机模型两份 URDF，执行前确认范围。
+不要手工修改这两份生成结果；需要浏览器查看包时再按第 1 节导出。
+文档、说明性注释和无关代码调整不触发生成或 `--check`；仅替换同路径网格且 URDF 参数未变时，不重写 URDF。
+正常构建或启动已有必要生成步骤时不重复执行。生成完成不自动串联全套检查；具体检查按本次改动选择。
+
+文件职责与参数入口见两个模型包的 `urdf/README.txt`。
+这些工具处理离线模型，不负责机器人硬件控制。
 
 可选场景（输出到运行目录，不覆盖默认纯 URDF）：
 
@@ -65,4 +71,4 @@ xacro src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro \
   gripper_joint_upper_limit:=0.94 > runs/assembly_candidate.urdf
 ```
 
-当前检查不能代替安装面/TCP 标定、实机跟踪、带 SRDF 的碰撞规划或动力学验证。新相机版本的检查见 `../validation/camera-v2-2026-10-24.md`，前一轮去包络记录保留在 `../validation/ag95-refinement-2026-10-24.md`。机械臂本体仍保留原厂零速度/力矩占位值。
+离线模型检查不能代替安装面/TCP 标定、实机跟踪、带 SRDF 的碰撞规划或动力学验证。已有检查资料见 `../../runs/records/validation/camera-v2-2026-10-24.md` 和 `../../runs/records/validation/ag95-refinement-2026-10-24.md`；其结论只适用于对应版本与检查范围。机械臂本体仍保留原厂零速度/力矩占位值。

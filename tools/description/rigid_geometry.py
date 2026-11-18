@@ -1,1 +1,1 @@
-../../src/chess_robot_description/chess_robot_description/rigid_geometry.py
+../../src/chess_robot_description/python/chess_robot_description/rigid_geometry.py
