@@ -1,12 +1,40 @@
 <?xml version="1.0"?>
-<package format="3"><name>chess_robot_arm</name><version>0.1.0</version>
-<description>Conservative measured-feedback arm task controller with framed rod policy.</description>
-<maintainer email="maintainer@example.com">chess_robot maintainers</maintainer><license>Apache-2.0</license>
-<buildtool_depend>ament_cmake</buildtool_depend>
-<depend>chess_robot_twist</depend><depend>eigen</depend><depend>rclcpp</depend><depend>rclcpp_action</depend><depend>rcl_interfaces</depend>
-<depend>fcl</depend><depend>yaml-cpp</depend>
-<depend>chess_robot_interface</depend><depend>sensor_msgs</depend><depend>geometry_msgs</depend><depend>trajectory_msgs</depend>
-<exec_depend>launch_ros</exec_depend><exec_depend>ament_index_python</exec_depend><exec_depend>chess_robot_description</exec_depend>
-<depend>libssl-dev</depend>
-<test_depend>ament_cmake_gtest</test_depend><export><build_type>ament_cmake</build_type></export>
+<package format="3">
+  <name>chess_robot_arm</name>
+  <version>0.1.0</version>
+  <description>Nova5 motion planning, measured-feedback execution and cable twist history.</description>
+  <maintainer email="zzkuang0516@163.com">kuang</maintainer>
+  <license>Apache-2.0</license>
+
+  <!-- 构建工具。 -->
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- 节点、动作服务和项目通信接口。 -->
+  <depend>rclcpp</depend>
+  <depend>rclcpp_action</depend>
+  <depend>rcl_interfaces</depend>
+  <depend>chess_robot_interface</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>trajectory_msgs</depend>
+
+  <!-- 核心库所需的运动模型、几何计算和存档支持；系统库名称使用 rosdep 键。 -->
+  <depend>chess_robot_twist</depend>
+  <depend>eigen</depend>
+  <depend>fcl</depend>
+  <depend>yaml-cpp</depend>
+  <depend>libssl-dev</depend>
+
+  <!-- launch 直接导入的模块，以及启动时加载的机器人模型。 -->
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>chess_robot_description</exec_depend>
+
+  <!-- 既有测试的构建依赖；声明依赖不会自动运行测试。 -->
+  <test_depend>ament_cmake_gtest</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>

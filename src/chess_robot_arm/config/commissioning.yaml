@@ -1,26 +1,33 @@
-# Overlay for explicitly authorized, local real-hardware acceptance only.
-# Load after arm.yaml and home.yaml. Keep enable false in the saved template.
-# Supply safety.model_file explicitly using the matching generated geometry.
+# 真实设备小范围调试的覆盖参数；在基础 arm.yaml、Home 和历史参考之后加载。
+# 读取方为 arm_node；加载方式见包 README。修改后重启生效。
+# 保留暂停和使能的现有默认值；此文件本身不会使能或移动机械臂。
 chess_robot_arm:
   ros__parameters:
-    backend: commissioning
-    hardware: {enable: false}
-    commissioning: {joint_radius_rad: 0.1, tcp_radius_m: 0.03}
+    backend: commissioning      # 使用下方限定范围；需要匹配的 safety.model_file
+    hardware:
+      enable: false             # 本模板不开放执行；还受 motion.paused 约束
+    commissioning:
+      joint_radius_rad: 0.1     # 各关节相对日常 Home 的最大偏差，弧度
+      tcp_radius_m: 0.03        # 工具工作点相对日常 Home 的最大距离，米
     limits:
-      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]
-      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]
+      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]       # joint1～6，弧度/秒
+      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72] # joint1～6，弧度/秒²
     profiles:
       default: low
-      names: [low, high, commissioning_slow]
+      names: [low, high, commissioning_slow] # 要加载的档位；切换速度不扩大运动范围
+      # 两项分别为速度（弧度/秒）和加速度（弧度/秒²）上限。
       low: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
       high: {speed_rad_s: 2.36, acceleration_rad_s2: 4.72}
       commissioning_slow: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
-    twist: {net_limit_rad: 0.3490658503988659, total_limit_rad: 0.3490658503988659}
-    feedback: {freshness_s: 0.1}
+    twist:
+      net_limit_rad: 0.3490658503988659   # 净扭转绝对值上限，弧度（20°）
+      total_limit_rad: 0.3490658503988659 # 各段扭转绝对值总和上限，弧度（20°）
+    feedback:
+      freshness_s: 0.1         # 实测反馈有效期，秒；不是反馈周期
     tolerances:
-      stationary_rad_s: 0.002
-      dwell_s: 0.4
-      position_m: 0.001
-      rotation_rad: 0.005
-      joint_rad: 0.0005
-      tracking_rad: 0.15
+      stationary_rad_s: 0.002  # 停稳速度阈值，弧度/秒
+      dwell_s: 0.4             # 连续到位/停稳确认时间，秒
+      position_m: 0.001        # 位置及正逆解一致性的容差，米
+      rotation_rad: 0.005      # 姿态及正逆解一致性的容差，弧度
+      joint_rad: 0.0005        # 到位/起点匹配的单轴容差，弧度
+      tracking_rad: 0.15       # 实测关节与上一轨迹点的单轴偏差上限，弧度

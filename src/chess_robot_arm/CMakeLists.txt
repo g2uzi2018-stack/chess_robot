@@ -1,14 +1,21 @@
 cmake_minimum_required(VERSION 3.16)
 project(chess_robot_arm)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# 构建工具。
 find_package(ament_cmake REQUIRED)
+
+# 运动模型、几何检查、存档校验与线程支持。
 find_package(chess_robot_twist REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(fcl REQUIRED)
 find_package(yaml-cpp REQUIRED)
+
+# ROS 节点、动作服务和消息接口。
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rcl_interfaces REQUIRED)
@@ -16,52 +23,126 @@ find_package(chess_robot_interface REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(trajectory_msgs REQUIRED)
-add_library(chess_robot_arm_core src/core.cpp src/driver.cpp src/geometry_guard.cpp src/checkpoint.cpp src/rotating_audit.cpp
-  third_party/dobot_v4/api/Dashboard.cpp third_party/dobot_v4/api/DobotClient.cpp)
+
+# 不依赖 ROS 的机械臂核心库；公共接口见 include/README.txt。
+add_library(chess_robot_arm_core
+  src/core.cpp
+  src/driver.cpp
+  src/geometry_guard.cpp
+  src/checkpoint.cpp
+  src/rotating_audit.cpp
+  third_party/dobot_v4/api/Dashboard.cpp
+  third_party/dobot_v4/api/DobotClient.cpp
+)
 target_include_directories(chess_robot_arm_core PRIVATE third_party/dobot_v4/api)
-install(DIRECTORY third_party/dobot_v4/ DESTINATION share/${PROJECT_NAME}/third_party/dobot_v4)
-target_include_directories(chess_robot_arm_core PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
-target_link_libraries(chess_robot_arm_core PUBLIC chess_robot_twist::chess_robot_twist Eigen3::Eigen Threads::Threads fcl yaml-cpp OpenSSL::Crypto)
+install(DIRECTORY third_party/dobot_v4/
+  DESTINATION share/${PROJECT_NAME}/third_party/dobot_v4
+)
+target_include_directories(chess_robot_arm_core PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+target_link_libraries(chess_robot_arm_core PUBLIC
+  chess_robot_twist::chess_robot_twist
+  Eigen3::Eigen
+  Threads::Threads
+  fcl
+  yaml-cpp
+  OpenSSL::Crypto
+)
 target_compile_options(chess_robot_arm_core PRIVATE -Wall -Wextra -Wpedantic)
+
+# ROS 接入与任务调度，复用上面的核心库。
 add_executable(arm_node src/node.cpp)
 target_link_libraries(arm_node chess_robot_arm_core)
-ament_target_dependencies(arm_node rclcpp rclcpp_action rcl_interfaces chess_robot_interface sensor_msgs geometry_msgs trajectory_msgs)
-install(TARGETS chess_robot_arm_core arm_node EXPORT export_arm ARCHIVE DESTINATION lib LIBRARY DESTINATION lib RUNTIME DESTINATION lib/${PROJECT_NAME})
-install(DIRECTORY include/ DESTINATION include)
-install(DIRECTORY config launch DESTINATION share/${PROJECT_NAME})
-# Install canonical sources last, including through --symlink-install. Never
-# let a stale package mirror become the installed daily target.
-execute_process(COMMAND "${CMAKE_COMMAND}" -E compare_files
-  "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/home.yaml"
-  "${CMAKE_CURRENT_SOURCE_DIR}/config/home.yaml" RESULT_VARIABLE home_mirror_status)
+ament_target_dependencies(arm_node
+  rclcpp
+  rclcpp_action
+  rcl_interfaces
+  chess_robot_interface
+  sensor_msgs
+  geometry_msgs
+  trajectory_msgs
+)
+
+# 安装可执行程序、公共库、头文件和运行配置。
+install(TARGETS chess_robot_arm_core arm_node
+  EXPORT export_arm
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION include/${PROJECT_NAME}
+)
+install(FILES include/README.txt
+  DESTINATION share/${PROJECT_NAME}/include
+)
+install(DIRECTORY config launch
+  DESTINATION share/${PROJECT_NAME}
+)
+
+# Home 的包内镜像须与根配置逐字一致；避免安装时使用旧目标。
+execute_process(
+  COMMAND "${CMAKE_COMMAND}" -E compare_files
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/home.yaml"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config/home.yaml"
+  RESULT_VARIABLE home_mirror_status
+)
+# 两份 Home 不一致时停止构建，修改入口见 config/README.txt。
 if(NOT home_mirror_status EQUAL 0)
   message(FATAL_ERROR "Daily Home source/package mirror drift; reconcile or use capture --apply before building")
 endif()
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/home.yaml"
-              "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/twist_reference.yaml"
-        DESTINATION share/${PROJECT_NAME}/config)
-install(FILES README.md DESTINATION share/${PROJECT_NAME})
-install(PROGRAMS scripts/validate_target.sh DESTINATION lib/${PROJECT_NAME})
+
+# 最后安装正式 Home 和历史参考，保留既有覆盖顺序。
+install(FILES
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/home.yaml"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../config/arm/twist_reference.yaml"
+  DESTINATION share/${PROJECT_NAME}/config
+)
+install(FILES README.md
+  DESTINATION share/${PROJECT_NAME}
+)
+install(PROGRAMS scripts/validate_target.sh
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# 向直接调用核心库的工程导出目标和依赖。
 ament_export_targets(export_arm HAS_LIBRARY_TARGET)
 ament_export_dependencies(chess_robot_twist Eigen3 Threads OpenSSL fcl yaml-cpp)
+
+# 既有离线目标；日常构建关闭 BUILD_TESTING，使用边界见 test/README.txt。
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+
   add_executable(replay_feedback test/replay_feedback.cpp)
   target_link_libraries(replay_feedback chess_robot_arm_core)
+
   add_executable(restore_reference_offline test/restore_reference_offline.cpp)
   target_link_libraries(restore_reference_offline chess_robot_arm_core)
   target_compile_options(restore_reference_offline PRIVATE -Wall -Wextra -Wpedantic)
+
   ament_add_gtest(test_arm test/test_arm.cpp)
   target_link_libraries(test_arm chess_robot_arm_core)
-  target_compile_definitions(test_arm PRIVATE ARM_TEST_URDF="${CMAKE_CURRENT_SOURCE_DIR}/../chess_robot_description/urdf/nova5_with_ag95.urdf")
-  target_compile_definitions(test_arm PRIVATE ARM_TEST_GUARD="${CMAKE_CURRENT_SOURCE_DIR}/config/nova5_ag95_geometry.yaml")
+  target_compile_definitions(test_arm PRIVATE
+    ARM_TEST_URDF="${CMAKE_CURRENT_SOURCE_DIR}/../chess_robot_description/urdf/nova5_with_ag95.urdf"
+  )
+  target_compile_definitions(test_arm PRIVATE
+    ARM_TEST_GUARD="${CMAKE_CURRENT_SOURCE_DIR}/config/nova5_ag95_geometry.yaml"
+  )
+
   ament_add_gtest(test_checkpoint test/test_checkpoint.cpp)
   target_link_libraries(test_checkpoint chess_robot_arm_core)
-  target_compile_definitions(test_checkpoint PRIVATE ARM_TEST_URDF="${CMAKE_CURRENT_SOURCE_DIR}/../chess_robot_description/urdf/nova5_with_ag95.urdf")
+  target_compile_definitions(test_checkpoint PRIVATE
+    ARM_TEST_URDF="${CMAKE_CURRENT_SOURCE_DIR}/../chess_robot_description/urdf/nova5_with_ag95.urdf"
+  )
+
   add_executable(migrate_checkpoint_offline test/migrate_checkpoint_offline.cpp)
   target_link_libraries(migrate_checkpoint_offline chess_robot_arm_core)
   target_compile_options(migrate_checkpoint_offline PRIVATE -Wall -Wextra -Wpedantic)
+
   add_executable(checkpoint_fixture test/checkpoint_fixture.cpp)
   target_link_libraries(checkpoint_fixture chess_robot_arm_core)
 endif()
+
 ament_package()

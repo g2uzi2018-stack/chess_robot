@@ -1,101 +1,128 @@
+# arm_node 的基础参数；由 arm.launch.py 加载，修改后重新安装配置并重启生效。
+# launch 还会依次加载 home.yaml、twist_reference.yaml，再覆盖 IP、URDF 和几何文件路径。
+# 现场覆盖及大模型文件说明见本目录 README.txt；本模板不会自动使能或运动。
 chess_robot_arm:
   ros__parameters:
-    motion: {paused: true}
-    # Opt in on the installation with an absolute persistent path and explicit
-    # policy that no external/unobserved movement occurs while powered down.
+    motion:
+      paused: true             # true 禁止执行运动，仍可接收反馈和请求仅规划
+
+    # 保存跨重启所需的线缆扭转历史；不是普通日志。
     checkpoint:
-      file: ""
-      period_s: 10.0
-      stopped_dwell_s: 1.0
-      endpoint_tolerance_rad: 0.005
-      auto_restore: false
-      no_unobserved_motion: false
-      enable_after_restore: false
+      file: ""                 # 存档绝对路径；空值关闭存档，非空时父目录须已存在
+      period_s: 10.0           # 空闲停稳时的定期保存间隔，秒；运动后停稳会尽快保存
+      stopped_dwell_s: 1.0     # 保存或恢复前要求连续停稳的时间，秒
+      endpoint_tolerance_rad: 0.005  # 恢复时实测关节与存档的最大单轴偏差，弧度
+      auto_restore: false      # 是否尝试自动恢复存档；需要下方无遗漏运动声明
+      no_unobserved_motion: false  # 操作者确认：节点未观察期间机械臂没有运动
+      enable_after_restore: false  # 恢复历史后是否请求使能；使能不等于发送运动
+
+    # 原始反馈和命令记录；由独立线程写盘。
     audit:
-      directory: ""
-      max_file_bytes: 67108864
-      keep_files: 16
-    backend: read_only
-    test_fixture: false
-    # Loopback is deliberate. Supply the controller IPv4 explicitly on AGX.
+      directory: ""            # 输出目录；空值不记录，非空时运行程序创建目录
+      max_file_bytes: 67108864  # 每个记录流的单文件上限，字节（64 MiB）
+      keep_files: 16           # 每个记录流保留的文件总数，包含正在写入的文件
+
+    backend: read_only         # read_only 只读/规划；其余见 commissioning、exploration 模板
+                               # hardware 执行还要求 hardware 下五项均为 true，且取消暂停
+    test_fixture: false        # 旧模拟分支开关；真实调试保持 false，不使用该模拟入口
+
     controller:
-      protocol_family: v4
-      firmware_version: 4.6.2.4-stable-d9efa2ce0-202509261512
-      ip: 127.0.0.1
-      dashboard_port: 29999
-      feedback_port: 30004
-      timeout_ms: 500
-      stop_ack_timeout_ms: 1500
-    # Nominal URDF transform, NOT a measured physical TCP calibration.
+      protocol_family: v4      # 当前驱动使用的协议系列
+      firmware_version: 4.6.2.4-stable-d9efa2ce0-202509261512  # 固件身份，参与存档匹配
+      ip: 127.0.0.1            # 模板回环地址；通过 launch 的 controller_ip 指定真实控制器 IPv4
+      dashboard_port: 29999    # 命令及回复 TCP 端口
+      feedback_port: 30004     # 实测状态 TCP 端口
+      timeout_ms: 500          # 连接及普通命令超时，毫秒
+      stop_ack_timeout_ms: 1500  # 等待 Stop 回复的超时，毫秒；不代表已实测停稳
+
+    # 工具工作点相对末端法兰的变换，采用当前名义模型值；不是实测标定结果。
     tcp:
-      translation_m: [0.0, 0.0, 0.2]
-      rpy_rad: [1.5707963267948966, -1.5707963267948966, 0.0]
-    grasp_axis: [1.0, 0.0, 0.0]
-    approach_clearance_m: 0.25
+      translation_m: [0.0, 0.0, 0.2]  # 法兰坐标系中的 XYZ 偏移，米
+      rpy_rad: [1.5707963267948966, -1.5707963267948966, 0.0]  # 绕 XYZ 的角，弧度；按 Rz*Ry*Rx 组合
+    grasp_axis: [1.0, 0.0, 0.0]  # 工具坐标系中的抓取方向单位向量；抓取时要求指向基座 -Z
+    approach_clearance_m: 0.25   # 预抓/撤离位置相对目标沿基座 +Z 的偏移，米；0 表示无偏移
     workspace:
-      min_m: [-0.8, -0.8, 0.0]
-      max_m: [0.8, 0.8, 1.2]
+      min_m: [-0.8, -0.8, 0.0]  # 工具工作点在 base_link 中允许的 XYZ 下界，米
+      max_m: [0.8, 0.8, 1.2]    # 对应上界，米
+
+    # 六轴顺序均为 joint1～joint6；用于规划，不会修改控制器自身限值。
     limits:
-      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]
-      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]
+      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]          # 各轴速度上限，弧度/秒
+      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]    # 各轴加速度上限，弧度/秒²
     profiles:
-      default: low
-      names: [low, high, conservative]
+      default: low             # 请求未指定 profile 时使用的档位
+      names: [low, high, conservative]  # 实际加载的档位名；须与下方条目对应
+      # speed_rad_s / acceleration_rad_s2 分别为本档速度、加速度上限；还受 limits 约束。
       low: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
       high: {speed_rad_s: 2.36, acceleration_rad_s2: 4.72}
       conservative:
         speed_rad_s: 0.708
         acceleration_rad_s2: 1.416
-    capture: {max_age_s: 1.0, future_tolerance_s: 0.05}
-    feedback: {freshness_s: 0.25}
+
+    capture:
+      max_age_s: 1.0           # 目标采集时间戳最多落后当前 ROS 时间多少秒
+      future_tolerance_s: 0.05 # 允许目标时间戳领先当前 ROS 时间的范围，秒
+    feedback:
+      freshness_s: 0.25       # 实测反馈有效期，秒；不是采样或发布周期
+
     reference:
-      power_cycle_handoff: false
-      power_cycle_stopped_join_file: ""
-      power_cycle_fault_restart_file: ""
-      power_cycle_fault_restart_offset_bytes: -1
-      power_cycle_fault_restart_sha256: ""
-      # Final live near-Home handoff only; unchanged strict default.
-      power_cycle_endpoint_tolerance_rad: 0.001
-      home_tolerance_rad: 0.03
-      max_joint_step_rad: 0.1
-      max_phase_step_rad: 1.5707963267948966
+      power_cycle_handoff: false  # 允许按已声明的断电边界恢复完整历史；不自动清零
+      power_cycle_stopped_join_file: ""  # 指定停稳断电衔接的原始反馈文件；空值不启用
+      power_cycle_fault_restart_file: "" # 指定故障重启衔接的末份原始反馈文件；空值不启用
+      power_cycle_fault_restart_offset_bytes: -1  # 该文件内的重启记录偏移，字节；-1 表示未指定
+      power_cycle_fault_restart_sha256: ""       # 对应原始文件校验值；与文件、偏移一起指定
+      power_cycle_endpoint_tolerance_rad: 0.001  # 显式断电衔接端点的单轴偏差上限，弧度
+      home_tolerance_rad: 0.03  # 接近历史参考姿态的单轴容差，弧度；不是日常 Home 到位容差
+      max_joint_step_rad: 0.1  # 连续实测反馈间允许的单轴角度变化上限，弧度
+      max_phase_step_rad: 1.5707963267948966  # 连续反馈间允许的扭转相位变化上限，弧度
+
     tolerances:
-      downward_rad: 0.15
-      stationary_rad_s: 0.01
-      dwell_s: 0.3
-      position_m: 0.003
-      rotation_rad: 0.03
-      joint_rad: 0.015
-      tracking_rad: 0.15
+      downward_rad: 0.15      # 抓取方向偏离基座 -Z 的最大角度，弧度
+      stationary_rad_s: 0.01 # 各轴低于此速度才视为停稳，弧度/秒
+      dwell_s: 0.3           # 到位/停止确认要求连续满足条件的时间，秒
+      position_m: 0.003      # 工具位置及正逆解一致性的容差，米
+      rotation_rad: 0.03     # 工具姿态及正逆解一致性的容差，弧度
+      joint_rad: 0.015       # 到位及轨迹起点匹配的最大单轴偏差，弧度
+      tracking_rad: 0.15     # 实测关节与上一轨迹点的最大单轴偏差，弧度
+
     twist:
-      # Total twist, then absolute net; time is considered only inside deadbands.
-      neutral_band_rad: 0.08726646259971647
-      switch_hysteresis_rad: 0.03490658503988659
-      duration_hysteresis_s: 1.0
-      # Legacy weights accepted for configuration compatibility; no ranking effect.
+      neutral_band_rad: 0.08726646259971647     # 扭转选解时的中性区间，弧度（5°）
+      switch_hysteresis_rad: 0.03490658503988659 # 候选解扭转改善超过此量才切换，弧度（2°）
+      duration_hysteresis_s: 1.0               # 扭转近似相同时，耗时改善超过此量才切换，秒
+      # 以下四个旧权重仍被读取，但不再参与候选解排序。
       cost_duration: 1.0
       cost_net: 1.0
       cost_total: 1.0
       cost_energy: 0.01
-      net_limit_rad: 6.283185307179586
-      total_limit_rad: 6.283185307179586
+      net_limit_rad: 6.283185307179586   # 净扭转绝对值上限，弧度（360°）
+      total_limit_rad: 6.283185307179586 # 各段扭转绝对值总和上限，弧度（360°）
+
     sampling:
-      joint_step_rad: 0.025
-      cartesian_step_m: 0.002
-      period_s: 0.03
-      max_samples: 20000
-    servo: {aheadtime: 50.0, gain: 500.0, ack_timeout_s: 0.15, max_pending: 6}
-    planning_timeout_s: 30.0
-    gripper_timeout_s: 15.0
-    arrival_timeout_s: 10.0
-    stop_timeout_s: 4.0
+      joint_step_rad: 0.025   # 关节路径采样间隔/竖直路径相邻解的单轴变化上限，弧度
+      cartesian_step_m: 0.002 # 竖直路径求逆解的位置间隔，米
+      period_s: 0.03         # 轨迹时间采样与默认发点间隔，秒
+      max_samples: 20000     # 单段轨迹的采样数量上限
+    servo:
+      aheadtime: 50.0        # SDK 前瞻系数，无单位，类似 D 项；不是毫秒数
+      gain: 500.0            # SDK 比例增益，无单位，类似 P 项
+      ack_timeout_s: 0.15    # 单条 ServoJ 命令等待确认的期限，秒
+      max_pending: 6         # 已发送但尚未确认的命令数量上限
+    planning_timeout_s: 30.0 # 整个规划阶段的时间预算，秒
+    gripper_timeout_s: 15.0  # 抓取序列等待外部夹持确认的期限，秒
+    arrival_timeout_s: 10.0  # 每段发点结束后等待实测到位的期限，秒
+    stop_timeout_s: 4.0      # 取消/故障后发送 Stop 并确认停稳的总预算，秒
+
+    # 现有执行条件；声明代表人工核对结果，不会自动校准或认证设备。
     hardware:
-      enable: false
-      tcp_verified: false
-      limits_verified: false
-      execution_profile_verified: false
-      servoj_certified: false
-    # Optional sampled collision/Jacobian guard exported from this robot URDF.
-    # An explicit matching file is mandatory for backend=commissioning.
-    safety: {model_file: ""}
-    commissioning: {joint_radius_rad: 0.1, tcp_radius_m: 0.03}
+      enable: false                    # 允许发送执行命令；仍受暂停、backend 等条件约束
+      tcp_verified: false              # 已核对工具工作点
+      limits_verified: false           # 已核对设备实际限值
+      execution_profile_verified: false # 已核对实际速度/加速度档位
+      servoj_certified: false          # 已核对 ServoJ 执行行为
+
+    safety:
+      model_file: ""          # 几何检查 YAML 路径；launch 会填入默认模型
+                             # 直接运行时空值不加载；commissioning/exploration 要求非空
+    commissioning:
+      joint_radius_rad: 0.1  # 各关节相对日常 Home 的最大偏差，弧度
+      tcp_radius_m: 0.03     # 工具工作点相对日常 Home 的最大距离，米

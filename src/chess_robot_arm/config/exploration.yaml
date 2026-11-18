@@ -1,19 +1,22 @@
-# Explicitly authorized exploration. Stage names are speed profiles and checked
-# software boundaries, not production certification. Every stage uses real FK/IK,
-# sampled collision/Jacobian guards, one continuous twist history and measured arrival.
+# 真实设备分档调试的覆盖参数；在基础 arm.yaml、Home 和历史参考之后加载。
+# 读取方为 arm_node；加载方式见包 README。修改后重启生效。
+# 档位选择速度和运动范围，不表示设备已获完整验证；本模板不自动使能或运动。
 chess_robot_arm:
   ros__parameters:
     backend: exploration
-    hardware: {enable: false}
-    approach_clearance_m: 0.05
-    planning_timeout_s: 60.0
-    sampling: {max_samples: 40000}
+    hardware:
+      enable: false             # 执行开关；还受 motion.paused 和几何模型等现有条件约束
+    approach_clearance_m: 0.05   # 预抓/撤离相对目标的基座 +Z 偏移，米
+    planning_timeout_s: 60.0    # 规划时间预算，秒
+    sampling:
+      max_samples: 40000        # 单段轨迹的采样数量上限；其他采样参数沿用基础配置
     limits:
-      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]
-      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72]
+      velocity_rad_s: [2.36, 2.36, 2.36, 2.36, 2.36, 2.36]       # joint1～6，弧度/秒
+      acceleration_rad_s2: [4.72, 4.72, 4.72, 4.72, 4.72, 4.72] # joint1～6，弧度/秒²
     profiles:
       default: low
       names: [low, high, near, inner, middle, outer, full]
+      # 两项分别为速度（弧度/秒）和加速度（弧度/秒²）上限。
       low: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
       high: {speed_rad_s: 2.36, acceleration_rad_s2: 4.72}
       near: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
@@ -22,7 +25,10 @@ chess_robot_arm:
       outer: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
       full: {speed_rad_s: 0.708, acceleration_rad_s2: 1.416}
     exploration:
-      stages: [low, high, near, inner, middle, outer, full]
+      stages: [low, high, near, inner, middle, outer, full] # 各档范围按此顺序加载，不能逐档缩小
+      # tcp_radius_m：工具相对日常 Home 的距离上限，米。
+      # joint_radius_rad：各关节相对日常 Home 的偏差上限，弧度。
+      # twist_limit_rad：本档净扭转绝对值和总扭转的共同上限，弧度。
       near: {tcp_radius_m: 0.08, joint_radius_rad: 0.3, twist_limit_rad: 0.5235987755982988}
       inner: {tcp_radius_m: 0.18, joint_radius_rad: 0.7, twist_limit_rad: 1.0471975511965976}
       middle: {tcp_radius_m: 0.40, joint_radius_rad: 1.5, twist_limit_rad: 2.0943951023931953}
@@ -30,14 +36,21 @@ chess_robot_arm:
       low: {tcp_radius_m: 0.08, joint_radius_rad: 0.3, twist_limit_rad: 0.5235987755982988}
       high: {tcp_radius_m: 0.08, joint_radius_rad: 0.3, twist_limit_rad: 0.5235987755982988}
       full: {tcp_radius_m: 1.10, joint_radius_rad: 6.0, twist_limit_rad: 6.283185307179586}
-    twist: {net_limit_rad: 6.283185307179586, total_limit_rad: 6.283185307179586}
-    servo: {ack_timeout_s: 0.15, max_pending: 6, command_time_s: 0.0, aheadtime: 100.0, gain: 200.0}
-    # Explicit operator choice on 2026-10-31; no claim of a hardware defect.
-    feedback: {freshness_s: 1.0}
+    twist:
+      net_limit_rad: 6.283185307179586   # 所有档位的净扭转绝对值上限，弧度
+      total_limit_rad: 6.283185307179586 # 所有档位的总扭转上限，弧度；运行时还受所选档位限制
+    servo:
+      ack_timeout_s: 0.15       # 单条命令等待确认的期限，秒
+      max_pending: 6            # 已发送但尚未确认的命令数量上限
+      command_time_s: 0.0       # 单个目标点的跟随时间，秒；0 使用 sampling.period_s
+      aheadtime: 100.0          # SDK 前瞻系数，无单位；覆盖基础配置的 50
+      gain: 200.0               # SDK 比例增益，无单位；覆盖基础配置的 500
+    feedback:
+      freshness_s: 1.0          # 此调试配置允许的反馈有效期，秒；基础配置为 0.25 秒
     tolerances:
-      stationary_rad_s: 0.002
-      dwell_s: 0.4
-      position_m: 0.001
-      rotation_rad: 0.005
-      joint_rad: 0.0005
-      tracking_rad: 0.15
+      stationary_rad_s: 0.002  # 停稳速度阈值，弧度/秒
+      dwell_s: 0.4             # 连续到位/停稳确认时间，秒
+      position_m: 0.001        # 位置及正逆解一致性的容差，米
+      rotation_rad: 0.005      # 姿态及正逆解一致性的容差，弧度
+      joint_rad: 0.0005        # 到位/起点匹配的单轴容差，弧度
+      tracking_rad: 0.15       # 实测关节与上一轨迹点的单轴偏差上限，弧度
