@@ -2,6 +2,7 @@
 
 `chess_robot_vision` 提供 `vision_node`，负责 D405 彩色/深度采集、彩深对齐、畸变校正，以及图像、内参和帧信息发布。
 棋子识别由 [感知包](../chess_robot_perception/README.md)负责；网页编码和显示由 [预览包](../chess_robot_preview/README.md)负责。
+图像、内参和帧信息通过 ROS 发布，本节点不保存采样文件。
 
 ## 1 源码与配置入口
 
@@ -55,7 +56,7 @@ ros2 launch chess_robot_vision vision.launch.py
 - 只有 `publish_raw=true` 且对应图像存在订阅者时，才发布该路未压缩图像；内参与帧信息仍随有效帧发布。这里的 raw 不表示未经校正的镜头原图。
 - 相机不按照网页伪彩色的显示范围裁剪深度；网页显示设置由消费者负责。
 
-## 4 运行状态与采样
+## 4 运行状态与停止条件
 
 启动日志打印实际相机、流配置和曝光读回值。D405 的曝光/增益作用于立体模块，同时影响彩色和深度。
 未指定 serial 时要求恰好连接一台 D405；零台、多台或指定序列号不存在时启动失败。
@@ -64,8 +65,6 @@ ros2 launch chess_robot_vision vision.launch.py
 异常首次及时记录，持续同原因异常每 2 秒汇总，原因变化和恢复立即记录；日志位置见[日志说明](../../docs/operations/logging.md)。
 
 `max_frames=0` 持续运行；正数表示成功处理对应帧数后退出。
-`evidence_dir` 非空时，在第 30 帧及指定末帧保存 `color.png`、`depth_z16.png`、`capture.json`，同名文件会覆盖，因此应使用独立的 `runs/<批次>/` 目录。
-深度 PNG 保留 SDK Z16 原始单位，比例在 capture.json 中；这是单组采样，不是连续录像。
 
 ## 5 验证与边界
 

@@ -7,11 +7,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <chrono>
-#include <filesystem>
-#include <fstream>
 #include <limits>
 #include <iostream>
 #include <cmath>
@@ -26,7 +23,6 @@ class VisionNode final : public rclcpp::Node {
     // 参数说明见 config/d405.yaml。
     serial_ = declare_parameter<std::string>("serial", "");
     frame_id_ = declare_parameter<std::string>("frame_id", "d405_color_optical_frame");
-    evidence_dir_ = declare_parameter<std::string>("evidence_dir", "");
     width_ = declare_parameter<int>("width", 640);
     height_ = declare_parameter<int>("height", 480);
     fps_ = declare_parameter<int>("fps", 30);
@@ -358,9 +354,6 @@ class VisionNode final : public rclcpp::Node {
       }
 
       ++count_;
-      // 已设置保存目录，且到第 30 帧或指定末帧时，保存图像和参数。
-      if (!evidence_dir_.empty() && (count_ == 30 || (max_frames_ > 0 && count_ == max_frames_)))
-        save(bgr, z16, info, result, intrinsics);
       // 本帧处理成功后，记录此前异常的恢复情况。
       logFrameFault("", true);
       // 已设置帧数上限且成功处理帧数达到上限时，退出节点；上限为 0 时持续运行。
@@ -373,42 +366,6 @@ class VisionNode final : public rclcpp::Node {
     }
   }
 
-  // 保存图像和参数；同目录下再次保存会覆盖同名文件。
-  void save(const cv::Mat &color, const cv::Mat &depth, const sensor_msgs::msg::CameraInfo &info,
-            const chess_robot_interface::msg::FrameInfo &result, const rs2_intrinsics &intrinsics) {
-    std::filesystem::create_directories(evidence_dir_);
-    cv::imwrite(evidence_dir_ + "/color.png", color);
-    cv::imwrite(evidence_dir_ + "/depth_z16.png", depth);
-
-    cv::FileStorage out(evidence_dir_ + "/capture.json",
-                        cv::FileStorage::WRITE | cv::FileStorage::FORMAT_JSON);
-    out << "serial" << serial_
-        << "firmware" << profile_.get_device().get_info(RS2_CAMERA_INFO_FIRMWARE_VERSION)
-        << "depth_scale_m" << scale_
-        << "frame_id" << frame_id_
-        << "color_frame_number" << double(result.color_frame_number)
-        << "depth_frame_number" << double(result.depth_frame_number)
-        << "device_timestamp_ms" << result.device_timestamp_ms
-        << "timestamp_domain" << result.timestamp_domain
-        << "stamp_sec" << info.header.stamp.sec
-        << "stamp_nanosec" << double(info.header.stamp.nanosec)
-        << "width" << width_
-        << "height" << height_
-        << "fx" << intrinsics.fx
-        << "fy" << intrinsics.fy
-        << "ppx" << intrinsics.ppx
-        << "ppy" << intrinsics.ppy
-        << "distortion" << rs2_distortion_to_string(intrinsics.model)
-        << "coeffs" << "[";
-    for (float c : intrinsics.coeffs)
-      out << c;
-    out << "]" << "source_distortion" << rs2_distortion_to_string(source_intrinsics_.model)
-        << "source_coeffs" << "[";
-    for (float c : source_intrinsics_.coeffs)
-      out << c;
-    out << "]";
-  }
-
   rs2::pipeline pipeline_;
   rs2::pipeline_profile profile_;
   rs2::align align_;
@@ -418,7 +375,7 @@ class VisionNode final : public rclcpp::Node {
   int width_, height_, fps_, max_frames_, count_{0};
   bool have_frame_{false};
   uint64_t last_color_number_{0}, last_depth_number_{0};
-  std::string serial_, frame_id_, evidence_dir_;
+  std::string serial_, frame_id_;
   std::string exposure_mode_;
   double exposure_us_{10000.0}, gain_{16.0};
 

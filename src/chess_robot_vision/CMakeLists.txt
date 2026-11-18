@@ -14,7 +14,7 @@ find_package(chess_robot_interface REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
-find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 find_package(realsense2 REQUIRED)
 
 # 包内校正库，供节点和已有离线检查复用，不作为公共库安装或导出。

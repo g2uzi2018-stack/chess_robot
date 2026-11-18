@@ -60,7 +60,7 @@ arm 的 `test_fixture=true` 会把上述 `/arm/` 前缀改为 `/simulation/arm/`
 相机四类消息共享配对时间戳，表示**主机收到帧**，不是曝光时刻；设备时间另在 FrameInfo 中保留。
 相机光学系为 d405_color_optical_frame（X 右、Y 下、Z 前）。识别中心是可见顶面中心，不自动等于抓取 TCP。
 消息校验和 schema 以 [measurement_contract.py](../src/chess_robot_perception/chess_robot_perception/measurement_contract.py) 为准；该文件只定义当前协议，不重复复制字段表。
-preview 按 channels.yaml 配置订阅，并提供 HTTP，不负责 YOLO。当前绝对名称由源代码声明，参数和 remap 需在启动入口明确传入。
+vision 负责采集、校正和数据发布，不保存采样文件。preview 按 channels.yaml 配置订阅，并提供 HTTP，不负责 YOLO。当前绝对名称由源代码声明，参数和 remap 需在启动入口明确传入。
 
 ## 4 观察与任务交互
 
