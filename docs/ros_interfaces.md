@@ -1,6 +1,7 @@
 # ROS 节点与接口
 
 本页描述 Jetson **工作区源码**的默认接口；现场冻结服务可能采用不同实现。字段以接口源文件为准。
+全部自定义类型由 `chess_robot_interface` 提供。通信双方须使用一致的类型名称；现场旧类型不能与开发版本直接混用，切换时需同步重建和更新相关节点。
 默认业务 domain 由启动入口设置为 90；localhost 设置为 1。固定绝对话题名不会随节点 namespace 自动改变；适配时用明确 remap。
 
 ## 1 节点和启动入口
@@ -23,7 +24,7 @@
 
 ## 2 设备和运动接口
 
-下表自定义类型的共同前缀为 `chess_robot_interfaces`。结构与逐字段说明见 [接口源码](../src/chess_robot_interfaces)。
+下表自定义类型的共同前缀为 `chess_robot_interface`。结构与逐字段说明见 [接口源码](../src/chess_robot_interface)。
 
 | 完整名称 | 类别 / 类型 | 提供方 → 主要使用方 | 含义和完成条件 |
 | --- | --- | --- | --- |
@@ -48,7 +49,7 @@ arm 的 `test_fixture=true` 会把上述 `/arm/` 前缀改为 `/simulation/arm/`
 | `/vision/color/image_rect` | sensor_msgs/msg/Image | vision → perception、preview、tracking_preview、handeye | 校正后的 bgr8 基础图像；SensorDataQoS |
 | `/vision/aligned_depth/image_rect` | sensor_msgs/msg/Image | vision → perception、preview | 对齐彩色图的 32FC1 深度，单位 m；SensorDataQoS |
 | `/vision/color/camera_info` | sensor_msgs/msg/CameraInfo | vision → perception、handeye | 对应校正图内参；SensorDataQoS |
-| `/vision/frame_info` | chess_robot_vision/msg/FrameInfo | vision → perception、handeye | 同帧序号、设备时间和流状态；SensorDataQoS |
+| `/vision/frame_info` | chess_robot_interface/msg/FrameInfo | vision → perception、handeye | 同帧序号、设备时间和流状态；SensorDataQoS |
 | `/perception/xiangqi/measurements` | std_msgs/msg/String，JSON | perception → scene | 相机测量协议 v2；BEST_EFFORT、depth=3 |
 | `/perception/xiangqi/roi_hint` | std_msgs/msg/String，JSON | scene → perception | 下游建议的图像 ROI；不是设备原始数据或动作命令 |
 | `/pose/xiangqi/detections` | std_msgs/msg/String，JSON | scene → 任务、tracking_preview | 当前测量、跟踪及基座资格；可靠、depth=10 |

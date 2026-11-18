@@ -6,11 +6,11 @@ AG95 夹爪模型入口
   ag95.urdf：由独立入口生成的完整夹爪描述，不手工修改。
 
 使用关系
-  ../README.md：参数含义、模型边界和来源说明。
-  ../SOURCES.json：来源仓库、版本、原件文件指纹和本地调整说明。
-  整机模型在 ../../chess_robot_description/urdf/nova5_with_ag95.urdf.xacro 中引用夹爪定义。
-  夹爪本体改动写在本包；安装到机械臂的位置写在整机模型入口。
-  单独查看时加载 ag95.urdf，并提供本包的 meshes 资源。
+  ../../README.md：参数含义、模型边界和来源说明。
+  ../../SOURCES.json：来源仓库、版本、原件文件指纹和本地调整说明。
+  整机模型在 ../nova5_with_ag95.urdf.xacro 中引用夹爪定义。
+  夹爪本体改动写在本目录；安装到机械臂的位置写在整机模型入口。
+  单独查看时加载 ag95.urdf，并提供模型包的 meshes/ag95/ 资源。
 
 生成命令
   从项目根目录执行，前提是 ROS 2 Humble 环境中已安装 Xacro：
@@ -24,5 +24,5 @@ AG95 夹爪模型入口
   生成和验证分别判断，不默认运行整套检查。
 
 详细说明
-  工程查看用法：../../../docs/models/ag95-browser.md。
+  工程查看用法：../../../../docs/models/ag95-browser.md。
   组装与验证工作流：https://app.notion.com/p/4039f9a4e09e81d98ba4eb3f8b8597cc

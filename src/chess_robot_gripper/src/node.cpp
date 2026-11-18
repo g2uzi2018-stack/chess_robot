@@ -1,6 +1,6 @@
 #include "chess_robot_gripper/core.hpp"
-#include <chess_robot_interfaces/action/move_gripper.hpp>
-#include <chess_robot_interfaces/msg/gripper_state.hpp>
+#include <chess_robot_interface/action/move_gripper.hpp>
+#include <chess_robot_interface/msg/gripper_state.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <atomic>
@@ -10,8 +10,8 @@
 #include <thread>
 
 namespace cg = chess_robot_gripper;
-using Action = chess_robot_interfaces::action::MoveGripper;
-using State = chess_robot_interfaces::msg::GripperState;
+using Action = chess_robot_interface::action::MoveGripper;
+using State = chess_robot_interface::msg::GripperState;
 using Handle = rclcpp_action::ServerGoalHandle<Action>;
 
 class GripperNode final : public rclcpp::Node {

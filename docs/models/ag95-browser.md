@@ -23,12 +23,12 @@ python3 tools/description/export_browser_model.py
 导出包只包含 URDF、STL、来源/许可证、说明与校验清单，不包含 HTML、JavaScript 或服务端程序。
 
 也可以直接在查看器中选择本仓库的 `src` 文件夹，然后选择组合纯 URDF；
-两个 package.xml 用于解析 `package://` 路径。导出包则不依赖 ROS 包路径解析。
+`chess_robot_description/package.xml` 用于解析 `package://` 路径。导出包则不依赖 ROS 包路径解析。
 
 ## 2 按需修改与生成
 
 整机源入口为 `src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro`，
-夹爪本体定义为 `src/dh_ag95_description/urdf/dh_ag95_macro.xacro`。
+夹爪本体定义为 `src/chess_robot_description/urdf/ag95/dh_ag95_macro.xacro`。
 `nova5.urdf` 是原厂本体输入；`nova5_with_ag95.urdf` 和 `ag95.urdf` 才是本工具生成的结果。
 
 仅当输入变化影响展开结果、且需要使用或维护结果文件时，或本次需要的结果缺失/已确认过期时，执行：
@@ -44,7 +44,7 @@ python3 tools/description/generate_models.py
 文档、说明性注释和无关代码调整不触发生成或 `--check`；仅替换同路径网格且 URDF 参数未变时，不重写 URDF。
 正常构建或启动已有必要生成步骤时不重复执行。生成完成不自动串联全套检查；具体检查按本次改动选择。
 
-文件职责与参数入口见两个模型包的 `urdf/README.txt`。
+文件职责与参数入口见模型包的 `urdf/README.txt` 和 `urdf/ag95/README.txt`。
 这些工具处理离线模型，不负责机器人硬件控制。
 
 可选场景（输出到运行目录，不覆盖默认纯 URDF）：

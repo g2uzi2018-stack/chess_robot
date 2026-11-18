@@ -239,7 +239,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0.0405 0.0143 -0.0147" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/gripper_body.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/gripper_body.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -248,7 +248,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="0.0405 0.0143 -0.0147" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/gripper_body.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/gripper_body.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -272,7 +272,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.036673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/outer_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/outer_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -281,7 +281,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.036673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/outer_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/outer_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -294,7 +294,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.016 0.0254 -0.10586" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/inner_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/inner_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -303,7 +303,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.016 0.0254 -0.10586" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/inner_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/inner_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -316,7 +316,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.091673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/finger.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/finger.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -325,7 +325,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.091673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/finger.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/finger.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -338,7 +338,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.0705 -0.0 -0.12056" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/finger_pad.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/finger_pad.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
@@ -347,7 +347,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.0705 -0.0 -0.12056" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/finger_pad.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/finger_pad.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -431,7 +431,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.036673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/outer_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/outer_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -440,7 +440,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.036673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/outer_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/outer_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -453,7 +453,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.016 0.0254 -0.10586" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/inner_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/inner_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -462,7 +462,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.016 0.0254 -0.10586" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/inner_knuckle.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/inner_knuckle.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -475,7 +475,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.091673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/finger.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/finger.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.1 0.1 0.1 1" />
@@ -484,7 +484,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.091673 0.00875 -0.098336" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/finger.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/finger.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>
@@ -497,7 +497,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="-0.0705 -0.0 -0.12056" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/visual/finger_pad.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/visual/finger_pad.stl" scale="0.001 0.001 0.001" />
       </geometry>
       <material name="">
         <color rgba="0.792156862745098 0.819607843137255 0.933333333333333 1" />
@@ -506,7 +506,7 @@
     <collision>
       <origin rpy="0 0 0" xyz="-0.0705 -0.0 -0.12056" />
       <geometry>
-        <mesh filename="package://dh_ag95_description/meshes/collision/finger_pad.stl" scale="0.001 0.001 0.001" />
+        <mesh filename="package://chess_robot_description/meshes/ag95/collision/finger_pad.stl" scale="0.001 0.001 0.001" />
       </geometry>
     </collision>
   </link>

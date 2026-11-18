@@ -9,7 +9,7 @@ from pathlib import Path
 
 import rclpy
 import yaml
-from chess_robot_interfaces.srv import RestoreCheckpoint
+from chess_robot_interface.srv import RestoreCheckpoint
 from chess_robot_tasks.ros_io import RealIO,GetParameters,MoveGripper,convert,position,stamp,write
 
 

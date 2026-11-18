@@ -6,13 +6,13 @@
   <maintainer email="zzkuang0516@163.com">kuang</maintainer>
   <license>Apache-2.0</license>
 
-  <!-- 构建工具与消息代码生成器。 -->
+  <!-- 构建工具。 -->
   <buildtool_depend>ament_cmake</buildtool_depend>
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
 
   <!-- 节点使用的 ROS 接口与图像转换。 -->
   <depend>rclcpp</depend>
   <depend>rcl_interfaces</depend>
+  <depend>chess_robot_interface</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
@@ -21,8 +21,7 @@
   <depend>libopencv-dev</depend>
   <depend>librealsense2</depend>
 
-  <!-- 生成消息的运行时支持，以及 launch 文件直接使用的 Python 模块。 -->
-  <exec_depend>rosidl_default_runtime</exec_depend>
+  <!-- launch 文件直接使用的 Python 模块。 -->
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>ament_index_python</exec_depend>
@@ -30,7 +29,6 @@
   <!-- 仅供已保留的离线校正测试使用。 -->
   <test_depend>ament_cmake_gtest</test_depend>
 
-  <member_of_group>rosidl_interface_packages</member_of_group>
   <export>
     <build_type>ament_cmake</build_type>
   </export>

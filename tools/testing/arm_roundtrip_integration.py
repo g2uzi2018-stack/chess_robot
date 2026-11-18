@@ -37,7 +37,7 @@ def main():
     try:
         run=out/'normal';run.mkdir()
         session.__init__(root,run,data,p)
-        from chess_robot_interfaces.srv import InitializeReference
+        from chess_robot_interface.srv import InitializeReference
         initialize=session.node.create_client(InitializeReference,'/simulation/arm/initialize_reference')
         session.wait(lambda:initialize.service_is_ready(),5)
         until=time.monotonic()+.4;session.wait(lambda:time.monotonic()>=until,1)

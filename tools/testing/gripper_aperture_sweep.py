@@ -21,8 +21,8 @@ os.environ.setdefault('ROS_DOMAIN_ID', '96' if args.execute else '89')
 os.environ['ROS_LOCALHOST_ONLY'] = '1'
 import rclpy
 from rclpy.action import ActionClient
-from chess_robot_interfaces.action import MoveGripper
-from chess_robot_interfaces.msg import GripperState, ArmState
+from chess_robot_interface.action import MoveGripper
+from chess_robot_interface.msg import GripperState, ArmState
 
 root = Path(__file__).resolve().parents[2]
 out = args.out.resolve()

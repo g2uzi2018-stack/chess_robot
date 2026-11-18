@@ -50,7 +50,7 @@ measured physical finger midpoint.
 
 ## 3 Arm adapter contract
 
-Read `chess_robot_interfaces/action/MoveArm.action`, `msg/ArmState.msg` and the
+Read `chess_robot_interface/action/MoveArm.action`, `msg/ArmState.msg` and the
 checks in `src/node.cpp` when implementing an adapter. Topic remapping alone does
 not change message semantics.
 
@@ -76,22 +76,21 @@ adapter must be tested independently before authorizing physical execution.
 ## 4 Camera adapter contract
 
 Inputs are sensor_msgs Image/CameraInfo and this repository's
-`chess_robot_vision/msg/FrameInfo`. They must have identical stamp and matching
+`chess_robot_interface/msg/FrameInfo`. They must have identical stamp and matching
 configured optical frame, dimensions and stream-health metadata. Use BGR8
 **rectified** images with matching rectified K/P and zero distortion coefficients.
 Do not zero raw-camera distortion fields without actually rectifying the image.
 The node uses stopped-pose host reception timing; hardware exposure alignment
 is not certified. A non-D405 camera needs an adapter producing this metadata.
 
-The current `chess_robot_vision` package contains both FrameInfo and the D405
-driver, so a source build currently brings librealsense dependencies even if a
-different camera adapter is used. Splitting message definitions from that driver
-is a future packaging improvement, not a capability of this release.
+FrameInfo is defined in `chess_robot_interface`, separate from the D405 driver.
+Building this hand-eye package does not require librealsense or the vision package.
+At runtime, provide a camera node or adapter that publishes the contract above.
 
 ## 5 Scene workflow
 
-1. Build/supply `chess_robot_interfaces`, `chess_robot_vision`,
-   `chess_robot_twist` and normal ROS/OpenCV/yaml dependencies. Source those
+1. Build/supply `chess_robot_interface`, `chess_robot_twist` and normal
+   ROS/OpenCV/yaml dependencies. Source those
    installations, then follow the handeye README build commands. For the Nova5
    example also build/source `chess_robot_description` so its package URI resolves.
 2. Copy `config/handeye.example.yaml` into a writable scene directory. Replace

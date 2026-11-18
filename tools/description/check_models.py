@@ -83,16 +83,19 @@ def check_stl(path):
 
 
 def main():
-    meta = json.loads((ROOT / "reference/ag95/SOURCES.json").read_text(encoding="utf-8"))
+    meta = json.loads((ROOT / "src/chess_robot_description/SOURCES.json").read_text(encoding="utf-8"))
+    archived = json.loads((ROOT / "reference/ag95/SOURCES.json").read_text(encoding="utf-8"))
+    # 当前路径允许整理；原始来源和文件指纹必须与归档一致。
+    assert (meta["repository"], meta["commit"]) == (archived["repository"], archived["commit"])
+    assert [(entry["source_path"], entry["sha256"]) for entry in meta["files"]] == [
+        (entry["source_path"], entry["sha256"]) for entry in archived["files"]]
     for entry in meta["files"]:
         target = ROOT / entry["target_path"]
         assert hashlib.sha256(target.read_bytes()).hexdigest() == entry["sha256"], str(target)
-    assert (ROOT / "src/dh_ag95_description/SOURCES.json").read_bytes() == (
-        ROOT / "reference/ag95/SOURCES.json").read_bytes()
 
     base = ET.parse(ROOT / "src/chess_robot_description/urdf/nova5.urdf").getroot()
     assembly = ET.parse(ROOT / "src/chess_robot_description/urdf/nova5_with_ag95.urdf").getroot()
-    gripper = ET.parse(ROOT / "src/dh_ag95_description/urdf/ag95.urdf").getroot()
+    gripper = ET.parse(ROOT / "src/chess_robot_description/urdf/ag95/ag95.urdf").getroot()
     legacy = ET.parse(ROOT / "reference/ag95/nova5_with_ag95.original.xacro").getroot()
     summary = {"source_files_unchanged": len(meta["files"]), "models": {}}
     assets = set()

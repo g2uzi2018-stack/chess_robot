@@ -11,7 +11,7 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 MODELS = {
     "nova5_with_ag95.urdf": ROOT / "src/chess_robot_description/urdf/nova5_with_ag95.urdf",
-    "ag95.urdf": ROOT / "src/dh_ag95_description/urdf/ag95.urdf",
+    "ag95.urdf": ROOT / "src/chess_robot_description/urdf/ag95/ag95.urdf",
 }
 
 
@@ -55,13 +55,11 @@ def export(output):
         doc.write(target, encoding="utf-8", xml_declaration=True)
         exported.add(target)
 
-    for package in ("chess_robot_description", "dh_ag95_description"):
-        for name in ("LICENSE", "SOURCES.json"):
-            source = ROOT / "src" / package / name
-            if source.exists():
-                target = output / f"{package}_{name}"
-                shutil.copyfile(source, target)
-                exported.add(target)
+    for name in ("LICENSE", "LICENSE.ag95", "SOURCES.json"):
+        source = ROOT / "src/chess_robot_description" / name
+        target = output / f"chess_robot_description_{name}"
+        shutil.copyfile(source, target)
+        exported.add(target)
     provenance = ROOT / "src/chess_robot_description/meshes/tool_mount/camera_mount_assembly_m.json"
     provenance_target = output / "camera_mount_extraction.json"
     shutil.copyfile(provenance, provenance_target)

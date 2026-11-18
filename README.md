@@ -60,6 +60,8 @@ ros2 run chess_robot_tasks scan_controller   --config config/scan/scan.current.j
 | `docs/` | 当前接口、配置、操作、模型和工具说明 |
 | `reference/` | 厂家原件、来源和许可证 |
 
+项目模型集中在 [chess_robot_description](src/chess_robot_description/README.md)，按机械臂、夹爪和安装件分目录；自定义消息、服务和动作集中在 [chess_robot_interface](src/chess_robot_interface/README.txt)。
+
 现场 `.runtime/` 仍由现有部署使用，包含有效绕转存档和审计数据；活动的历史 runs 也保留。
 它们尚未做部署迁移，不能直接作为缓存清空。配置读取和覆盖位置见各模块说明。
 

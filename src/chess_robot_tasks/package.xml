@@ -5,7 +5,7 @@
   <maintainer email="zzkuang0516@163.com">gitadmin</maintainer><license>MIT</license>
   <buildtool_depend>ament_cmake</buildtool_depend><buildtool_depend>ament_cmake_python</buildtool_depend>
   <exec_depend>rclpy</exec_depend><exec_depend>rcl_interfaces</exec_depend><exec_depend>rosidl_runtime_py</exec_depend>
-  <exec_depend>std_msgs</exec_depend><exec_depend>sensor_msgs</exec_depend><exec_depend>chess_robot_interfaces</exec_depend>
+  <exec_depend>std_msgs</exec_depend><exec_depend>sensor_msgs</exec_depend><exec_depend>chess_robot_interface</exec_depend>
   <exec_depend>python3-numpy</exec_depend><exec_depend>python3-yaml</exec_depend>
   <export><build_type>ament_cmake</build_type></export>
 </package>

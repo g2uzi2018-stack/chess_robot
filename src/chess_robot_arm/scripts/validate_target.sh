@@ -10,7 +10,7 @@ source /opt/ros/humble/setup.bash
 set -u
 command -v c++ >/dev/null || { echo 'BLOCKED: C++ compiler unavailable' >&2; exit 2; }
 command -v colcon >/dev/null || { echo 'BLOCKED: colcon unavailable' >&2; exit 2; }
-bash tools/build.sh --packages-select chess_robot_twist chess_robot_interfaces chess_robot_arm --cmake-args -DBUILD_TESTING=ON
+bash tools/build.sh --packages-select chess_robot_twist chess_robot_interface chess_robot_arm --cmake-args -DBUILD_TESTING=ON
 set +u
 source install/dev/local_setup.bash
 set -u

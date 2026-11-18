@@ -36,7 +36,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
    - 入参：`target` 为 `base_link` 下的 `PoseStamped`，m、XYZW；感知目标保留原始非零采集时间戳，不能以发送时间替换。
    - 入参：`operation` 为 PREGRASP=0、DESCEND=1、RETREAT=2、GRASP_SEQUENCE=3、HOME=4。
    - 入参：`profile` 为空时取 `profiles.default`；`plan_only=true` 仅规划。
-   - 返回：`code`、`detail`、`executed`、`final_tcp`/`final_tcp_valid`、`trajectory`；[权威定义](../chess_robot_interfaces/action/MoveArm.action)。
+   - 返回：`code`、`detail`、`executed`、`final_tcp`/`final_tcp_valid`、`trajectory`；[权威定义](../chess_robot_interface/action/MoveArm.action)。
    - PLAN_READY=0 表示计划可用、未运动；COMPLETED=1 要求实测到位；`executed` 表示可能尝试过运动，不能当作成功。
    - 反馈：`phase`、`job_id`、TCP有效位、参考有效位及净/总扭转。
 2. **目标语义**
@@ -52,7 +52,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 
 ### 2.1a 六关节手动角度
 
-`/arm/move_joints` 使用 [MoveJoints](../chess_robot_interfaces/action/MoveJoints.action)，不会改变原有 MoveArm 定义。`positions` 与 `expected_start` 按 joint1～joint6 排列，单位 rad；`header` 保留匹配实测 JointState 的原始时间戳、frame_id 为 base_link。`profile` 与 `plan_only` 和 MoveArm 相同，结果及反馈字段也相同。
+`/arm/move_joints` 使用 [MoveJoints](../chess_robot_interface/action/MoveJoints.action)，不会改变原有 MoveArm 定义。`positions` 与 `expected_start` 按 joint1～joint6 排列，单位 rad；`header` 保留匹配实测 JointState 的原始时间戳、frame_id 为 base_link。`profile` 与 `plan_only` 和 MoveArm 相同，结果及反馈字段也相同。
 
 每次仅允许一个关节相对于 expected_start 改变，幅度不超过 10°，不进行角度取模。规划时必须停稳、反馈新鲜且参考有效，当前位置与 expected_start 的差异不得超过 joint_tolerance。它沿用 PTP 采样、模型关节限位、工作空间、全臂几何与线缆扭转检查，允许手动调整工具朝向，不强制抓取轴向下；模型和几何检查仍然有效。roundtrip 测试模式禁止该接口。
 
@@ -61,7 +61,7 @@ ROS 2 Humble / C++17，`chess_robot_arm / arm_node`。日常启动与恢复统�
 ### 2.2 状态与参考
 
 1. **测量状态**
-   - `/arm/state`：[ArmState](../chess_robot_interfaces/msg/ArmState.msg)，含backend、phase/job_id、busy、feedback_fresh、reference_valid、controller_mode、TCP、扭转与diagnostic。
+   - `/arm/state`：[ArmState](../chess_robot_interface/msg/ArmState.msg)，含backend、phase/job_id、busy、feedback_fresh、reference_valid、controller_mode、TCP、扭转与diagnostic。
    - `/arm/joint_states`：`sensor_msgs/JointState`，仅新鲜真实关节位置/速度；不合成反馈。
    - `state.header`、TCP、JointState与最终TCP采用完整反馈帧收到后的ROS时刻；发布不能刷新原收帧时间。
    - TCP来自实测关节的URDF正运动学，不是独立笛卡尔传感器；无物理精度认证。

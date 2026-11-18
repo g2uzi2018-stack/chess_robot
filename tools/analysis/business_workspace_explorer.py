@@ -9,9 +9,9 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 import rclpy
 from rclpy.action import ActionClient
-from chess_robot_interfaces.action import MoveArm
-from chess_robot_interfaces.msg import ArmState
-from chess_robot_interfaces.srv import RestoreReference
+from chess_robot_interface.action import MoveArm
+from chess_robot_interface.msg import ArmState
+from chess_robot_interface.srv import RestoreReference
 from sensor_msgs.msg import JointState
 
 def main():

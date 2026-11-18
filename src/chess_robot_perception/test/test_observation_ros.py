@@ -40,8 +40,8 @@ if '--worker-perception' in sys.argv or '--worker-scene' in sys.argv:
 import numpy as np,rclpy
 from rclpy.qos import qos_profile_sensor_data,QoSProfile,DurabilityPolicy
 from sensor_msgs.msg import Image,CameraInfo,JointState
-from chess_robot_interfaces.msg import ArmState
-from chess_robot_vision.msg import FrameInfo
+from chess_robot_interface.msg import ArmState
+from chess_robot_interface.msg import FrameInfo
 from std_msgs.msg import String
 from builtin_interfaces.msg import Time
 from cv_bridge import CvBridge

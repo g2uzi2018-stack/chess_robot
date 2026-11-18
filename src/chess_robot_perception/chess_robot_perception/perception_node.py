@@ -15,7 +15,7 @@ from cv_bridge import CvBridge
 from rclpy.qos import QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from sensor_msgs.msg import CameraInfo, Image
 from std_msgs.msg import String
-from chess_robot_vision.msg import FrameInfo
+from chess_robot_interface.msg import FrameInfo
 
 from chess_robot_perception.benchmark_lease import BenchmarkLease
 from chess_robot_perception.measurement_contract import CAMERA_FRAME, ContractError, RoiHint, camera_measurement, decode_json, encode

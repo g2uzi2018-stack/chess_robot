@@ -25,7 +25,7 @@ if len(sys.argv)>1 and sys.argv[1]=='--worker':
 
 import rclpy,numpy as np
 from sensor_msgs.msg import Image,CameraInfo
-from chess_robot_vision.msg import FrameInfo
+from chess_robot_interface.msg import FrameInfo
 from std_msgs.msg import String
 from cv_bridge import CvBridge
 from rclpy.qos import qos_profile_sensor_data

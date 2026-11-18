@@ -13,7 +13,7 @@ cp -a "$root/config" "$build_run/source/"
 exec 9>"$root/runs/perf_ceiling_20261031/benchmark.lock"
 flock 9
 trap 'echo "Evidence: $run"' EXIT
-for package in chess_robot_arm chess_robot_twist chess_robot_description chess_robot_interfaces chess_robot_tracking_preview; do
+for package in chess_robot_arm chess_robot_twist chess_robot_description chess_robot_interface chess_robot_tracking_preview; do
   cp -a "$root/src/$package" "$build_run/source/src/"
 done
 source /opt/ros/humble/setup.bash

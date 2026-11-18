@@ -2,10 +2,10 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <atomic>
-#include <chess_robot_interfaces/action/move_arm.hpp>
-#include <chess_robot_interfaces/msg/arm_state.hpp>
+#include <chess_robot_interface/action/move_arm.hpp>
+#include <chess_robot_interface/msg/arm_state.hpp>
 #include <chess_robot_twist/model.hpp>
-#include <chess_robot_vision/msg/frame_info.hpp>
+#include <chess_robot_interface/msg/frame_info.hpp>
 #include <chrono>
 #include <csignal>
 #include <cv_bridge/cv_bridge.h>
@@ -27,12 +27,12 @@
 #include <thread>
 
 namespace he = chess_robot_handeye;
-using Arm = chess_robot_interfaces::msg::ArmState;
+using Arm = chess_robot_interface::msg::ArmState;
 using Joint = sensor_msgs::msg::JointState;
 using Image = sensor_msgs::msg::Image;
 using Info = sensor_msgs::msg::CameraInfo;
-using Frame = chess_robot_vision::msg::FrameInfo;
-using Move = chess_robot_interfaces::action::MoveArm;
+using Frame = chess_robot_interface::msg::FrameInfo;
+using Move = chess_robot_interface::action::MoveArm;
 using Handle = rclcpp_action::ClientGoalHandle<Move>;
 using Clock = std::chrono::steady_clock;
 namespace {

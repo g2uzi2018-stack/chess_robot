@@ -4,7 +4,7 @@ import argparse,json,math,time
 from pathlib import Path
 import numpy as np
 import rclpy
-from chess_robot_interfaces.action import MoveArm
+from chess_robot_interface.action import MoveArm
 from chess_robot_tasks.ros_io import PlanInspector
 from chess_robot_tasks.scan_controller import position,stamp,convert,write
 

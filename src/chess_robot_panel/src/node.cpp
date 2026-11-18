@@ -1,8 +1,8 @@
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <chess_robot_interfaces/action/move_gripper.hpp>
-#include <chess_robot_interfaces/action/move_joints.hpp>
-#include <chess_robot_interfaces/msg/arm_state.hpp>
-#include <chess_robot_interfaces/msg/gripper_state.hpp>
+#include <chess_robot_interface/action/move_gripper.hpp>
+#include <chess_robot_interface/action/move_joints.hpp>
+#include <chess_robot_interface/msg/arm_state.hpp>
+#include <chess_robot_interface/msg/gripper_state.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
@@ -30,12 +30,12 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 using tcp = net::ip::tcp;
 using Clock = std::chrono::steady_clock;
-using GripperState = chess_robot_interfaces::msg::GripperState;
-using GripperAction = chess_robot_interfaces::action::MoveGripper;
+using GripperState = chess_robot_interface::msg::GripperState;
+using GripperAction = chess_robot_interface::action::MoveGripper;
 using GripperHandle = rclcpp_action::ClientGoalHandle<GripperAction>;
-using ArmState = chess_robot_interfaces::msg::ArmState;
+using ArmState = chess_robot_interface::msg::ArmState;
 using JointState = sensor_msgs::msg::JointState;
-using MoveJoints = chess_robot_interfaces::action::MoveJoints;
+using MoveJoints = chess_robot_interface::action::MoveJoints;
 using ArmHandle = rclcpp_action::ClientGoalHandle<MoveJoints>;
 using Request = http::request<http::string_body>;
 using Response = http::response<http::string_body>;

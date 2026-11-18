@@ -15,8 +15,8 @@ from rclpy.action import ActionClient
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from std_msgs.msg import String
 from rcl_interfaces.srv import GetParameters
-from chess_robot_interfaces.action import MoveArm, MoveGripper
-from chess_robot_interfaces.msg import GripperState
+from chess_robot_interface.action import MoveArm, MoveGripper
+from chess_robot_interface.msg import GripperState
 from rosidl_runtime_py.convert import message_to_ordereddict as convert
 
 from chess_robot_tasks.scan_controller import Controller, write, stamp, position

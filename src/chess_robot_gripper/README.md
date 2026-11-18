@@ -41,7 +41,7 @@ ros2 launch chess_robot_gripper gripper.launch.py \
 
 ## 接口与单位
 
-`/gripper/command`：`chess_robot_interfaces/action/MoveGripper`。
+`/gripper/command`：`chess_robot_interface/action/MoveGripper`。
 
 | 目标字段 | 含义 |
 |---|---|
@@ -56,13 +56,13 @@ ros2 launch chess_robot_gripper gripper.launch.py \
 
 ```bash
 # 初始化有物理动作；仅在明确可执行时发送。
-ros2 action send_goal /gripper/command chess_robot_interfaces/action/MoveGripper \
+ros2 action send_goal /gripper/command chess_robot_interface/action/MoveGripper \
   '{operation: 0, timeout_sec: 5.0}' --feedback
 # 模拟张开：硬件使用前必须复核开合方向和现场条件。
-ros2 action send_goal /gripper/command chess_robot_interfaces/action/MoveGripper \
+ros2 action send_goal /gripper/command chess_robot_interface/action/MoveGripper \
   '{operation: 1, position_raw: 1000, force_percent: 20, require_contact: false, timeout_sec: 5.0}' --feedback
 # 模拟夹持：用 mock_contact_raw:=450 启动可模拟在450处接触。
-ros2 action send_goal /gripper/command chess_robot_interfaces/action/MoveGripper \
+ros2 action send_goal /gripper/command chess_robot_interface/action/MoveGripper \
   '{operation: 1, position_raw: 0, force_percent: 20, require_contact: true, timeout_sec: 5.0}' --feedback
 ```
 

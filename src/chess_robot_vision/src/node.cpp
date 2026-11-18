@@ -2,7 +2,7 @@
 // 识别和位姿计算由下游节点完成。
 
 #include "chess_robot_vision/calibration.hpp"
-#include "chess_robot_vision/msg/frame_info.hpp"
+#include "chess_robot_interface/msg/frame_info.hpp"
 #include <librealsense2/rs.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -59,7 +59,7 @@ class VisionNode final : public rclcpp::Node {
     });
 
     const auto qos = rclcpp::SensorDataQoS();
-    frame_pub_ = create_publisher<vision::msg::FrameInfo>("/vision/frame_info", qos);
+    frame_pub_ = create_publisher<chess_robot_interface::msg::FrameInfo>("/vision/frame_info", qos);
     color_pub_ = create_publisher<sensor_msgs::msg::Image>("/vision/color/image_rect", qos);
     depth_pub_ = create_publisher<sensor_msgs::msg::Image>("/vision/aligned_depth/image_rect", qos);
     info_pub_ = create_publisher<sensor_msgs::msg::CameraInfo>("/vision/color/camera_info", qos);
@@ -219,7 +219,7 @@ class VisionNode final : public rclcpp::Node {
 
   // 发布无效帧状态，并记录原因。
   void invalid(const std::string &why) {
-    vision::msg::FrameInfo msg;
+    chess_robot_interface::msg::FrameInfo msg;
     msg.header.stamp = now();
     msg.header.frame_id = frame_id_;
     msg.stream_ok = false;
@@ -285,7 +285,7 @@ class VisionNode final : public rclcpp::Node {
       header.stamp = received;
       header.frame_id = frame_id_;
 
-      vision::msg::FrameInfo result;
+      chess_robot_interface::msg::FrameInfo result;
       result.header = header;
       result.color_frame_number = color.get_frame_number();
       result.depth_frame_number = depth.get_frame_number();
@@ -375,7 +375,7 @@ class VisionNode final : public rclcpp::Node {
 
   // 保存图像和参数；同目录下再次保存会覆盖同名文件。
   void save(const cv::Mat &color, const cv::Mat &depth, const sensor_msgs::msg::CameraInfo &info,
-            const vision::msg::FrameInfo &result, const rs2_intrinsics &intrinsics) {
+            const chess_robot_interface::msg::FrameInfo &result, const rs2_intrinsics &intrinsics) {
     std::filesystem::create_directories(evidence_dir_);
     cv::imwrite(evidence_dir_ + "/color.png", color);
     cv::imwrite(evidence_dir_ + "/depth_z16.png", depth);
@@ -430,7 +430,7 @@ class VisionNode final : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_;
 
-  rclcpp::Publisher<vision::msg::FrameInfo>::SharedPtr frame_pub_;
+  rclcpp::Publisher<chess_robot_interface::msg::FrameInfo>::SharedPtr frame_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr color_pub_, depth_pub_;
   rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr info_pub_;
 };

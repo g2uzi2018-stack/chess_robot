@@ -11,7 +11,7 @@ import numpy as np
 import rclpy
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import Image, CameraInfo
-from chess_robot_vision.msg import FrameInfo
+from chess_robot_interface.msg import FrameInfo
 
 parser=argparse.ArgumentParser()
 parser.add_argument('output')

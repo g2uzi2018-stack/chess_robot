@@ -10,7 +10,7 @@ import xacro
 
 ROOT = Path(__file__).resolve().parents[2]
 ENTRIES = (
-    ROOT / "src/dh_ag95_description/urdf/ag95.urdf.xacro",
+    ROOT / "src/chess_robot_description/urdf/ag95/ag95.urdf.xacro",
     ROOT / "src/chess_robot_description/urdf/nova5_with_ag95.urdf.xacro",
 )
 
@@ -24,7 +24,7 @@ def main():
         target = source.with_suffix("")
         # Use the Python API so output has no machine-specific command/path banner.
         mappings = {"ag95_macro_file": str(
-            ROOT / "src/dh_ag95_description/urdf/dh_ag95_macro.xacro")}
+            ROOT / "src/chess_robot_description/urdf/ag95/dh_ag95_macro.xacro")}
         doc = xacro.process_file(str(source), mappings=mappings)
         # Normalize formatting and discard auto-generated absolute-path comments.
         robot = ET.fromstring(doc.toxml())

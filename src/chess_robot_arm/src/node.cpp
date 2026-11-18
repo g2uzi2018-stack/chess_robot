@@ -3,13 +3,13 @@
 #include "chess_robot_arm/driver.hpp"
 #include "chess_robot_arm/geometry_guard.hpp"
 #include "chess_robot_arm/net.hpp"
-#include <chess_robot_interfaces/action/move_arm.hpp>
-#include <chess_robot_interfaces/action/move_joints.hpp>
-#include <chess_robot_interfaces/msg/arm_state.hpp>
-#include <chess_robot_interfaces/srv/confirm_grasp.hpp>
-#include <chess_robot_interfaces/srv/initialize_reference.hpp>
-#include <chess_robot_interfaces/srv/restore_reference.hpp>
-#include <chess_robot_interfaces/srv/restore_checkpoint.hpp>
+#include <chess_robot_interface/action/move_arm.hpp>
+#include <chess_robot_interface/action/move_joints.hpp>
+#include <chess_robot_interface/msg/arm_state.hpp>
+#include <chess_robot_interface/srv/confirm_grasp.hpp>
+#include <chess_robot_interface/srv/initialize_reference.hpp>
+#include <chess_robot_interface/srv/restore_reference.hpp>
+#include <chess_robot_interface/srv/restore_checkpoint.hpp>
 #include <map>
 #include <condition_variable>
 #include <iomanip>
@@ -20,8 +20,8 @@
 #include <thread>
 
 namespace chess_robot_arm {
-using Move = chess_robot_interfaces::action::MoveArm;
-using JointMove = chess_robot_interfaces::action::MoveJoints;
+using Move = chess_robot_interface::action::MoveArm;
+using JointMove = chess_robot_interface::action::MoveJoints;
 using JointHandle = rclcpp_action::ServerGoalHandle<JointMove>;
 using Handle = rclcpp_action::ServerGoalHandle<Move>;
 namespace {
@@ -99,13 +99,13 @@ class ArmNode final : public rclcpp::Node {
   std::function<void()> pending_, terminal_;
   rclcpp_action::Server<JointMove>::SharedPtr joint_action_;
   rclcpp_action::Server<Move>::SharedPtr action_;
-  rclcpp::Service<chess_robot_interfaces::srv::ConfirmGrasp>::SharedPtr
+  rclcpp::Service<chess_robot_interface::srv::ConfirmGrasp>::SharedPtr
       confirm_;
-  rclcpp::Service<chess_robot_interfaces::srv::InitializeReference>::SharedPtr
+  rclcpp::Service<chess_robot_interface::srv::InitializeReference>::SharedPtr
       initialize_;
-  rclcpp::Service<chess_robot_interfaces::srv::RestoreReference>::SharedPtr restore_;
-  rclcpp::Service<chess_robot_interfaces::srv::RestoreCheckpoint>::SharedPtr restore_checkpoint_;
-  rclcpp::Publisher<chess_robot_interfaces::msg::ArmState>::SharedPtr
+  rclcpp::Service<chess_robot_interface::srv::RestoreReference>::SharedPtr restore_;
+  rclcpp::Service<chess_robot_interface::srv::RestoreCheckpoint>::SharedPtr restore_checkpoint_;
+  rclcpp::Publisher<chess_robot_interface::msg::ArmState>::SharedPtr
       state_pub_;
   rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joints_pub_;
   rclcpp::TimerBase::SharedPtr timer_, publish_timer_;
@@ -499,7 +499,7 @@ class ArmNode final : public rclcpp::Node {
   void publish() {
     auto s = state_->snapshot();
     auto v = gate_.view();
-    chess_robot_interfaces::msg::ArmState msg;
+    chess_robot_interface::msg::ArmState msg;
     msg.header.stamp = rclcpp::Time(s.feedback.ros_received_ns, get_clock()->get_clock_type());
     msg.header.frame_id = "base_link";
     msg.backend = config_.backend;
@@ -539,7 +539,7 @@ class ArmNode final : public rclcpp::Node {
   }
   template<class Action> void publishActionFeedback(
       const std::shared_ptr<rclcpp_action::ServerGoalHandle<Action>> &h,
-      const chess_robot_interfaces::msg::ArmState &msg,bool fresh) {
+      const chess_robot_interface::msg::ArmState &msg,bool fresh) {
     if(!h || !h->is_active()) return;
     auto f=std::make_shared<typename Action::Feedback>();
     f->phase=msg.phase;f->job_id=msg.job_id;f->tcp=msg.tcp;f->tcp_valid=fresh;
@@ -716,7 +716,7 @@ public:
         [this] { return get_clock()->now().nanoseconds(); });
     state_ = std::make_unique<State>(config_, model_);
     if(!config_.checkpoint_file.empty())checkpoint_store_=std::make_unique<CheckpointStore>(config_);
-    state_pub_ = create_publisher<chess_robot_interfaces::msg::ArmState>(
+    state_pub_ = create_publisher<chess_robot_interface::msg::ArmState>(
         endpoint("state"), 10);
     joints_pub_ = create_publisher<sensor_msgs::msg::JointState>(
         endpoint("joint_states"), 10);
@@ -769,13 +769,13 @@ public:
         {std::lock_guard<std::mutex> l(queue_mutex_);pending_=[this,h]{process<JointMove>(h);};joint_active_=h;}
         queue_cv_.notify_one();
       });
-    confirm_ = create_service<chess_robot_interfaces::srv::ConfirmGrasp>(
+    confirm_ = create_service<chess_robot_interface::srv::ConfirmGrasp>(
         endpoint("confirm_grasp"),
         [this](
             const std::shared_ptr<
-                chess_robot_interfaces::srv::ConfirmGrasp::Request>
+                chess_robot_interface::srv::ConfirmGrasp::Request>
                 req,
-            std::shared_ptr<chess_robot_interfaces::srv::ConfirmGrasp::Response>
+            std::shared_ptr<chess_robot_interface::srv::ConfirmGrasp::Response>
                 res) {
           res->accepted = gate_.confirm(req->job_id, req->success, req->detail);
           res->detail = res->accepted
@@ -783,28 +783,28 @@ public:
                             : "wrong job, phase, duplicate or canceled";
         });
     initialize_ =
-        create_service<chess_robot_interfaces::srv::InitializeReference>(
+        create_service<chess_robot_interface::srv::InitializeReference>(
             endpoint("initialize_reference"),
             [this](
                 const std::shared_ptr<
-                    chess_robot_interfaces::srv::InitializeReference::Request>,
+                    chess_robot_interface::srv::InitializeReference::Request>,
                 std::shared_ptr<
-                    chess_robot_interfaces::srv::InitializeReference::Response>
+                    chess_robot_interface::srv::InitializeReference::Response>
                     res) {
               res->success = gate_.initialize(*state_, res->detail);
             });
-    restore_=create_service<chess_robot_interfaces::srv::RestoreReference>(
+    restore_=create_service<chess_robot_interface::srv::RestoreReference>(
         endpoint("restore_reference"),
-        [this](const std::shared_ptr<chess_robot_interfaces::srv::RestoreReference::Request> req,
-               std::shared_ptr<chess_robot_interfaces::srv::RestoreReference::Response> res) {
+        [this](const std::shared_ptr<chess_robot_interface::srv::RestoreReference::Request> req,
+               std::shared_ptr<chess_robot_interface::srv::RestoreReference::Response> res) {
           res->success=gate_.restore(*state_,req->audit_files,req->no_unobserved_motion,res->detail);
           if (res->success && config_.enable_after_history_restore)
             res->success=enableRecoveredHistory(false,config_.dwell,res->detail);
         });
-    restore_checkpoint_=create_service<chess_robot_interfaces::srv::RestoreCheckpoint>(
+    restore_checkpoint_=create_service<chess_robot_interface::srv::RestoreCheckpoint>(
         endpoint("restore_checkpoint"),[this](
-            const std::shared_ptr<chess_robot_interfaces::srv::RestoreCheckpoint::Request> req,
-            std::shared_ptr<chess_robot_interfaces::srv::RestoreCheckpoint::Response> res) {
+            const std::shared_ptr<chess_robot_interface::srv::RestoreCheckpoint::Request> req,
+            std::shared_ptr<chess_robot_interface::srv::RestoreCheckpoint::Response> res) {
           res->success=recoverCheckpoint(req->no_unobserved_motion,res->detail);
           if(res->success && !config_.checkpoint_enable_after_restore)checkpoint_auto_inhibited_=false;
         });

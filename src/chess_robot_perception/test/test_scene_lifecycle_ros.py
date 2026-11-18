@@ -13,7 +13,7 @@ import rclpy
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
-from chess_robot_interfaces.msg import ArmState
+from chess_robot_interface.msg import ArmState
 from builtin_interfaces.msg import Time
 from test_node_split import packet
 

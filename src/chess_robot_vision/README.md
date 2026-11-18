@@ -12,7 +12,7 @@
 | [config/d405.yaml](config/d405.yaml) | 相机参数；每项用途、单位和特殊值见文件注释 |
 | [config/99-chess-d405.rules](config/99-chess-d405.rules) | Linux udev USB 权限规则；目标目录、安装命令和加载方式见文件注释 |
 | [config/large_images_fastdds.xml](config/large_images_fastdds.xml) | Fast DDS 的本机大图像传输配置；通过环境变量指定，加载方法见文件注释 |
-| [msg/FrameInfo.msg](msg/FrameInfo.msg) | 帧信息的字段定义与含义 |
+| [FrameInfo.msg](../chess_robot_interface/msg/FrameInfo.msg) | 统一接口包中的帧信息字段定义与含义 |
 
 配置文件不会因为放在 `config/` 中就自动生效。包构建会把配置安装到包的 share 目录，但不会把 udev 规则安装到 Linux 系统目录。
 节点参数仅启动时读取，运行中修改会被拒绝；修改源码配置不会自动切换现场服务。

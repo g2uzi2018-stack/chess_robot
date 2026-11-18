@@ -15,8 +15,8 @@ os.environ.setdefault('ROS_DOMAIN_ID', '87')
 os.environ['ROS_LOCALHOST_ONLY'] = '1'
 import rclpy
 from rclpy.action import ActionClient
-from chess_robot_interfaces.action import MoveGripper
-from chess_robot_interfaces.msg import GripperState
+from chess_robot_interface.action import MoveGripper
+from chess_robot_interface.msg import GripperState
 
 
 def crc(data):

@@ -7,8 +7,8 @@ from rclpy.action import ActionServer
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.action.server import GoalResponse
-from chess_robot_interfaces.action import MoveJoints,MoveGripper
-from chess_robot_interfaces.msg import ArmState,GripperState
+from chess_robot_interface.action import MoveJoints,MoveGripper
+from chess_robot_interface.msg import ArmState,GripperState
 from sensor_msgs.msg import JointState
 RUN=Path(os.environ.get('CHESS_ROBOT_TEST_RUN','/tmp/chess-panel-arm-integration'))
 RUN.mkdir(parents=True,exist_ok=True)

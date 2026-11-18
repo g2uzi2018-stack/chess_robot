@@ -68,7 +68,7 @@ class SplitTests(unittest.TestCase):
         text = (Path(__file__).resolve().parents[1]/'chess_robot_perception/perception_node.py').read_text()
         tree = ast.parse(text)
         imports = [n.module for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
-        self.assertNotIn('chess_robot_interfaces.msg', imports)
+        self.assertNotIn('chess_robot_interface.msg', imports)
         self.assertNotIn('chess_robot_perception.stable_observation', imports)
         self.assertNotIn('/arm/', text)
         self.assertNotIn('AuditEpoch', text)

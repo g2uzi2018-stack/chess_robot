@@ -2,7 +2,7 @@
 import json,signal,socket,struct,subprocess,threading,time,os,argparse
 from pathlib import Path
 import yaml,rclpy
-from chess_robot_interfaces.msg import ArmState
+from chess_robot_interface.msg import ArmState
 from rosidl_runtime_py.convert import message_to_ordereddict as convert
 p=argparse.ArgumentParser();p.add_argument('--run',required=True);p.add_argument('--build-root');p.add_argument('--label',default='history-loopback');p.add_argument('--cases',nargs='*');a=p.parse_args()
 r=Path(os.environ.get('CHESS_ROBOT_ROOT','/home/kuang/workspace/chess_robot'));w=Path(a.run).resolve();out=w/a.label;out.mkdir(exist_ok=False)

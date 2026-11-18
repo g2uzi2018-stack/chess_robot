@@ -1,12 +1,15 @@
 # Nova5 与 AG95 模型资产
 
-ROS 2 description 包，提供 URDF、网格和共用的 Python 几何函数。Nova5 本体描述保持不变，不含控制器。
+项目统一的 ROS 2 模型包，提供 URDF、网格和共用的 Python 几何函数。Nova5 本体描述保持不变，不含控制器。
 
 - `python/chess_robot_description/`：共用几何计算源码；安装后使用 `chess_robot_description` 包名导入。
 - [urdf/README.txt](urdf/README.txt)：源文件、生成结果、编辑入口和按需生成命令。
 - `urdf/nova5.urdf`：Nova5 原厂基线。
 - `urdf/nova5_with_ag95.urdf.xacro`：组合模型入口。
 - `urdf/nova5_with_ag95.urdf`：由入口生成的纯 URDF。
+- `urdf/ag95/`：夹爪本体定义、独立入口和生成的 URDF；见 [夹爪提示](urdf/ag95/README.txt)。
+- `meshes/ag95/visual/`、`meshes/ag95/collision/`：各 6 个原始 STL，分别用于显示与碰撞。
+- `SOURCES.json`：外部模型的来源版本、原件文件指纹及本地调整；`LICENSE.ag95` 保留 AG95 的 Apache-2.0 许可证。
 - `meshes/nova5/`：7 个原厂 STL。
 - `meshes/tool_mount/camera_mount_assembly_m.stl`：用户提供的 20260117 v2 安装板、支架和新相机，已按法兰安装面配准到 Link6，单位为米。
 - `meshes/tool_mount/camera_mount_assembly_m.json`：CAD 安装基准、坐标变换、7 个分量、来源与 SHA-256。
@@ -14,7 +17,7 @@ ROS 2 description 包，提供 URDF、网格和共用的 Python 几何函数。N
 
 ## 1 当前装配
 
-本包负责 Nova5、安装件和夹爪的整机装配；AG95 本体定义与原始网格由 `dh_ag95_description` 提供，通过 Xacro 引用。
+本包集中维护 Nova5、安装件和 AG95 夹爪。总装入口引用 `urdf/ag95/dh_ag95_macro.xacro`；单独查看夹爪使用 `urdf/ag95/ag95.urdf`。
 
 当前安装件采用用户提供的 20260117 v2 模型，包含安装板、支架、相机及夹持底座。组合模型因此省略 AG95 通用底座的重复显示和碰撞形状；单独查看夹爪时仍使用通用底座。
 
@@ -24,7 +27,7 @@ ROS 2 description 包，提供 URDF、网格和共用的 Python 几何函数。N
 
 ```bash
 cd /home/kuang/workspace/chess_robot
-bash tools/build.sh --packages-select dh_ag95_description chess_robot_description
+bash tools/build.sh --packages-select chess_robot_description
 source tools/env.sh
 ```
 
@@ -53,8 +56,19 @@ python3 tools/description/export_browser_model.py
 
 默认 `grasp_link` 的局部 +X 指向夹爪伸出方向，其 +Z 不是接近轴；抓取代码需要使用一致的轴约定。
 
+AG95 原始网格在 URDF 中按 0.001 缩放到米。显示网格保留外形细节，碰撞网格用于几何计算，两者按各自用途维护。
+宏的 `include_base_geometry` 默认 true，整机入口设为 false；`grasp_link_offset` 由两个入口设为 0.20 m。
+
 ## 4 验证边界
+
+AG95 用单主动关节加 mimic 表达无接触平行运动，不完整模拟接触后的自适应包络抓取；原惯性和驱动开度映射仍需与实物对照。
 
 本体的六个关节 effort/velocity 为原厂 0 占位值。尚无完整 SRDF、有效运动限值或实机碰撞误差验收。删除旧包络不代表碰撞检查已关闭，也不代表历史自碰撞原因已消除；细化后的模型仍需验证安装基准、误差余量和实际碰撞姿态。
 
 查看和参数覆盖见 [模型查看说明](../../docs/models/ag95-browser.md)。生成条件与入口见 [URDF 提示](urdf/README.txt)。CAD 配准不等于实物安装/TCP 标定；按本次改动选择相关检查，不把构建或查看当成完整验收。
+
+## 5 外部资源与许可证
+
+AG95 资源来自 `g2uzi2018-stack/nova`，采用版本和文件指纹见 [SOURCES.json](SOURCES.json)。
+上游原宏与元数据保存在 `../../reference/ag95/`，用于来源对照；当前文件位置以本包来源清单为准。
+项目代码沿用 [MIT](LICENSE)，AG95 导入资源保留 [Apache-2.0](LICENSE.ag95)。

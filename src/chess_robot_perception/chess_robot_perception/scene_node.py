@@ -13,7 +13,7 @@ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rosidl_runtime_py.convert import message_to_ordereddict as convert
 from sensor_msgs.msg import JointState
 from std_msgs.msg import String
-from chess_robot_interfaces.msg import ArmState
+from chess_robot_interface.msg import ArmState
 
 from chess_robot_perception.base_geometry import BaseGeometry, CALIB, URDF
 from chess_robot_perception.measurement_contract import ContractError, MAX_MESSAGE_BYTES, decode, decode_json, encode_json

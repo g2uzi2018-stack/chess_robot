@@ -10,8 +10,8 @@ from rclpy.qos import QoSProfile,DurabilityPolicy
 from rcl_interfaces.srv import GetParameters
 from std_msgs.msg import String
 from sensor_msgs.msg import JointState
-from chess_robot_interfaces.msg import ArmState
-from chess_robot_interfaces.action import MoveArm
+from chess_robot_interface.msg import ArmState
+from chess_robot_interface.action import MoveArm
 from rosidl_runtime_py.convert import message_to_ordereddict as convert
 
 def stamp(m):return m.header.stamp.sec*10**9+m.header.stamp.nanosec

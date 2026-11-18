@@ -1,8 +1,9 @@
-chess_robot_interfaces 接口索引
+chess_robot_interface 接口索引
 
-本包维护机械臂和夹爪的自定义通信接口，供相关 ROS 2 包依赖使用，无需单独启动。
+本包集中维护相机、机械臂和夹爪的自定义通信接口，供相关 ROS 2 包依赖使用，无需单独启动。
 
 消息 msg/
+  FrameInfo.msg：同一组彩深图的帧序号、设备时间、深度比例和流状态。
   ArmState.msg：机械臂的运行阶段、末端位姿、参考状态和绕转信息。
   GripperState.msg：夹爪的连接、初始化、开度和夹持状态。
 

@@ -9,6 +9,6 @@ ament_python_install_package(${PROJECT_NAME}
 )
 
 install(DIRECTORY urdf meshes DESTINATION share/${PROJECT_NAME})
-install(FILES README.md LICENSE DESTINATION share/${PROJECT_NAME})
+install(FILES README.md LICENSE LICENSE.ag95 SOURCES.json DESTINATION share/${PROJECT_NAME})
 
 ament_package()

@@ -55,7 +55,7 @@ ArmState与JointState使用QoS深度20，各自缓存最多32帧。只使用完�
 
 ```bash
 source /opt/ros/humble/setup.bash
-colcon --log-base build/colcon_logs build --base-paths src/chess_robot_interfaces src/chess_robot_gripper src/chess_robot_panel \
+colcon --log-base build/colcon_logs build --base-paths src/chess_robot_interface src/chess_robot_gripper src/chess_robot_panel \
   --build-base build/ros --install-base install/dev --executor sequential
 source install/dev/setup.bash
 export ROS_DOMAIN_ID=89 ROS_LOCALHOST_ONLY=1

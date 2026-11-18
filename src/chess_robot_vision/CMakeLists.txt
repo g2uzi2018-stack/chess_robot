@@ -4,27 +4,18 @@ project(chess_robot_vision)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 构建工具与消息生成。
+# 构建工具。
 find_package(ament_cmake REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
 
 # 节点通信、图像消息和相机 SDK。
 find_package(rclcpp REQUIRED)
 find_package(rcl_interfaces REQUIRED)
+find_package(chess_robot_interface REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 find_package(realsense2 REQUIRED)
-
-# FrameInfo 目前在本包生成，供相机节点及下游使用。
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/FrameInfo.msg"
-  DEPENDENCIES std_msgs
-)
-rosidl_get_typesupport_target(cpp_typesupport_target
-  ${PROJECT_NAME} rosidl_typesupport_cpp
-)
 
 # 包内校正库，供节点和已有离线检查复用，不作为公共库安装或导出。
 add_library(camera_calibration STATIC src/calibration.cpp)
@@ -43,6 +34,7 @@ add_executable(vision_node src/node.cpp)
 ament_target_dependencies(vision_node
   rclcpp
   rcl_interfaces
+  chess_robot_interface
   std_msgs
   sensor_msgs
   cv_bridge
@@ -50,7 +42,6 @@ ament_target_dependencies(vision_node
 target_link_libraries(vision_node
   camera_calibration
   realsense2::realsense2
-  "${cpp_typesupport_target}"
 )
 target_compile_options(vision_node PRIVATE -Wall -Wextra -Wpedantic)
 
@@ -75,5 +66,4 @@ if(BUILD_TESTING)
   target_link_libraries(test_camera_calibration camera_calibration)
 endif()
 
-ament_export_dependencies(rosidl_default_runtime)
 ament_package()

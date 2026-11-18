@@ -2,10 +2,10 @@
 #include "chess_robot_handeye/core.hpp"
 #include <Eigen/Geometry>
 #include <atomic>
-#include <chess_robot_interfaces/action/move_arm.hpp>
-#include <chess_robot_interfaces/msg/arm_state.hpp>
+#include <chess_robot_interface/action/move_arm.hpp>
+#include <chess_robot_interface/msg/arm_state.hpp>
 #include <chess_robot_twist/model.hpp>
-#include <chess_robot_vision/msg/frame_info.hpp>
+#include <chess_robot_interface/msg/frame_info.hpp>
 #include <cv_bridge/cv_bridge.h>
 #include <filesystem>
 #include <fstream>
@@ -19,11 +19,11 @@
 #include <thread>
 
 namespace he = chess_robot_handeye;
-using Move = chess_robot_interfaces::action::MoveArm;
+using Move = chess_robot_interface::action::MoveArm;
 using FixtureHandle = rclcpp_action::ServerGoalHandle<Move>;
-using Arm = chess_robot_interfaces::msg::ArmState;
+using Arm = chess_robot_interface::msg::ArmState;
 using Joint = sensor_msgs::msg::JointState;
-using Frame = chess_robot_vision::msg::FrameInfo;
+using Frame = chess_robot_interface::msg::FrameInfo;
 void atomicYaml(const std::string &path, const YAML::Node &node) {
   const std::string temporary = path + ".tmp";
   {

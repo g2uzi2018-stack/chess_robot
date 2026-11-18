@@ -20,8 +20,8 @@ from rclpy.action import ActionServer
 from rclpy.action.server import GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.executors import MultiThreadedExecutor
-from chess_robot_interfaces.action import MoveGripper
-from chess_robot_interfaces.msg import GripperState
+from chess_robot_interface.action import MoveGripper
+from chess_robot_interface.msg import GripperState
 
 
 class Fixture:

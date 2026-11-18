@@ -14,10 +14,10 @@ import time
 import yaml
 import rclpy
 from rclpy.action import ActionClient
-from chess_robot_interfaces.action import MoveArm
-from chess_robot_interfaces.msg import ArmState
+from chess_robot_interface.action import MoveArm
+from chess_robot_interface.msg import ArmState
 from sensor_msgs.msg import JointState
-from chess_robot_interfaces.srv import InitializeReference, ConfirmGrasp
+from chess_robot_interface.srv import InitializeReference, ConfirmGrasp
 from arm_controller_fixture import ControllerFixture
 from scipy.spatial.transform import Rotation
 
