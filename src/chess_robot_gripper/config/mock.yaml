@@ -1,8 +1,18 @@
+# 默认调试配置：由 gripper.launch.py 加载，只访问内存模拟设备。
+# 所有参数只在启动时读取，修改后须重启节点。
 gripper_node:
   ros__parameters:
+    # 模拟寄存器、初始化和开合；不模拟实际夹持力，也不加载三维模型。
     backend: mock
+    # 允许模拟动作请求；仍需显式发送初始化，启动不会自动完成初始化。
     enable_commands: true
+    # 模拟请求的力设定上限，单位 %，范围 20～100；不产生真实力。
     max_force_percent: 30
+    # -1 表示无物体；0～1000 表示接触开度，闭合目标须小于它才触发模拟接触。
     mock_contact_raw: -1
+    # 一轮反馈处理后等待的时间，单位 ms，范围 20～1000。
     poll_period_ms: 100
+    # 整组反馈从开始读取起的有效期，单位 s，范围 0.1～5。
     feedback_max_age_sec: 1.0
+# 未覆盖的 position_tolerance_raw 使用代码默认值 5，单位为原始开度；允许范围 0～50。
+# /gripper/state 固定每 100 ms 发布一次。

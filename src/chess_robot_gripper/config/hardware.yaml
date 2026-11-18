@@ -1,12 +1,23 @@
+# 真实 AG95：由 gripper.launch.py 的 config 参数加载，所有参数修改后须重启节点。
+# 连接 Nova5 末端 RS485 的 TCP 透传口；发送原始 RTU 帧，不是标准 Modbus TCP。
 gripper_node:
   ros__parameters:
+    # 使用真实 TCP 通信；节点启动后只轮询状态，不自动初始化。
     backend: tcp_rtu
-    # Nova5 tool RS485 transparent port; verified with read-only AG95 registers.
+    # 透传服务的数字 IPv4 与 TCP 端口，可随设备连接配置调整。
     host: "192.168.30.234"
     port: 60000
+    # 夹爪的 Modbus 从站地址，范围 1～247。
     slave_id: 1
+    # false 只读；true 才允许接收初始化和开合请求，不会立即触发动作。
     enable_commands: false
+    # 允许请求的力设定上限，单位 %，范围 20～100；不是实测夹持力。
     max_force_percent: 30
+    # 每次 RTU 请求的连接、发送、接收共用超时，单位 ms，范围 10～1000。
     io_timeout_ms: 150
+    # 一轮反馈处理后等待多久再读，单位 ms，范围 20～1000；不含通信耗时。
     poll_period_ms: 100
+    # 整组反馈从开始读取起最多有效多久，单位 s，范围 0.1～5。
     feedback_max_age_sec: 1.0
+# 未覆盖的 position_tolerance_raw 使用代码默认值 5，单位为原始开度；允许范围 0～50。
+# /gripper/state 固定每 100 ms 发布一次，与上面的设备读取间隔分开。
